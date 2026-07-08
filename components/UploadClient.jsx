@@ -30,9 +30,12 @@ export default function UploadClient({ branches = [] }) {
   const [files, setFiles] = useState([]); // File[]
   const [dragOver, setDragOver] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | sending | done | error
+  const [step, setStep] = useState(0);
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const inputRef = useRef(null);
+
+  const STEPS = ["Ekstrak arsip", "Baca data", "Simpan ke database", "Selesai"];
 
   const noBranch = branches.length === 0;
 
@@ -59,23 +62,29 @@ export default function UploadClient({ branches = [] }) {
   async function handleSubmit() {
     if (!accountId || files.length === 0) return;
     setStatus("sending");
+    setStep(0);
     setErrorMsg("");
     setResult(null);
+    // Indikator langkah (server memproses dalam 1 request; ini menandakan progres).
+    const iv = setInterval(() => setStep((s) => Math.min(s + 1, 2)), 700);
     try {
       const form = new FormData();
       form.append("accountId", accountId);
       files.forEach((f) => form.append("files", f));
       const res = await fetch("/api/upload", { method: "POST", body: form });
       const data = await res.json();
+      clearInterval(iv);
       if (!res.ok) {
         setStatus("error");
         setErrorMsg(data.error || "Gagal mengunggah.");
         return;
       }
+      setStep(3);
       setResult(data);
       setStatus("done");
       setFiles([]);
     } catch (err) {
+      clearInterval(iv);
       setStatus("error");
       setErrorMsg(err?.message || "Terjadi kesalahan jaringan.");
     }
@@ -150,12 +159,23 @@ export default function UploadClient({ branches = [] }) {
         <Button variant="primary" disabled={noBranch || files.length === 0 || status === "sending"} onClick={handleSubmit}>
           {status === "sending" ? "Memproses…" : `Simpan ${files.length ? `(${files.length} file)` : ""}`}
         </Button>
-        {status === "sending" && (
-          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
-            Ekstrak → baca data → simpan…
-          </span>
-        )}
       </div>
+
+      {/* Step indicator saat memproses (blueprint 22) */}
+      {status === "sending" && (
+        <div className="mt-4">
+          <div className="mb-2 h-2 overflow-hidden rounded-full" style={{ background: "rgba(0,60,68,.1)" }}>
+            <div style={{ width: `${((step + 1) / STEPS.length) * 100}%`, height: "100%", background: "linear-gradient(90deg,#0a8291,#006674)", transition: "width .5s ease" }} />
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+            {STEPS.slice(0, 3).map((label, i) => (
+              <span key={label} style={{ color: i <= step ? "var(--teal-900)" : "var(--ink-soft)", fontWeight: i === step ? 700 : 500 }}>
+                {i < step ? "✓" : i === step ? "●" : "○"} {label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Error */}
       {status === "error" && (
