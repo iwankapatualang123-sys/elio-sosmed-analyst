@@ -24,6 +24,7 @@ Terakhir diperbarui: 2026-07-09.
 | Arsip cabang (§21D) | ✅ | toggle is_active di /settings |
 | Manajemen user & cabang (§21D) | ✅ | admin atur role, akses, cabang |
 | Log aktivitas / audit trail (§21B) | ✅ | /activity: siapa upload/ubah apa & kapan |
+| Peringatan/alert (§21C) | ✅ | panel dashboard: follower turun, ER rendah, stagnan, reminder upload, viral |
 | Reduce motion (§21E,§22) | ✅ | di globals.css |
 
 ## Sebagian (perlu dilengkapi)
@@ -46,7 +47,7 @@ Terakhir diperbarui: 2026-07-09.
 
 **Kolaborasi (§21B):** ~~log aktivitas/audit trail~~ ✅ · komentar internal · assignment tugas · approval workflow · manajemen periode lengkap/parsial.
 
-**Notifikasi (§21C):** viral alert · anomaly alert · reminder upload · export terjadwal · push notification PWA. (tabel `notifikasi` ada tapi belum dipakai app ini)
+**Notifikasi (§21C):** ~~viral alert~~ ✅ · ~~anomaly alert~~ ✅ · ~~reminder upload~~ ✅ (semua via panel "Peringatan" di dashboard, dihitung on-the-fly) · belum: export terjadwal · push notification PWA (butuh web-push/cron).
 
 **Manajemen (§21D):** onboarding/tutorial · bulk action · template laporan custom.
 
