@@ -114,6 +114,13 @@ export default async function DashboardPage({ searchParams }) {
             <h2 className="text-lg font-semibold text-white drop-shadow">
               Detail: {selectedBranch.nama_cabang}
             </h2>
+            <Link
+              href={`/report/${selectedId}`}
+              className="rounded-full bg-white px-3 py-1 text-xs font-semibold"
+              style={{ color: "var(--teal-900)" }}
+            >
+              📄 Laporan
+            </Link>
             {branches.length > 1 && (
               <div className="flex flex-wrap gap-2">
                 {branches.map((b) => (

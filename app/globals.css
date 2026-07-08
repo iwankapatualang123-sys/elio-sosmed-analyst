@@ -132,6 +132,15 @@ body::before {
   }
 }
 
+/* Mode cetak (untuk "Simpan sebagai PDF" laporan). Latar putih, sembunyikan tombol. */
+@media print {
+  body { background: #ffffff !important; }
+  body::before { display: none !important; }
+  .no-print { display: none !important; }
+  .card-3d { box-shadow: none !important; border: 1px solid #d7e6da !important; }
+  @page { margin: 12mm; }
+}
+
 /* Hormati preferensi "kurangi gerak" (blueprint bagian 22). */
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
