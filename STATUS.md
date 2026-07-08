@@ -22,6 +22,7 @@ Terakhir diperbarui: 2026-07-09.
 | PWA installable + offline (§11) | ✅ | manifest, service worker, ikon, safe-area |
 | Best posting heatmap (§21A) | ✅ | jam × hari |
 | Goals/target per cabang (§21A) | ✅ | set target views/ER/follower + progress bar |
+| Global search (§21E) | ✅ | kotak di header → cari cabang & video (RLS) |
 | Arsip cabang (§21D) | ✅ | toggle is_active di /settings |
 | Manajemen user & cabang (§21D) | ✅ | admin atur role, akses, cabang |
 | Log aktivitas / audit trail (§21B) | ✅ | /activity: siapa upload/ubah apa & kapan |
@@ -52,7 +53,7 @@ Terakhir diperbarui: 2026-07-09.
 
 **Manajemen (§21D):** onboarding/tutorial · bulk action · template laporan custom.
 
-**Pengalaman (§21E):** dark mode · multi-bahasa · global search lintas cabang.
+**Pengalaman (§21E):** dark mode · multi-bahasa · ~~global search lintas cabang~~ ✅.
 
 **Keamanan (§21F):** session timeout · backup berkala · rate limit upload · 2FA admin.
 

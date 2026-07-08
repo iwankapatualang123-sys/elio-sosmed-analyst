@@ -8,6 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, UploadCloud, Database, Settings, UserRound, ScrollText } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
+import GlobalSearch from "@/components/GlobalSearch";
 
 const BASE_LINKS = [
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
@@ -83,6 +84,7 @@ export default function Nav({ email, role }) {
 
       {/* Kanan: user chip + keluar */}
       <div className="ml-auto flex items-center gap-2">
+        <div className="hidden sm:block"><GlobalSearch /></div>
         {email && (
           <span
             className="hidden max-w-[180px] truncate rounded-full px-3 py-1.5 text-xs font-medium text-white md:inline-block"
