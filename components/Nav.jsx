@@ -6,19 +6,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LayoutDashboard, UploadCloud, Settings, UserRound } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
 const BASE_LINKS = [
-  { href: "/dashboard", label: "Dashboard", icon: "📊" },
-  { href: "/upload", label: "Upload", icon: "⬆️" },
+  { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { href: "/upload", label: "Upload", Icon: UploadCloud },
 ];
 
 export default function Nav({ email, role }) {
   const pathname = usePathname();
   const links = [
     ...BASE_LINKS,
-    ...(role === "admin" ? [{ href: "/settings", label: "Pengaturan", icon: "⚙️" }] : []),
-    { href: "/account", label: "Akun", icon: "👤" },
+    ...(role === "admin" ? [{ href: "/settings", label: "Pengaturan", Icon: Settings }] : []),
+    { href: "/account", label: "Akun", Icon: UserRound },
   ];
 
   return (
@@ -69,7 +70,7 @@ export default function Nav({ email, role }) {
                   : { color: "rgba(255,255,255,.82)" }
               }
             >
-              <span className="text-base">{l.icon}</span>
+              <l.Icon size={18} strokeWidth={2.2} aria-hidden />
               <span className="hidden sm:inline">{l.label}</span>
             </Link>
           );
