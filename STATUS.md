@@ -23,6 +23,7 @@ Terakhir diperbarui: 2026-07-09.
 | Best posting heatmap (§21A) | ✅ | jam × hari |
 | Arsip cabang (§21D) | ✅ | toggle is_active di /settings |
 | Manajemen user & cabang (§21D) | ✅ | admin atur role, akses, cabang |
+| Log aktivitas / audit trail (§21B) | ✅ | /activity: siapa upload/ubah apa & kapan |
 | Reduce motion (§21E,§22) | ✅ | di globals.css |
 
 ## Sebagian (perlu dilengkapi)
@@ -43,7 +44,7 @@ Terakhir diperbarui: 2026-07-09.
 
 **Data & Analitik (§21A):** goals/target per cabang · anotasi data · forecasting · content calendar · perbandingan periode fleksibel (UI).
 
-**Kolaborasi (§21B):** log aktivitas/audit trail* · komentar internal · assignment tugas · approval workflow · manajemen periode lengkap/parsial. *(direkomendasikan prioritas)*
+**Kolaborasi (§21B):** ~~log aktivitas/audit trail~~ ✅ · komentar internal · assignment tugas · approval workflow · manajemen periode lengkap/parsial.
 
 **Notifikasi (§21C):** viral alert · anomaly alert · reminder upload · export terjadwal · push notification PWA. (tabel `notifikasi` ada tapi belum dipakai app ini)
 
