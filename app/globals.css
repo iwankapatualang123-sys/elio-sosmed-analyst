@@ -132,6 +132,23 @@ body::before {
   }
 }
 
+/* Skeleton shimmer saat memuat data (blueprint 22). Dihormati reduce-motion di bawah. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 16px;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
 /* Mode cetak (untuk "Simpan sebagai PDF" laporan). Latar putih, sembunyikan tombol. */
 @media print {
   body { background: #ffffff !important; }
