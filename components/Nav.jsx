@@ -6,11 +6,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, UploadCloud, Settings, UserRound } from "lucide-react";
+import { LayoutDashboard, UploadCloud, Database, Settings, UserRound } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
 const BASE_LINKS = [
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { href: "/data", label: "Data", Icon: Database },
   { href: "/upload", label: "Upload", Icon: UploadCloud },
 ];
 
