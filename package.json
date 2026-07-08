@@ -14,6 +14,7 @@
     "test": "node test/tiktok-parser.test.js && node test/tiktok-sync.test.js && node test/tiktok-metrics.test.js && node test/tiktok-upload.test.js"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.1",
     "exceljs": "^4.4.0",
     "fflate": "^0.8.3",
