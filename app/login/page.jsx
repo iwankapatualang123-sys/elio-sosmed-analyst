@@ -28,7 +28,7 @@ export default function LoginPage() {
       setError("Email atau password salah, atau akun belum aktif.");
       return;
     }
-    router.push("/upload");
+    router.push("/dashboard");
     router.refresh();
   }
 

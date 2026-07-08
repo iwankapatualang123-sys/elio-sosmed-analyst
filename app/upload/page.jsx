@@ -4,7 +4,7 @@
 
 import { getCurrentProfile, canWrite } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import LogoutButton from "@/components/LogoutButton";
+import Nav from "@/components/Nav";
 import UploadClient from "@/components/UploadClient";
 
 export default async function UploadPage() {
@@ -24,16 +24,7 @@ export default async function UploadPage() {
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 p-6">
-      <header className="card-3d flex items-center justify-between gap-4 px-6 py-4">
-        <div>
-          <h1 className="text-lg font-semibold text-ink">Upload Data TikTok</h1>
-          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
-            {profile?.email}
-            {profile?.role ? ` · ${profile.role}` : " · belum ada role"}
-          </p>
-        </div>
-        <LogoutButton />
-      </header>
+      <Nav email={profile?.email} role={profile?.role} />
 
       {!hasRole ? (
         <section className="card-3d p-6">
