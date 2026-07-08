@@ -10,11 +10,13 @@
     "test:parser": "node test/tiktok-parser.test.js",
     "test:sync": "node test/tiktok-sync.test.js",
     "test:metrics": "node test/tiktok-metrics.test.js",
-    "test": "node test/tiktok-parser.test.js && node test/tiktok-sync.test.js && node test/tiktok-metrics.test.js"
+    "test:upload": "node test/tiktok-upload.test.js",
+    "test": "node test/tiktok-parser.test.js && node test/tiktok-sync.test.js && node test/tiktok-metrics.test.js && node test/tiktok-upload.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.1",
     "exceljs": "^4.4.0",
+    "fflate": "^0.8.3",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4"
