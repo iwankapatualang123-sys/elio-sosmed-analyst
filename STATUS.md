@@ -21,6 +21,7 @@ Terakhir diperbarui: 2026-07-09.
 | Tema teal 3D + Poppins (§11,§23) | ✅ | kartu/tombol 3D, header branded, ikon Lucide |
 | PWA installable + offline (§11) | ✅ | manifest, service worker, ikon, safe-area |
 | Best posting heatmap (§21A) | ✅ | jam × hari |
+| Goals/target per cabang (§21A) | ✅ | set target views/ER/follower + progress bar |
 | Arsip cabang (§21D) | ✅ | toggle is_active di /settings |
 | Manajemen user & cabang (§21D) | ✅ | admin atur role, akses, cabang |
 | Log aktivitas / audit trail (§21B) | ✅ | /activity: siapa upload/ubah apa & kapan |
@@ -43,7 +44,7 @@ Terakhir diperbarui: 2026-07-09.
 
 ## Belum dibangun
 
-**Data & Analitik (§21A):** goals/target per cabang · anotasi data · forecasting · content calendar · perbandingan periode fleksibel (UI).
+**Data & Analitik (§21A):** ~~goals/target per cabang~~ ✅ · anotasi data · forecasting · content calendar · perbandingan periode fleksibel (UI).
 
 **Kolaborasi (§21B):** ~~log aktivitas/audit trail~~ ✅ · komentar internal · assignment tugas · approval workflow · manajemen periode lengkap/parsial.
 

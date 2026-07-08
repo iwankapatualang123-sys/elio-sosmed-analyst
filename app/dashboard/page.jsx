@@ -2,7 +2,7 @@
 // Dashboard analitik TikTok (terproteksi). Server Component: muat metrik lintas
 // cabang (KPI + ranking) dan detail 1 cabang (grafik). Blueprint bagian 4.
 
-import { getCurrentProfile } from "@/lib/auth";
+import { getCurrentProfile, canWrite } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPortfolio, loadBranchDetail } from "@/lib/tiktok/analytics";
 import Link from "next/link";
@@ -10,6 +10,8 @@ import Nav from "@/components/Nav";
 import MetricCard from "@/components/MetricCard";
 import { LineChart, Donut, BarChartLabeled, Heatmap } from "@/components/Charts";
 import InsightAI from "@/components/InsightAI";
+import ProgressBar from "@/components/ProgressBar";
+import { setGoals } from "./actions";
 
 const INSIGHT_STYLE = {
   naik: { background: "#dcfce7", color: "#166534" },
@@ -64,6 +66,10 @@ export default async function DashboardPage({ searchParams }) {
   const selectedId = sp.branch || branches[0]?.id || null;
   const detail = await loadBranchDetail(supabase, selectedId);
   const selectedBranch = branches.find((b) => b.id === selectedId);
+  const { data: goal } = selectedId
+    ? await supabase.from("tiktok_account_goals").select("*").eq("tiktok_account_id", selectedId).maybeSingle()
+    : { data: null };
+  const editable = canWrite(profile);
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
@@ -161,6 +167,25 @@ export default async function DashboardPage({ searchParams }) {
               </div>
             )}
           </div>
+
+          {/* Target & Progress (blueprint 21A) */}
+          <section className="card-3d p-4 sm:p-5">
+            <h3 className="mb-3 text-sm font-semibold text-ink">🎯 Target & Progress</h3>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <ProgressBar label="Total Views" current={detail.summary.totalViews} target={goal?.target_total_views} />
+              <ProgressBar label="Engagement Rate" current={detail.summary.engagementRateOverall} target={goal?.target_engagement_rate} suffix="%" />
+              <ProgressBar label="Net Follower" current={detail.growth.netGrowth} target={goal?.target_net_followers} />
+            </div>
+            {editable && (
+              <form action={setGoals} className="mt-4 grid gap-2 sm:grid-cols-4">
+                <input type="hidden" name="accountId" value={selectedId} />
+                <input name="target_total_views" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="Target views" defaultValue={goal?.target_total_views ?? ""} />
+                <input name="target_engagement_rate" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="Target ER %" defaultValue={goal?.target_engagement_rate ?? ""} />
+                <input name="target_net_followers" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="Target follower Δ" defaultValue={goal?.target_net_followers ?? ""} />
+                <button type="submit" className="btn btn-ghost !min-h-0 !py-1.5 text-sm">Simpan target</button>
+              </form>
+            )}
+          </section>
 
           {/* Peringatan / alert (anomali + reminder upload) */}
           {detail.alerts && detail.alerts.length > 0 && (
