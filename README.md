@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Elio Sosmed Analyst
 
-## Getting Started
+Aplikasi analitik TikTok multi-cabang untuk internal Elio Agency. Upload manual
+file export TikTok Studio → parsing → simpan ke Supabase → dashboard analitik.
+Detail keputusan desain/fitur ada di [`Catatan_Update_Blueprint.md`](./Catatan_Update_Blueprint.md).
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js 16** (App Router, JavaScript), **Tailwind v4**, PWA (installable + offline)
+- **Supabase** (Postgres + Auth + RLS) — project `Digihub`
+- Parsing xlsx: `exceljs` · unzip: `fflate`
+
+## Struktur kode penting
+
+```
+lib/tiktok/        parser.js  -> parse export TikTok Studio (xlsx) ke bentuk baris DB
+                   sync.js    -> upsert hasil parse ke Supabase (dedup)
+                   metrics.js -> engagement rate, ranking, hashtag, growth, dll
+                   upload.js  -> bongkar arsip (zip bersarang) -> parse -> sync
+                   analytics.js -> muat data + hitung metrik untuk dashboard
+lib/supabase/      client/server/middleware -> client Supabase (SSR, cookie)
+app/               login, dashboard, upload, api/upload
+components/        Nav, MetricCard, Charts, UploadClient, Button, ...
+supabase/migrations/ -> perubahan schema (trigger profil, dll)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Konvensi: kode pemroses dipisah per platform; setiap file & fungsi diberi komentar
+(Bahasa Indonesia). Lihat blueprint bagian 16.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Setup lokal
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+cp .env.local.example .env.local   # isi URL + anon/publishable key Supabase
+npm run dev                        # http://localhost:3000
+```
 
-## Learn More
+Environment variables (lihat `.env.local.example`):
 
-To learn more about Next.js, take a look at the following resources:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (publishable/anon key — aman di browser, dilindungi RLS)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm test            # semua tes lib/tiktok (parser, sync, metrics, upload)
+npm run build       # production build
+npm run lint
+```
 
-## Deploy on Vercel
+## Deploy ke Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push repo ke GitHub (sudah terhubung).
+2. Di Vercel: **New Project** → import repo ini.
+3. **Environment Variables**: tambahkan `NEXT_PUBLIC_SUPABASE_URL` dan
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY` (nilai dari `.env.local`).
+4. Deploy. Setiap push ke `main` → auto-deploy.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> Jangan taruh service-role key atau Groq key sebagai `NEXT_PUBLIC_*` (terekspos ke
+> browser). Key rahasia server diatur terpisah (Supabase Edge Function secret).
+
+## Role & akses
+
+3 role (`admin`/`manager`/`staff`) via RLS `can_access_account`. Admin lihat semua
+cabang; upload data hanya admin & manager. User baru otomatis dapat profil role
+`staff` (trigger `handle_new_user`), lalu dipromosikan admin.
