@@ -9,13 +9,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 
-const LINKS = [
+const BASE_LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
   { href: "/upload", label: "Upload", icon: "⬆️" },
 ];
 
 export default function Nav({ email, role }) {
   const pathname = usePathname();
+  const links = role === "admin"
+    ? [...BASE_LINKS, { href: "/settings", label: "Pengaturan", icon: "⚙️" }]
+    : BASE_LINKS;
   return (
     <header className="card-3d flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
       <div
@@ -25,7 +28,7 @@ export default function Nav({ email, role }) {
         E
       </div>
       <nav className="flex items-center gap-1">
-        {LINKS.map((l) => {
+        {links.map((l) => {
           const active = pathname === l.href || pathname.startsWith(`${l.href}/`);
           return (
             <Link
