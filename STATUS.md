@@ -45,17 +45,19 @@ Terakhir diperbarui: 2026-07-09.
 
 ## Belum dibangun
 
-**Data & Analitik (§21A):** ~~goals/target per cabang~~ ✅ · ~~anotasi data~~ ✅ · forecasting · content calendar · perbandingan periode fleksibel (UI).
+**Data & Analitik (§21A):** ~~goals/target~~ ✅ · ~~anotasi data~~ ✅ · ~~content calendar~~ ✅ · ~~analisis hashtag~~ ✅ · forecasting · perbandingan periode fleksibel (UI).
 
 **Kolaborasi (§21B):** ~~log aktivitas/audit trail~~ ✅ · komentar internal · assignment tugas · approval workflow · manajemen periode lengkap/parsial.
 
+**Keamanan (§21F):** ~~session timeout~~ ✅ · ~~rate limit upload~~ ✅ · backup berkala · 2FA admin.
+
+**UX (§22):** ~~skeleton/shimmer saat load~~ ✅ · belum: progress-bar step indicator upload + animasi centang.
+
+**Manajemen (§21D):** ~~kategori/tag grouping~~ ✅ · onboarding · bulk action · template laporan custom.
+
 **Notifikasi (§21C):** ~~viral alert~~ ✅ · ~~anomaly alert~~ ✅ · ~~reminder upload~~ ✅ (semua via panel "Peringatan" di dashboard, dihitung on-the-fly) · belum: export terjadwal · push notification PWA (butuh web-push/cron).
 
-**Manajemen (§21D):** onboarding/tutorial · bulk action · template laporan custom.
-
-**Pengalaman (§21E):** dark mode · multi-bahasa · ~~global search lintas cabang~~ ✅.
-
-**Keamanan (§21F):** session timeout · backup berkala · rate limit upload · 2FA admin.
+**Pengalaman (§21E):** dark mode · multi-bahasa · ~~global search~~ ✅.
 
 **Ekspansi (§14,§25):** migrasi `tiktok_accounts`→`social_accounts` (platform generik) · Instagram · TikTok oEmbed thumbnail.
 

@@ -11,6 +11,7 @@ import MetricCard from "@/components/MetricCard";
 import { LineChart, Donut, BarChartLabeled, Heatmap } from "@/components/Charts";
 import InsightAI from "@/components/InsightAI";
 import ProgressBar from "@/components/ProgressBar";
+import { forecastNext } from "@/lib/tiktok/forecast";
 import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
 
 const INSIGHT_STYLE = {
@@ -280,6 +281,10 @@ export default async function DashboardPage({ searchParams }) {
               <h3 className="mb-1 text-sm font-semibold text-ink">Pertumbuhan Follower</h3>
               <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
                 {detail.growth.startFollowers} → {detail.growth.endFollowers} ({detail.growth.netGrowth >= 0 ? "+" : ""}{detail.growth.netGrowth})
+                {detail.history.length >= 2 && (() => {
+                  const fc = forecastNext(detail.history.map((h) => h.followers), 7);
+                  return <span> · proyeksi 7 hari: <b style={{ color: fc.trend === "naik" ? "#166534" : fc.trend === "turun" ? "#991b1b" : "inherit" }}>~{fmt(fc.nextValue)} ({fc.trend})</b></span>;
+                })()}
               </p>
               <LineChart data={detail.history.map((h) => ({ x: h.date, y: h.followers }))} />
             </div>
