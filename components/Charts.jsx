@@ -132,6 +132,47 @@ export function Donut({ data = [], size = 160, center = null }) {
   );
 }
 
+// Komponen: Heatmap — grid hari × jam (follower aktif). heatmap: {wd:{hour:avg}}.
+// wd: 0=Min..6=Sab (UTC). Intensitas warna teal mengikuti nilai/maks.
+const DAYS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+export function Heatmap({ heatmap = {} }) {
+  let max = 0;
+  for (const wd of Object.keys(heatmap)) {
+    for (const h of Object.keys(heatmap[wd])) max = Math.max(max, heatmap[wd][h] || 0);
+  }
+  if (max <= 0) return <Empty height={160} />;
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ borderCollapse: "collapse" }}>
+        <tbody>
+          {DAYS.map((day, wd) => (
+            <tr key={wd}>
+              <td style={{ fontSize: 10, color: "var(--ink-soft)", paddingRight: 6, whiteSpace: "nowrap" }}>{day}</td>
+              {Array.from({ length: 24 }, (_, h) => {
+                const val = (heatmap[wd] && heatmap[wd][h]) || 0;
+                const a = val / max;
+                return (
+                  <td
+                    key={h}
+                    title={`${day} ${String(h).padStart(2, "0")}:00 — ${Math.round(val)}`}
+                    style={{ width: 13, height: 13, borderRadius: 3, background: `rgba(0,102,116,${0.08 + a * 0.92})`, padding: 0 }}
+                  />
+                );
+              })}
+            </tr>
+          ))}
+          <tr>
+            <td />
+            {Array.from({ length: 24 }, (_, h) => (
+              <td key={h} style={{ fontSize: 8, color: "var(--ink-soft)", textAlign: "center" }}>{h % 3 === 0 ? h : ""}</td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // Komponen: Empty — placeholder saat data kosong.
 function Empty({ height = 160 }) {
   return (

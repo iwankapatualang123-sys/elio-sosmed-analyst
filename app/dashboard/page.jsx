@@ -5,9 +5,18 @@
 import { getCurrentProfile } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPortfolio, loadBranchDetail } from "@/lib/tiktok/analytics";
+import Link from "next/link";
 import Nav from "@/components/Nav";
 import MetricCard from "@/components/MetricCard";
-import { LineChart, Donut, BarChartLabeled } from "@/components/Charts";
+import { LineChart, Donut, BarChartLabeled, Heatmap } from "@/components/Charts";
+import InsightAI from "@/components/InsightAI";
+
+const INSIGHT_STYLE = {
+  naik: { background: "#dcfce7", color: "#166534" },
+  turun: { background: "#fee2e2", color: "#991b1b" },
+  stabil: { background: "#fef9c3", color: "#854d0e" },
+  info: { background: "#e0f2fe", color: "#075985" },
+};
 
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
 
@@ -101,9 +110,45 @@ export default async function DashboardPage({ searchParams }) {
       {/* Detail 1 cabang */}
       {detail && selectedBranch && (
         <>
-          <h2 className="mt-2 text-lg font-semibold text-white drop-shadow">
-            Detail: {selectedBranch.nama_cabang}
-          </h2>
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <h2 className="text-lg font-semibold text-white drop-shadow">
+              Detail: {selectedBranch.nama_cabang}
+            </h2>
+            {branches.length > 1 && (
+              <div className="flex flex-wrap gap-2">
+                {branches.map((b) => (
+                  <Link
+                    key={b.id}
+                    href={`/dashboard?branch=${b.id}`}
+                    className="rounded-full px-3 py-1 text-xs font-medium"
+                    style={b.id === selectedId
+                      ? { background: "#fff", color: "var(--teal-900)" }
+                      : { background: "rgba(255,255,255,.2)", color: "#fff" }}
+                  >
+                    {b.nama_cabang}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Insight otomatis (Kesimpulan + Saran per aspek) */}
+          <section className="grid gap-4 sm:grid-cols-2">
+            {(detail.insights || []).map((ins, i) => (
+              <div key={i} className="card-3d p-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="text-sm font-semibold text-ink">{ins.aspek}</span>
+                  <span className="ml-auto rounded-full px-2 py-0.5 text-xs font-semibold" style={INSIGHT_STYLE[ins.status] || INSIGHT_STYLE.info}>
+                    {ins.status}
+                  </span>
+                </div>
+                <p className="text-sm text-ink">{ins.kesimpulan}</p>
+                <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>💡 {ins.saran}</p>
+              </div>
+            ))}
+          </section>
+
+          <InsightAI accountId={selectedId} namaCabang={selectedBranch.nama_cabang} />
 
           <section className="grid gap-4 lg:grid-cols-2">
             <div className="card-3d p-5">
@@ -147,6 +192,11 @@ export default async function DashboardPage({ searchParams }) {
                 ]}
               />
             </div>
+          </section>
+
+          <section className="card-3d p-5">
+            <h3 className="mb-3 text-sm font-semibold text-ink">Heatmap Jam × Hari (follower aktif)</h3>
+            <Heatmap heatmap={detail.bestHours.heatmap} />
           </section>
 
           <section className="card-3d p-4 sm:p-6">

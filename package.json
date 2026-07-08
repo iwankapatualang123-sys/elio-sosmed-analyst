@@ -11,7 +11,8 @@
     "test:sync": "node test/tiktok-sync.test.js",
     "test:metrics": "node test/tiktok-metrics.test.js",
     "test:upload": "node test/tiktok-upload.test.js",
-    "test": "node test/tiktok-parser.test.js && node test/tiktok-sync.test.js && node test/tiktok-metrics.test.js && node test/tiktok-upload.test.js"
+    "test:insights": "node test/tiktok-insights.test.js",
+    "test": "node test/tiktok-parser.test.js && node test/tiktok-sync.test.js && node test/tiktok-metrics.test.js && node test/tiktok-upload.test.js && node test/tiktok-insights.test.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
