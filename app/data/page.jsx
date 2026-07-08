@@ -9,21 +9,7 @@ import Nav from "@/components/Nav";
 import DataFilters from "@/components/DataFilters";
 import DataTable from "@/components/DataTable";
 
-const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
 const monthOf = (d) => (typeof d === "string" ? d.slice(0, 7) : null);
-const pct = (v) => (v == null ? "-" : `${Number(v)}%`);
-
-// ER per baris konten (DB tidak menyimpannya).
-function erOf(r) {
-  const views = Number(r.total_views) || 0;
-  const eng = (Number(r.total_likes) || 0) + (Number(r.total_comments) || 0) + (Number(r.total_shares) || 0);
-  return views > 0 ? `${Math.round((eng / views) * 10000) / 100}%` : "0%";
-}
-// Angka merah kalau negatif (anomali TikTok).
-function numCell(r, key) {
-  const neg = Number(r[key]) < 0;
-  return <span style={neg ? { color: "#b91c1c", fontWeight: 600 } : undefined}>{fmt(r[key])}</span>;
-}
 
 export default async function DataPage({ searchParams }) {
   const profile = await getCurrentProfile();
@@ -100,13 +86,13 @@ export default async function DataPage({ searchParams }) {
               rows={fContent}
               emptyText="Tidak ada konten pada bulan ini."
               columns={[
-                { key: "video_title", label: "Judul", render: (r) => <span className="line-clamp-1 block max-w-xs" title={r.video_title}>{r.video_title || "-"}</span> },
-                { key: "post_date", label: "Tanggal" },
-                { key: "total_views", label: "Views", align: "right" },
-                { key: "total_likes", label: "Likes", align: "right" },
-                { key: "total_comments", label: "Komentar", align: "right", render: (r) => numCell(r, "total_comments") },
-                { key: "total_shares", label: "Shares", align: "right" },
-                { key: "er", label: "ER", align: "right", render: erOf },
+                { key: "video_title", label: "Judul", format: "text" },
+                { key: "post_date", label: "Tanggal", format: "date" },
+                { key: "total_views", label: "Views", align: "right", format: "number" },
+                { key: "total_likes", label: "Likes", align: "right", format: "number" },
+                { key: "total_comments", label: "Komentar", align: "right", format: "number" },
+                { key: "total_shares", label: "Shares", align: "right", format: "number" },
+                { key: "er", label: "ER", align: "right", format: "er" },
               ]}
             />
           </Section>
@@ -116,12 +102,12 @@ export default async function DataPage({ searchParams }) {
               rows={fOverview}
               emptyText="Tidak ada data harian pada bulan ini."
               columns={[
-                { key: "date", label: "Tanggal" },
-                { key: "video_views", label: "Video views", align: "right" },
-                { key: "profile_views", label: "Profile views", align: "right" },
-                { key: "likes", label: "Likes", align: "right" },
-                { key: "comments", label: "Komentar", align: "right", render: (r) => numCell(r, "comments") },
-                { key: "shares", label: "Shares", align: "right" },
+                { key: "date", label: "Tanggal", format: "date" },
+                { key: "video_views", label: "Video views", align: "right", format: "number" },
+                { key: "profile_views", label: "Profile views", align: "right", format: "number" },
+                { key: "likes", label: "Likes", align: "right", format: "number" },
+                { key: "comments", label: "Komentar", align: "right", format: "number" },
+                { key: "shares", label: "Shares", align: "right", format: "number" },
               ]}
             />
           </Section>
@@ -131,12 +117,9 @@ export default async function DataPage({ searchParams }) {
               rows={fFollower}
               emptyText="Tidak ada data follower pada bulan ini."
               columns={[
-                { key: "date", label: "Tanggal" },
-                { key: "followers", label: "Followers", align: "right" },
-                { key: "diff_from_previous_day", label: "Selisih", align: "right", render: (r) => {
-                  const d = Number(r.diff_from_previous_day) || 0;
-                  return <span style={{ color: d > 0 ? "#166534" : d < 0 ? "#b91c1c" : undefined }}>{d > 0 ? `+${fmt(d)}` : fmt(d)}</span>;
-                } },
+                { key: "date", label: "Tanggal", format: "date" },
+                { key: "followers", label: "Followers", align: "right", format: "number" },
+                { key: "diff_from_previous_day", label: "Selisih", align: "right", format: "diff" },
               ]}
             />
           </Section>
@@ -146,11 +129,11 @@ export default async function DataPage({ searchParams }) {
               rows={fViewers}
               emptyText="Tidak ada data viewers pada bulan ini."
               columns={[
-                { key: "date", label: "Tanggal" },
-                { key: "total_viewers", label: "Total", align: "right" },
-                { key: "new_viewers", label: "Baru", align: "right" },
-                { key: "returning_viewers", label: "Kembali", align: "right" },
-                { key: "status", label: "Status", render: (r) => r.is_incomplete ? <span className="text-amber-700">⚠️ Belum lengkap</span> : <span style={{ color: "var(--ink-soft)" }}>Lengkap</span> },
+                { key: "date", label: "Tanggal", format: "date" },
+                { key: "total_viewers", label: "Total", align: "right", format: "number" },
+                { key: "new_viewers", label: "Baru", align: "right", format: "number" },
+                { key: "returning_viewers", label: "Kembali", align: "right", format: "number" },
+                { key: "status", label: "Status", format: "incomplete" },
               ]}
             />
           </Section>
@@ -160,9 +143,9 @@ export default async function DataPage({ searchParams }) {
               rows={fActivity}
               emptyText="Tidak ada data aktivitas pada bulan ini."
               columns={[
-                { key: "date", label: "Tanggal" },
-                { key: "hour", label: "Jam", align: "right", render: (r) => `${String(r.hour).padStart(2, "0")}:00` },
-                { key: "active_followers", label: "Follower aktif", align: "right" },
+                { key: "date", label: "Tanggal", format: "date" },
+                { key: "hour", label: "Jam", align: "right", format: "hour" },
+                { key: "active_followers", label: "Follower aktif", align: "right", format: "number" },
               ]}
             />
           </Section>
@@ -172,10 +155,10 @@ export default async function DataPage({ searchParams }) {
               rows={gender}
               emptyText="Belum ada data gender."
               columns={[
-                { key: "snapshot_date", label: "Tanggal snapshot" },
-                { key: "male_pct", label: "Pria", align: "right", render: (r) => pct(r.male_pct) },
-                { key: "female_pct", label: "Wanita", align: "right", render: (r) => pct(r.female_pct) },
-                { key: "other_pct", label: "Lainnya", align: "right", render: (r) => pct(r.other_pct) },
+                { key: "snapshot_date", label: "Tanggal snapshot", format: "date" },
+                { key: "male_pct", label: "Pria", align: "right", format: "pct" },
+                { key: "female_pct", label: "Wanita", align: "right", format: "pct" },
+                { key: "other_pct", label: "Lainnya", align: "right", format: "pct" },
               ]}
             />
           </Section>
@@ -185,9 +168,9 @@ export default async function DataPage({ searchParams }) {
               rows={territories}
               emptyText="Belum ada data lokasi."
               columns={[
-                { key: "territory_code", label: "Kode wilayah" },
-                { key: "distribution_pct", label: "Distribusi", align: "right", render: (r) => pct(r.distribution_pct) },
-                { key: "snapshot_date", label: "Tanggal snapshot" },
+                { key: "territory_code", label: "Kode wilayah", format: "text" },
+                { key: "distribution_pct", label: "Distribusi", align: "right", format: "pct" },
+                { key: "snapshot_date", label: "Tanggal snapshot", format: "date" },
               ]}
             />
           </Section>
