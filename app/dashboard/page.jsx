@@ -62,6 +62,16 @@ export default async function DashboardPage({ searchParams }) {
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
       <Nav email={profile.email} role={profile.role} />
 
+      {/* Hero judul */}
+      <div className="px-1">
+        <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">
+          Dashboard Analitik
+        </h1>
+        <p className="mt-0.5 text-sm" style={{ color: "rgba(255,255,255,.75)" }}>
+          Ringkasan performa TikTok lintas cabang
+        </p>
+      </div>
+
       {/* KPI portofolio */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <MetricCard icon="🏢" accent="teal" label="Cabang aktif" value={fmt(portfolio.activeBranches)} />
@@ -111,7 +121,8 @@ export default async function DashboardPage({ searchParams }) {
       {detail && selectedBranch && (
         <>
           <div className="mt-2 flex flex-wrap items-center gap-3">
-            <h2 className="text-lg font-semibold text-white drop-shadow">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-white drop-shadow">
+              <span style={{ width: 6, height: 22, borderRadius: 3, background: "linear-gradient(180deg,#7fe0d0,#0a8291)", display: "inline-block" }} />
               Detail: {selectedBranch.nama_cabang}
             </h2>
             <Link
