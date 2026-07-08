@@ -16,9 +16,11 @@ const BASE_LINKS = [
 
 export default function Nav({ email, role }) {
   const pathname = usePathname();
-  const links = role === "admin"
-    ? [...BASE_LINKS, { href: "/settings", label: "Pengaturan", icon: "⚙️" }]
-    : BASE_LINKS;
+  const links = [
+    ...BASE_LINKS,
+    ...(role === "admin" ? [{ href: "/settings", label: "Pengaturan", icon: "⚙️" }] : []),
+    { href: "/account", label: "Akun", icon: "👤" },
+  ];
   return (
     <header className="card-3d flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
       <div
