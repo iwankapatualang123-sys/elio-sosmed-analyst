@@ -64,6 +64,9 @@ export default async function DashboardPage({ searchParams }) {
   const { branches, portfolio } = await loadPortfolio(supabase);
   const sp = (await searchParams) || {};
   const selectedId = sp.branch || branches[0]?.id || null;
+  const catFilter = sp.cat || null;
+  const categories = [...new Set(branches.map((b) => b.kategori).filter(Boolean))];
+  const rankedBranches = catFilter ? branches.filter((b) => b.kategori === catFilter) : branches;
   const detail = await loadBranchDetail(supabase, selectedId);
   const selectedBranch = branches.find((b) => b.id === selectedId);
   const { data: goal } = selectedId
@@ -100,6 +103,14 @@ export default async function DashboardPage({ searchParams }) {
       <section className="card-3d p-4 sm:p-6">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <h2 className="text-base font-semibold text-ink">Ranking Cabang</h2>
+          {categories.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              <Link href="/dashboard" className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={!catFilter ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>Semua</Link>
+              {categories.map((c) => (
+                <Link key={c} href={`/dashboard?cat=${encodeURIComponent(c)}`} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={catFilter === c ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>{c}</Link>
+              ))}
+            </div>
+          )}
           <Link href="/report/portfolio" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
             📄 Laporan Semua Cabang
           </Link>
@@ -109,6 +120,7 @@ export default async function DashboardPage({ searchParams }) {
             <thead>
               <tr style={{ color: "var(--ink-soft)" }}>
                 <th className="py-2 pr-3 font-medium">Cabang</th>
+                <th className="py-2 pr-3 font-medium">Kategori</th>
                 <th className="py-2 pr-3 font-medium">Konten/bln</th>
                 <th className="py-2 pr-3 font-medium">Views</th>
                 <th className="py-2 pr-3 font-medium">Eng. rate</th>
@@ -117,12 +129,13 @@ export default async function DashboardPage({ searchParams }) {
               </tr>
             </thead>
             <tbody>
-              {branches.map((b) => (
+              {rankedBranches.map((b) => (
                 <tr key={b.id} className="border-t" style={{ borderColor: "rgba(0,60,68,.1)" }}>
                   <td className="py-2 pr-3 font-medium text-ink">
                     {b.nama_cabang}
                     {b.tiktok_username ? <span style={{ color: "var(--ink-soft)" }}> @{b.tiktok_username}</span> : null}
                   </td>
+                  <td className="py-2 pr-3" style={{ color: "var(--ink-soft)" }}>{b.kategori || "-"}</td>
                   <td className="py-2 pr-3">{fmt(b.contentThisMonth)}</td>
                   <td className="py-2 pr-3">{fmt(b.totalViews)}</td>
                   <td className="py-2 pr-3">{b.engagementRate}%</td>
@@ -130,8 +143,8 @@ export default async function DashboardPage({ searchParams }) {
                   <td className="py-2 pr-3"><StatusBadge status={b.status} /></td>
                 </tr>
               ))}
-              {branches.length === 0 && (
-                <tr><td colSpan={6} className="py-6 text-center" style={{ color: "var(--ink-soft)" }}>Belum ada cabang berisi data.</td></tr>
+              {rankedBranches.length === 0 && (
+                <tr><td colSpan={7} className="py-6 text-center" style={{ color: "var(--ink-soft)" }}>Belum ada cabang untuk kategori ini.</td></tr>
               )}
             </tbody>
           </table>
@@ -304,6 +317,26 @@ export default async function DashboardPage({ searchParams }) {
                 ]}
               />
             </div>
+          </section>
+
+          <section className="card-3d p-4 sm:p-5">
+            <h3 className="mb-3 text-sm font-semibold text-ink"># Analisis Hashtag</h3>
+            {(detail.hashtags || []).length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada hashtag di judul video.</p>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                {detail.hashtags.map((h) => (
+                  <span
+                    key={h.hashtag}
+                    title={`${h.count}x dipakai · avg ${fmt(h.avgViews)} views · ER ${h.avgEngagementRate}%`}
+                    className="rounded-full px-3 py-1 font-medium"
+                    style={{ background: "rgba(0,102,116,.08)", color: "var(--teal-900)", fontSize: `${12 + Math.min(8, h.count)}px` }}
+                  >
+                    {h.hashtag} <b>{h.count}</b>
+                  </span>
+                ))}
+              </div>
+            )}
           </section>
 
           <section className="card-3d p-5">
