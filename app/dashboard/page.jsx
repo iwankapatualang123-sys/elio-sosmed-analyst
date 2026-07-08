@@ -18,6 +18,13 @@ const INSIGHT_STYLE = {
   info: { background: "#e0f2fe", color: "#075985" },
 };
 
+const ALERT_STYLE = {
+  danger: { bg: "#fef2f2", border: "#fecaca", color: "#991b1b", icon: "🔴" },
+  warning: { bg: "#fffbeb", border: "#fde68a", color: "#854d0e", icon: "🟠" },
+  info: { bg: "#eff6ff", border: "#bfdbfe", color: "#075985", icon: "🔵" },
+  success: { bg: "#f0fdf4", border: "#bbf7d0", color: "#166534", icon: "🟢" },
+};
+
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
 
 const STATUS_STYLE = {
@@ -149,6 +156,32 @@ export default async function DashboardPage({ searchParams }) {
               </div>
             )}
           </div>
+
+          {/* Peringatan / alert (anomali + reminder upload) */}
+          {detail.alerts && detail.alerts.length > 0 && (
+            <section className="card-3d p-4 sm:p-5">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">
+                🔔 Peringatan
+                <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+                  {detail.alerts.length}
+                </span>
+              </h3>
+              <div className="flex flex-col gap-2">
+                {detail.alerts.map((a, i) => {
+                  const s = ALERT_STYLE[a.level] || ALERT_STYLE.info;
+                  return (
+                    <div key={i} className="flex items-start gap-2 rounded-xl p-3 text-sm" style={{ background: s.bg, border: `1px solid ${s.border}` }}>
+                      <span>{s.icon}</span>
+                      <span>
+                        <b style={{ color: s.color }}>{a.title}.</b>{" "}
+                        <span className="text-ink">{a.message}</span>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           {/* Insight otomatis (Kesimpulan + Saran per aspek) */}
           <section className="grid gap-4 sm:grid-cols-2">
