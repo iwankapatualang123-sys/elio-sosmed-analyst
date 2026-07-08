@@ -1,0 +1,17 @@
+{
+  "name": "Elio Sosmed Analyst",
+  "short_name": "Elio Analyst",
+  "description": "Analitik TikTok multi-cabang untuk Elio Agency",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#00464f",
+  "theme_color": "#006674",
+  "lang": "id",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
