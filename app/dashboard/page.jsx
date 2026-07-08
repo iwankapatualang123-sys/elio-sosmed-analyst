@@ -11,7 +11,7 @@ import MetricCard from "@/components/MetricCard";
 import { LineChart, Donut, BarChartLabeled, Heatmap } from "@/components/Charts";
 import InsightAI from "@/components/InsightAI";
 import ProgressBar from "@/components/ProgressBar";
-import { setGoals } from "./actions";
+import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
 
 const INSIGHT_STYLE = {
   naik: { background: "#dcfce7", color: "#166534" },
@@ -69,6 +69,9 @@ export default async function DashboardPage({ searchParams }) {
   const { data: goal } = selectedId
     ? await supabase.from("tiktok_account_goals").select("*").eq("tiktok_account_id", selectedId).maybeSingle()
     : { data: null };
+  const { data: annotations } = selectedId
+    ? await supabase.from("branch_annotations").select("*").eq("tiktok_account_id", selectedId).order("note_date", { ascending: false }).limit(50)
+    : { data: [] };
   const editable = canWrite(profile);
 
   return (
@@ -184,6 +187,34 @@ export default async function DashboardPage({ searchParams }) {
                 <input name="target_net_followers" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="Target follower Δ" defaultValue={goal?.target_net_followers ?? ""} />
                 <button type="submit" className="btn btn-ghost !min-h-0 !py-1.5 text-sm">Simpan target</button>
               </form>
+            )}
+          </section>
+
+          {/* Anotasi / catatan tanggal (blueprint 21A) */}
+          <section className="card-3d p-4 sm:p-5">
+            <h3 className="mb-3 text-sm font-semibold text-ink">📌 Catatan / Anotasi</h3>
+            <form action={addAnnotation} className="mb-3 flex flex-wrap items-end gap-2">
+              <input type="hidden" name="accountId" value={selectedId} />
+              <input type="date" name="note_date" required className="input-3d !min-h-0 !py-1.5 text-sm" />
+              <input name="note" required placeholder="Catatan (mis. promo, kolaborasi influencer)" className="input-3d !min-h-0 !py-1.5 text-sm min-w-[200px] flex-1" />
+              <button type="submit" className="btn btn-ghost !min-h-0 !py-1.5 text-sm">+ Tambah</button>
+            </form>
+            {(annotations || []).length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada catatan. Tambahkan konteks di tanggal penting (promo, kolaborasi) untuk menjelaskan lonjakan/penurunan.</p>
+            ) : (
+              <ul className="flex flex-col gap-1.5">
+                {annotations.map((a) => (
+                  <li key={a.id} className="flex items-center gap-2 rounded-xl bg-white/60 px-3 py-1.5 text-sm">
+                    <span className="rounded-md px-2 py-0.5 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>{a.note_date}</span>
+                    <span className="min-w-0 flex-1 text-ink">{a.note}</span>
+                    <span className="hidden text-xs sm:inline" style={{ color: "var(--ink-soft)" }}>{a.created_by_email}</span>
+                    <form action={deleteAnnotation}>
+                      <input type="hidden" name="id" value={a.id} />
+                      <button type="submit" className="text-red-500 hover:text-red-700" aria-label="Hapus">✕</button>
+                    </form>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
 

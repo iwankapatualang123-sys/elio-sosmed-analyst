@@ -45,7 +45,7 @@ Terakhir diperbarui: 2026-07-09.
 
 ## Belum dibangun
 
-**Data & Analitik (§21A):** ~~goals/target per cabang~~ ✅ · anotasi data · forecasting · content calendar · perbandingan periode fleksibel (UI).
+**Data & Analitik (§21A):** ~~goals/target per cabang~~ ✅ · ~~anotasi data~~ ✅ · forecasting · content calendar · perbandingan periode fleksibel (UI).
 
 **Kolaborasi (§21B):** ~~log aktivitas/audit trail~~ ✅ · komentar internal · assignment tugas · approval workflow · manajemen periode lengkap/parsial.
 

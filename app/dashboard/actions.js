@@ -41,3 +41,34 @@ export async function setGoals(formData) {
   await logActivity(supabase, { action: "set_target_cabang", entity: accountId });
   revalidatePath("/dashboard");
 }
+
+// Tambah anotasi/catatan pada tanggal tertentu (semua role dengan akses cabang).
+export async function addAnnotation(formData) {
+  const profile = await getCurrentProfile();
+  if (!profile?.role) throw new Error("Belum login.");
+  const accountId = String(formData.get("accountId") || "");
+  const note_date = String(formData.get("note_date") || "");
+  const note = String(formData.get("note") || "").trim();
+  if (!accountId || !note_date || !note) return;
+  const supabase = await createSupabaseServerClient();
+  await supabase.from("branch_annotations").insert({
+    tiktok_account_id: accountId,
+    note_date,
+    note,
+    created_by: profile.id,
+    created_by_email: profile.email,
+  });
+  await logActivity(supabase, { action: "tambah_anotasi", entity: accountId, detail: { note_date } });
+  revalidatePath("/dashboard");
+}
+
+// Hapus anotasi (pemilik atau admin — dijamin RLS).
+export async function deleteAnnotation(formData) {
+  const profile = await getCurrentProfile();
+  if (!profile?.role) throw new Error("Belum login.");
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  const supabase = await createSupabaseServerClient();
+  await supabase.from("branch_annotations").delete().eq("id", id);
+  revalidatePath("/dashboard");
+}
