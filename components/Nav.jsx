@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, UploadCloud, Database, Settings, UserRound, ScrollText } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 import GlobalSearch from "@/components/GlobalSearch";
+import IdleLogout from "@/components/IdleLogout";
 
 const BASE_LINKS = [
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
@@ -96,6 +97,7 @@ export default function Nav({ email, role }) {
         )}
         <LogoutButton />
       </div>
+      <IdleLogout />
     </header>
   );
 }

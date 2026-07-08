@@ -14,6 +14,18 @@ import { logActivity } from "@/lib/audit";
 
 export const runtime = "nodejs";
 
+// Rate limit sederhana per user (in-memory, blueprint 21F): maks 20 upload / 60 detik.
+const RATE_WINDOW_MS = 60 * 1000;
+const RATE_MAX = 20;
+const rateHits = new Map();
+function isRateLimited(userId) {
+  const now = Date.now();
+  const hits = (rateHits.get(userId) || []).filter((t) => now - t < RATE_WINDOW_MS);
+  hits.push(now);
+  rateHits.set(userId, hits);
+  return hits.length > RATE_MAX;
+}
+
 export async function POST(request) {
   // 1) Auth + role
   const profile = await getCurrentProfile();
@@ -22,6 +34,9 @@ export async function POST(request) {
   }
   if (!canWrite(profile)) {
     return NextResponse.json({ error: "Hanya admin/manager yang boleh mengunggah data." }, { status: 403 });
+  }
+  if (isRateLimited(profile.id)) {
+    return NextResponse.json({ error: "Terlalu banyak upload dalam waktu singkat. Coba lagi sebentar lagi." }, { status: 429 });
   }
 
   // 2) Baca form
