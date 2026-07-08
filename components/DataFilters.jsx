@@ -14,11 +14,11 @@ function labelBulan(ym) {
   return `${BULAN[Number(m) - 1] || m} ${y}`;
 }
 
-export default function DataFilters({ branches = [], months = [], selectedBranch, selectedMonth }) {
+export default function DataFilters({ branches = [], months = [], selectedBranch, selectedMonth, basePath = "/data" }) {
   const router = useRouter();
 
   function go(branch, month) {
-    router.push(`/data?branch=${branch}&month=${month}`);
+    router.push(`${basePath}?branch=${branch}&month=${month}`);
   }
 
   return (

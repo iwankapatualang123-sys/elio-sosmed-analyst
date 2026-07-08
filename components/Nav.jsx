@@ -6,7 +6,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, UploadCloud, Database, Settings, UserRound, ScrollText } from "lucide-react";
+import { LayoutDashboard, UploadCloud, Database, CalendarDays, Settings, UserRound, ScrollText } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 import GlobalSearch from "@/components/GlobalSearch";
 import IdleLogout from "@/components/IdleLogout";
@@ -14,6 +14,7 @@ import IdleLogout from "@/components/IdleLogout";
 const BASE_LINKS = [
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/data", label: "Data", Icon: Database },
+  { href: "/calendar", label: "Kalender", Icon: CalendarDays },
   { href: "/upload", label: "Upload", Icon: UploadCloud },
 ];
 
