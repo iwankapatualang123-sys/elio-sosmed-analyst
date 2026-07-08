@@ -34,7 +34,7 @@ Terakhir diperbarui: 2026-07-09.
 | Komponen tabel standar (§20) | 🟡 | search/sort/pagination ✅; belum: filter tanggal/kolom, column visibility, download per tabel, clickable row, loading/error state |
 | Loading state (§22) | 🟡 | upload ada teks langkah; belum: progress bar + step indicator + animasi centang, skeleton/shimmer saat load |
 | AI Groq (§18) | 🟡 | jalan via Next API route (lokal); produksi idealnya Supabase Edge Function |
-| Laporan Semua Cabang (§9) | 🟡 | ada ranking di dashboard; belum: PDF tabular multi-cabang + sheet Excel "Ringkasan Semua Cabang" |
+| Laporan Semua Cabang (§9) | ✅ | /report/portfolio (cetak PDF) + Excel "Ringkasan Semua Cabang" |
 | Status Naik/Stabil/Turun (§25) | 🟡 | default ±5%; ambang resmi belum dikonfirmasi |
 | Analisis hashtag (§21A) | 🟡 | dihitung & dipakai insight; belum: halaman khusus/hashtag cloud/tren |
 | Kategori/tag cabang (§21D) | 🟡 | kolom `kategori` bisa diisi; belum: grup/filter apple-to-apple |

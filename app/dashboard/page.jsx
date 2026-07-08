@@ -89,7 +89,12 @@ export default async function DashboardPage({ searchParams }) {
 
       {/* Ranking cabang */}
       <section className="card-3d p-4 sm:p-6">
-        <h2 className="mb-3 text-base font-semibold text-ink">Ranking Cabang</h2>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <h2 className="text-base font-semibold text-ink">Ranking Cabang</h2>
+          <Link href="/report/portfolio" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+            📄 Laporan Semua Cabang
+          </Link>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
