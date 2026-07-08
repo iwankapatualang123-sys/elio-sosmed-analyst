@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Button from "@/components/Button";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function ChangePasswordForm() {
   const [pass, setPass] = useState("");
@@ -33,11 +34,11 @@ export default function ChangePasswordForm() {
     <form onSubmit={handleSubmit} className="flex max-w-sm flex-col gap-4">
       <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">
         Password baru
-        <input type="password" className="input-3d" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="min. 8 karakter" autoComplete="new-password" />
+        <PasswordInput value={pass} onChange={(e) => setPass(e.target.value)} placeholder="min. 8 karakter" autoComplete="new-password" />
       </label>
       <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">
         Ulangi password baru
-        <input type="password" className="input-3d" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
+        <PasswordInput value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
       </label>
       {msg && (
         <p className={`rounded-lg px-3 py-2 text-sm ${msg.type === "ok" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`} role="alert">

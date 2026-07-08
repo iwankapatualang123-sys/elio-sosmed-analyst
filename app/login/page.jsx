@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Button from "@/components/Button";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -63,11 +64,9 @@ export default function LoginPage() {
           </label>
           <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">
             Password
-            <input
-              type="password"
+            <PasswordInput
               required
               autoComplete="current-password"
-              className="input-3d"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
