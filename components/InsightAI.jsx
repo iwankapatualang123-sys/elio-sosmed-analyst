@@ -47,8 +47,9 @@ export default function InsightAI({ accountId, namaCabang }) {
               <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>
                 {result.source === "ai"
                   ? "✨ Disusun oleh AI (Groq)."
-                  : "Ringkasan berbasis formula. Aktifkan AI dengan mengisi GROQ_API_KEY di server."}
-                {result.warning ? ` (${result.warning})` : ""}
+                  : result.configured
+                    ? "⚠️ AI sedang tidak tersedia (mis. kuota/limit penuh) — sementara menampilkan ringkasan berbasis formula. Coba lagi nanti."
+                    : "Ringkasan berbasis formula. Aktifkan AI dengan mengisi GROQ_API_KEY di server."}
               </p>
             </>
           )}
