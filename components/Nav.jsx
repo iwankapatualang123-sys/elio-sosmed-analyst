@@ -6,7 +6,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, UploadCloud, Database, Settings, UserRound } from "lucide-react";
+import { LayoutDashboard, UploadCloud, Database, Settings, UserRound, ScrollText } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 
 const BASE_LINKS = [
@@ -19,7 +19,10 @@ export default function Nav({ email, role }) {
   const pathname = usePathname();
   const links = [
     ...BASE_LINKS,
-    ...(role === "admin" ? [{ href: "/settings", label: "Pengaturan", Icon: Settings }] : []),
+    ...(role === "admin" ? [
+      { href: "/settings", label: "Pengaturan", Icon: Settings },
+      { href: "/activity", label: "Log", Icon: ScrollText },
+    ] : []),
     { href: "/account", label: "Akun", Icon: UserRound },
   ];
 

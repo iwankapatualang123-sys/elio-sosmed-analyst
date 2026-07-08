@@ -7,6 +7,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { logActivity } from "@/lib/audit";
 
 // Fungsi: requireAdmin — pastikan pemanggil adalah admin, kembalikan client Supabase.
 async function requireAdmin() {
@@ -26,6 +27,7 @@ export async function addBranch(formData) {
   const kategori = String(formData.get("kategori") || "").trim() || null;
   if (!nama_cabang || !tiktok_username) return;
   await supabase.from("tiktok_accounts").insert({ nama_cabang, tiktok_username, kategori, is_active: true });
+  await logActivity(supabase, { action: "tambah_cabang", entity: nama_cabang, detail: { tiktok_username } });
   revalidatePath("/settings");
 }
 
@@ -36,6 +38,7 @@ export async function toggleBranchActive(formData) {
   const next = String(formData.get("next") || "") === "true";
   if (!id) return;
   await supabase.from("tiktok_accounts").update({ is_active: next }).eq("id", id);
+  await logActivity(supabase, { action: next ? "aktifkan_cabang" : "nonaktifkan_cabang", entity: id });
   revalidatePath("/settings");
 }
 
@@ -46,6 +49,7 @@ export async function setUserRole(formData) {
   const role = String(formData.get("role") || "");
   if (!id || !["admin", "manager", "staff"].includes(role)) return;
   await supabase.from("profiles").update({ role }).eq("id", id);
+  await logActivity(supabase, { action: "ubah_role_user", entity: role, detail: { user_id: id } });
   revalidatePath("/settings");
 }
 
@@ -56,6 +60,7 @@ export async function toggleUserActive(formData) {
   const next = String(formData.get("next") || "") === "true";
   if (!id) return;
   await supabase.from("profiles").update({ is_active: next }).eq("id", id);
+  await logActivity(supabase, { action: next ? "aktifkan_user" : "nonaktifkan_user", detail: { user_id: id } });
   revalidatePath("/settings");
 }
 
@@ -70,5 +75,6 @@ export async function saveUserBranches(formData) {
   if (branchIds.length) {
     await supabase.from("user_branch_access").insert(branchIds.map((tiktok_account_id) => ({ user_id: userId, tiktok_account_id })));
   }
+  await logActivity(supabase, { action: "ubah_akses_cabang", detail: { user_id: userId, jumlah_cabang: branchIds.length } });
   revalidatePath("/settings");
 }

@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentProfile, canWrite } from "@/lib/auth";
 import { processUpload } from "@/lib/tiktok/upload.js";
+import { logActivity } from "@/lib/audit";
 
 export const runtime = "nodejs";
 
@@ -61,6 +62,11 @@ export async function POST(request) {
   // 5) Jalankan pipeline (bongkar -> parse -> upsert)
   try {
     const result = await processUpload(supabase, account, files, {});
+    await logActivity(supabase, {
+      action: "upload_data",
+      entity: account.nama_cabang,
+      detail: { totals: result.totals, files: files.length },
+    });
     return NextResponse.json(result, { status: 200 });
   } catch (err) {
     return NextResponse.json(
