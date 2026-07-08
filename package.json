@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:parser": "node test/tiktok-parser.test.js"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
