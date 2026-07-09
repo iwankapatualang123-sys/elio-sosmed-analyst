@@ -31,6 +31,10 @@ const ALERT_STYLE = {
 
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
 
+// Rekomendasi jam upload = ~30 menit sebelum jam puncak (agar video sudah tayang
+// & masuk "golden hour" saat follower ramai). Puncak HH:00 -> (HH-1):30.
+const uploadHint = (hour) => `${String((Number(hour) + 23) % 24).padStart(2, "0")}:30`;
+
 const STATUS_STYLE = {
   naik: { background: "#dcfce7", color: "#166534" },
   stabil: { background: "#fef9c3", color: "#854d0e" },
@@ -308,9 +312,14 @@ export default async function DashboardPage({ searchParams }) {
 
             <div className="card-3d p-5">
               <h3 className="text-sm font-semibold text-ink">Jam Terbaik untuk Posting</h3>
-              <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
-                5 jam dengan follower paling aktif (angka = rata-rata follower online). Makin tinggi batangnya, makin ramai — waktu bagus untuk posting.
+              <p className="mb-2 text-xs" style={{ color: "var(--ink-soft)" }}>
+                5 jam dengan follower paling aktif (angka = rata-rata follower online). Makin tinggi batangnya, makin ramai.
               </p>
+              {detail.bestHours.topHours[0] && (
+                <p className="mb-3 rounded-lg px-3 py-2 text-xs" style={{ background: "rgba(240,180,90,.15)", color: "#8a5a12" }}>
+                  💡 Puncak jam <b>{String(detail.bestHours.topHours[0].hour).padStart(2, "0")}:00</b> — disarankan <b>upload ~{uploadHint(detail.bestHours.topHours[0].hour)}</b> (±30 menit sebelum puncak) supaya video sudah tayang & masuk &quot;golden hour&quot; saat follower ramai.
+                </p>
+              )}
               <BarChartLabeled
                 data={detail.bestHours.topHours.map((h) => ({ label: `${String(h.hour).padStart(2, "0")}:00`, value: h.avgActive }))}
                 format={(v) => Math.round(v)}

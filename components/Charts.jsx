@@ -178,8 +178,9 @@ export function Heatmap({ heatmap = {} }) {
         jam-jam gelap paling bagus untuk posting.
       </p>
       {best && (
-        <p className="mb-3 text-sm font-semibold text-ink">
-          ⭐ Paling ramai: {DAYS[best.wd]} {String(best.h).padStart(2, "0")}:00 (~{Math.round(best.v)} follower aktif)
+        <p className="mb-3 text-sm text-ink">
+          <span className="font-semibold">⭐ Paling ramai: {DAYS[best.wd]} {String(best.h).padStart(2, "0")}:00</span> (~{Math.round(best.v)} follower aktif)
+          <span style={{ color: "#8a5a12" }}> · 💡 disarankan upload ~{DAYS[best.wd]} {String((best.h + 23) % 24).padStart(2, "0")}:30</span>
         </p>
       )}
 
