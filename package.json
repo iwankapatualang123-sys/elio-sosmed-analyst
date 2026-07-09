@@ -14,7 +14,8 @@
     "test:insights": "node test/tiktok-insights.test.js",
     "test:alerts": "node test/tiktok-alerts.test.js",
     "test:forecast": "node test/tiktok-forecast.test.js",
-    "test": "node test/tiktok-parser.test.js && node test/tiktok-sync.test.js && node test/tiktok-metrics.test.js && node test/tiktok-upload.test.js && node test/tiktok-insights.test.js && node test/tiktok-alerts.test.js && node test/tiktok-forecast.test.js"
+    "test:weekly": "node test/tiktok-weekly.test.js",
+    "test": "node test/tiktok-parser.test.js && node test/tiktok-sync.test.js && node test/tiktok-metrics.test.js && node test/tiktok-upload.test.js && node test/tiktok-insights.test.js && node test/tiktok-alerts.test.js && node test/tiktok-forecast.test.js && node test/tiktok-weekly.test.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

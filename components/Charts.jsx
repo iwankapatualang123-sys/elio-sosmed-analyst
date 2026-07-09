@@ -53,6 +53,44 @@ export function BarChartLabeled({ data = [], height = 200, format = (v) => v }) 
   );
 }
 
+// Komponen: DivergingBarChart — bar naik (hijau) di atas garis nol untuk nilai
+// positif, turun (merah) di bawah garis nol untuk nilai negatif. Dipakai untuk
+// metrik yang BOLEH negatif (mis. pertumbuhan follower mingguan yang bisa turun)
+// — BarChartLabeled biasa akan salah render kalau ada nilai negatif.
+// data: [{label, value}].
+export function DivergingBarChart({ data = [], height = 160, format = (v) => v }) {
+  if (data.length === 0) return <Empty height={height} />;
+  const max = Math.max(1, ...data.map((d) => Math.abs(Number(d.value) || 0)));
+  return (
+    <div style={{ height, display: "flex", gap: 8 }}>
+      {data.map((d, i) => {
+        const v = Number(d.value) || 0;
+        const positive = v >= 0;
+        const pct = (Math.abs(v) / max) * 100;
+        return (
+          <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+              {positive && (
+                <div title={`${d.label}: ${v > 0 ? "+" : ""}${format(v)}`} style={{ width: "70%", margin: "0 auto", height: `${pct}%`, minHeight: v !== 0 ? 4 : 0, borderRadius: "5px 5px 2px 2px", background: "linear-gradient(180deg,#7fbf8f,#4f9e7a)", boxShadow: "0 2px 5px rgba(0,60,68,.2)" }} />
+              )}
+            </div>
+            <div style={{ textAlign: "center", fontSize: 11, fontWeight: 700, padding: "2px 0", color: v > 0 ? "#166534" : v < 0 ? "#991b1b" : "var(--ink-soft)" }}>
+              {v > 0 ? "+" : ""}{format(v)}
+            </div>
+            <div style={{ height: 1, background: "rgba(0,60,68,.25)" }} />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              {!positive && (
+                <div title={`${d.label}: ${format(v)}`} style={{ width: "70%", margin: "0 auto", height: `${pct}%`, minHeight: v !== 0 ? 4 : 0, borderRadius: "2px 2px 5px 5px", background: "linear-gradient(0deg,#f87171,#dc2626)", boxShadow: "0 2px 5px rgba(0,60,68,.2)" }} />
+              )}
+            </div>
+            <span style={{ fontSize: 10, color: "var(--ink-soft)", textAlign: "center", marginTop: 4 }}>{d.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // Komponen: LineChart — garis + area untuk tren, dengan sumbu-Y berlabel & titik
 // bulat di tiap data point. data: [{x(label), y(value)}]. viewBox skala seragam
 // (tanpa distorsi) supaya lingkaran & teks tetap bulat/rapi.
