@@ -12,7 +12,7 @@ Terakhir diperbarui: 2026-07-09.
 
 **Halaman & fitur**
 - Dashboard (§4): KPI, ranking + filter kategori, grafik, heatmap jam×hari, pemilih cabang, hashtag cloud (§21A), forecasting follower (§21A), peringatan/alert (§21C), target & progress (§21A), catatan/anotasi (§21A), insight 4-aspek + AI Groq (§5,§18).
-- Data (§20): tabel per aspek + filter bulan + search/sort/pagination.
+- Data (§20): tabel per aspek + filter bulan + search/sort/pagination + tren mingguan dalam bulan (§21A, diverging bar untuk follower yang bisa turun).
 - Kalender konten (§21A). Global search (§21E). Upload (§19) dgn step-progress (§22).
 - Laporan per-akun (infografis PDF cetak) + Excel (§7,§8). Laporan Semua Cabang (PDF + Excel §9).
 - Pengaturan admin: kelola cabang/user/role/akses, arsip cabang, backup semua data (§21D,§21F).
