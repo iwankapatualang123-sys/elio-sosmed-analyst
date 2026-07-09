@@ -5,19 +5,61 @@
 // pagination); column visibility, download & clickable row menyusul.
 //
 // Kolom pakai TIPE FORMAT serializable (bukan fungsi) supaya bisa dioper dari
-// Server Component: columns [{ key, label, align?, format? }].
-//   format: 'number' | 'pct' | 'date' | 'diff' | 'er' | 'hour' | 'incomplete' | 'text'
+// Server Component: columns [{ key, label, align?, format?, width? }].
+//   format: 'number' | 'pct' | 'date' | 'diff' | 'er' | 'hour' | 'incomplete' | 'text' | 'title'
 
 "use client";
 
 import { useMemo, useState } from "react";
 
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
+const HASHTAG_RE = /#[\p{L}\p{N}_]+/gu;
 
 function erValue(row) {
   const views = Number(row.total_views) || 0;
   const eng = (Number(row.total_likes) || 0) + (Number(row.total_comments) || 0) + (Number(row.total_shares) || 0);
   return views > 0 ? (eng / views) * 100 : 0;
+}
+
+// Komponen: TitleCell — untuk judul/caption panjang (mis. video TikTok). Teks
+// utama dipotong 2 baris, hashtag dipisah jadi chip agar mudah dipindai, dan bisa
+// diperluas ("Lihat selengkapnya") tanpa membuat baris tabel lain jadi raksasa.
+function TitleCell({ value, width = 320 }) {
+  const [expanded, setExpanded] = useState(false);
+  const text = String(value ?? "").trim();
+  if (!text) return <span style={{ color: "var(--ink-soft)" }}>-</span>;
+
+  const tags = text.match(HASHTAG_RE) || [];
+  const plain = text.replace(HASHTAG_RE, "").replace(/\s+/g, " ").trim() || text;
+  const isLong = text.length > 90 || tags.length > 3;
+
+  return (
+    <div style={{ maxWidth: width }}>
+      <button
+        type="button"
+        onClick={() => isLong && setExpanded((e) => !e)}
+        className="block w-full text-left"
+        style={{ cursor: isLong ? "pointer" : "default" }}
+      >
+        <span className={expanded ? "" : "line-clamp-2"}>{plain}</span>
+      </button>
+      {tags.length > 0 && (
+        <div className="mt-1 flex flex-wrap gap-1">
+          {tags.slice(0, expanded ? tags.length : 3).map((t, i) => (
+            <span key={`${t}-${i}`} className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>{t}</span>
+          ))}
+          {!expanded && tags.length > 3 && (
+            <span className="text-[10px]" style={{ color: "var(--ink-soft)" }}>+{tags.length - 3}</span>
+          )}
+        </div>
+      )}
+      {isLong && (
+        <span className="mt-0.5 block text-[10px] font-semibold" style={{ color: "var(--teal-900)" }}>
+          {expanded ? "▲ Sembunyikan" : "▼ Lihat selengkapnya"}
+        </span>
+      )}
+    </div>
+  );
 }
 
 // Render isi sel sesuai format kolom.
@@ -42,8 +84,10 @@ function cellContent(row, col) {
       return row.is_incomplete
         ? <span className="text-amber-700">⚠️ Belum lengkap</span>
         : <span style={{ color: "var(--ink-soft)" }}>Lengkap</span>;
+    case "title":
+      return <TitleCell value={v} width={col.width || 320} />;
     case "text":
-      return <span className="line-clamp-1 block max-w-xs" title={String(v ?? "")}>{v ?? "-"}</span>;
+      return <span className="line-clamp-1" style={{ maxWidth: col.width || 260 }} title={String(v ?? "")}>{v ?? "-"}</span>;
     default:
       return v ?? "-";
   }
@@ -143,7 +187,7 @@ export default function DataTable({ columns = [], rows = [], emptyText = "Tidak 
               pageRows.map((row, i) => (
                 <tr key={i} className="border-t" style={{ borderColor: "rgba(0,60,68,.08)" }}>
                   {columns.map((c) => (
-                    <td key={c.key} className="px-3 py-1.5 text-ink" style={{ textAlign: c.align || "left" }}>
+                    <td key={c.key} className="px-3 py-1.5 text-ink" style={{ textAlign: c.align || "left", verticalAlign: "top" }}>
                       {cellContent(row, c)}
                     </td>
                   ))}

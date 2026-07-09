@@ -86,7 +86,7 @@ export default async function DataPage({ searchParams }) {
               rows={fContent}
               emptyText="Tidak ada konten pada bulan ini."
               columns={[
-                { key: "video_title", label: "Judul", format: "text" },
+                { key: "video_title", label: "Judul", format: "title", width: 340 },
                 { key: "post_date", label: "Tanggal", format: "date" },
                 { key: "total_views", label: "Views", align: "right", format: "number" },
                 { key: "total_likes", label: "Likes", align: "right", format: "number" },
