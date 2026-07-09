@@ -80,7 +80,7 @@ export default function Nav({ email, role }) {
                 : { color: "rgba(255,255,255,.82)" }}
             >
               <l.Icon size={18} strokeWidth={2.2} aria-hidden />
-              <span className="hidden lg:inline">{l.label}</span>
+              <span>{l.label}</span>
             </Link>
           );
         })}
