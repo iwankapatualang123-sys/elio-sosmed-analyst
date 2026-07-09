@@ -6,6 +6,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Nav from "@/components/Nav";
 import Button from "@/components/Button";
+import InviteUserForm from "@/components/InviteUserForm";
 import { addBranch, toggleBranchActive, setUserRole, toggleUserActive, saveUserBranches } from "./actions";
 
 export default async function SettingsPage() {
@@ -101,10 +102,12 @@ export default async function SettingsPage() {
       {/* User */}
       <section className="card-3d p-4 sm:p-6">
         <h2 className="mb-1 text-base font-semibold text-ink">User</h2>
-        <p className="mb-4 text-xs" style={{ color: "var(--ink-soft)" }}>
-          Akun baru dibuat lewat undangan di dashboard Supabase (Authentication). Setelah user
-          login pertama, profilnya muncul di sini untuk diatur role & akses cabang.
+        <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
+          Buat akun user baru di bawah ini (role bisa diubah lagi kapan saja), atau atur role/akses cabang user yang sudah ada.
         </p>
+        <div className="mb-5 border-b pb-4" style={{ borderColor: "rgba(0,60,68,.1)" }}>
+          <InviteUserForm />
+        </div>
 
         <div className="flex flex-col gap-4">
           {(users || []).map((u) => {
