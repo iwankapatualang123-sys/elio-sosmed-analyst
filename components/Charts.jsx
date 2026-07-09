@@ -137,38 +137,69 @@ export function Donut({ data = [], size = 160, center = null }) {
 const DAYS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 export function Heatmap({ heatmap = {} }) {
   let max = 0;
+  let best = null;
   for (const wd of Object.keys(heatmap)) {
-    for (const h of Object.keys(heatmap[wd])) max = Math.max(max, heatmap[wd][h] || 0);
+    for (const h of Object.keys(heatmap[wd])) {
+      const v = heatmap[wd][h] || 0;
+      if (v > max) { max = v; best = { wd: Number(wd), h: Number(h), v }; }
+    }
   }
   if (max <= 0) return <Empty height={160} />;
+
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ borderCollapse: "collapse" }}>
-        <tbody>
-          {DAYS.map((day, wd) => (
-            <tr key={wd}>
-              <td style={{ fontSize: 10, color: "var(--ink-soft)", paddingRight: 6, whiteSpace: "nowrap" }}>{day}</td>
-              {Array.from({ length: 24 }, (_, h) => {
-                const val = (heatmap[wd] && heatmap[wd][h]) || 0;
-                const a = val / max;
-                return (
-                  <td
-                    key={h}
-                    title={`${day} ${String(h).padStart(2, "0")}:00 — ${Math.round(val)}`}
-                    style={{ width: 13, height: 13, borderRadius: 3, background: `rgba(0,102,116,${0.08 + a * 0.92})`, padding: 0 }}
-                  />
-                );
-              })}
-            </tr>
-          ))}
-          <tr>
-            <td />
-            {Array.from({ length: 24 }, (_, h) => (
-              <td key={h} style={{ fontSize: 8, color: "var(--ink-soft)", textAlign: "center" }}>{h % 3 === 0 ? h : ""}</td>
+    <div>
+      {/* Penjelasan */}
+      <p className="mb-2 text-xs" style={{ color: "var(--ink-soft)" }}>
+        Tiap kotak = satu jam pada satu hari. <b style={{ color: "var(--teal-900)" }}>Makin gelap = follower makin aktif</b> —
+        jam-jam gelap paling bagus untuk posting.
+      </p>
+      {best && (
+        <p className="mb-3 text-sm font-semibold text-ink">
+          ⭐ Paling ramai: {DAYS[best.wd]} {String(best.h).padStart(2, "0")}:00 (~{Math.round(best.v)} follower aktif)
+        </p>
+      )}
+
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ borderCollapse: "separate", borderSpacing: 2 }}>
+          <tbody>
+            {DAYS.map((day, wd) => (
+              <tr key={wd}>
+                <td style={{ fontSize: 11, color: "var(--ink-soft)", paddingRight: 8, whiteSpace: "nowrap" }}>{day}</td>
+                {Array.from({ length: 24 }, (_, h) => {
+                  const val = (heatmap[wd] && heatmap[wd][h]) || 0;
+                  const a = val / max;
+                  const isBest = best && best.wd === wd && best.h === h;
+                  return (
+                    <td
+                      key={h}
+                      title={`${day} ${String(h).padStart(2, "0")}:00 — ${Math.round(val)} follower aktif`}
+                      style={{
+                        width: 15, height: 15, borderRadius: 3, padding: 0,
+                        background: `rgba(0,102,116,${0.06 + a * 0.94})`,
+                        boxShadow: isBest ? "0 0 0 2px #f0b45a" : "none",
+                      }}
+                    />
+                  );
+                })}
+              </tr>
             ))}
-          </tr>
-        </tbody>
-      </table>
+            <tr>
+              <td style={{ fontSize: 10, color: "var(--ink-soft)", paddingRight: 8 }}>Jam</td>
+              {Array.from({ length: 24 }, (_, h) => (
+                <td key={h} style={{ fontSize: 9, color: "var(--ink-soft)", textAlign: "center" }}>{h % 3 === 0 ? h : ""}</td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Legenda warna */}
+      <div className="mt-3 flex items-center gap-2 text-xs" style={{ color: "var(--ink-soft)" }}>
+        <span>Sepi</span>
+        <span style={{ width: 120, height: 10, borderRadius: 5, background: "linear-gradient(90deg, rgba(0,102,116,.08), rgba(0,102,116,1))", display: "inline-block" }} />
+        <span>Ramai</span>
+        <span className="ml-3 flex items-center gap-1"><span style={{ width: 10, height: 10, borderRadius: 3, boxShadow: "0 0 0 2px #f0b45a", display: "inline-block" }} /> jam terbaik</span>
+      </div>
     </div>
   );
 }
