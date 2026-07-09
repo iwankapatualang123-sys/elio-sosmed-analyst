@@ -1,36 +1,84 @@
 // File: app/login/page.jsx
 // Halaman login (email + password). Client component — pakai Supabase browser client.
-// Bertema teal 3D (blueprint bagian 11 & 23).
+// Bertema teal 3D (blueprint bagian 11 & 23). Pesan error spesifik per penyebab
+// (bukan generik) + baca alasan redirect dari middleware (mis. akun dinonaktifkan).
 
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Button from "@/components/Button";
 import PasswordInput from "@/components/PasswordInput";
 
-export default function LoginPage() {
+// Pesan untuk redirect paksa dari middleware (?reason=...).
+const REASON_MESSAGES = {
+  nonaktif: "Akun Anda telah dinonaktifkan oleh admin. Hubungi admin untuk info lebih lanjut.",
+};
+
+// Fungsi: describeAuthError — ubah error Supabase Auth jadi pesan spesifik Bahasa
+// Indonesia. "Invalid login credentials" sengaja tidak dipecah jadi "email salah"
+// vs "password salah" (Supabase memang menyamakan keduanya agar email tidak bisa
+// ditebak/di-enumerasi oleh pihak luar).
+function describeAuthError(err) {
+  const msg = (err?.message || "").toLowerCase();
+  if (msg.includes("invalid login credentials")) {
+    return "Email atau password salah. Periksa kembali, atau minta admin reset password Anda (menu Pengaturan).";
+  }
+  if (msg.includes("email not confirmed")) {
+    return "Email belum dikonfirmasi. Hubungi admin.";
+  }
+  if (err?.status === 429 || msg.includes("rate limit") || msg.includes("security purposes")) {
+    return "Terlalu banyak percobaan login dalam waktu singkat. Coba lagi sebentar lagi.";
+  }
+  if (msg.includes("user not found")) {
+    return "Akun dengan email ini tidak ditemukan.";
+  }
+  return err?.message || "Gagal masuk. Coba lagi.";
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const reason = searchParams.get("reason");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(reason ? (REASON_MESSAGES[reason] || "") : "");
 
-  // Fungsi: handleSubmit — proses login lalu arahkan ke /upload.
+  // Fungsi: handleSubmit — login, cek akun masih aktif, lalu arahkan ke /dashboard.
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
     const supabase = createSupabaseBrowserClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (signInError) {
-      setError("Email atau password salah, atau akun belum aktif.");
-      return;
+
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        setError(describeAuthError(signInError));
+        setLoading(false);
+        return;
+      }
+
+      // Login Supabase berhasil bukan berarti akun boleh dipakai — cek status aktif
+      // (bisa dinonaktifkan admin) sebelum masuk, supaya pesannya jelas di sini.
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase.from("profiles").select("is_active").eq("id", user.id).maybeSingle();
+      if (profile && profile.is_active === false) {
+        await supabase.auth.signOut();
+        setError(REASON_MESSAGES.nonaktif);
+        setLoading(false);
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Gagal terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.");
+      setLoading(false);
     }
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
@@ -85,5 +133,13 @@ export default function LoginPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
