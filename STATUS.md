@@ -3,68 +3,48 @@
 Peta item `Catatan_Update_Blueprint.md` → status. ✅ selesai · 🟡 sebagian · ⬜ belum.
 Terakhir diperbarui: 2026-07-09.
 
-## Inti (sudah jalan penuh)
+## ✅ Sudah dibangun & terverifikasi
 
-| Area | Status | Catatan |
-|---|---|---|
-| Database Supabase (§13) | ✅ | tabel + RLS `can_access_account` + trigger profil |
-| `lib/tiktok/parser.js` (§19,§25) | ✅ | tervalidasi 7/7 file export asli |
-| `lib/tiktok/sync.js` (upsert dedup) | ✅ | RLS-aware, tervalidasi tulis DB nyata (253 baris) |
-| `lib/tiktok/metrics.js` (§3,§5) | ✅ | engagement, ranking, hashtag, growth, jam terbaik |
-| `lib/tiktok/upload.js` (§19) | ✅ | bongkar zip bersarang, deteksi cabang, notif ringkasan |
-| Auth email/password + 3 role (§13) | ✅ | login, proteksi rute, ganti password, mata password |
-| Dashboard (§4) | ✅ | KPI, ranking cabang, grafik, heatmap, pemilih cabang |
-| Halaman Data + tabel per aspek | ✅ | filter bulan + search/sort/pagination |
-| Insight otomatis 4 aspek (§5) | ✅ | formula + AI Groq (fallback aman) |
-| Laporan Excel per cabang (§7) | ✅ | data + insight, download .xlsx |
-| Laporan infografis per akun (§8) | ✅ | halaman cetak → Simpan PDF |
-| Tema teal 3D + Poppins (§11,§23) | ✅ | kartu/tombol 3D, header branded, ikon Lucide |
-| PWA installable + offline (§11) | ✅ | manifest, service worker, ikon, safe-area |
-| Best posting heatmap (§21A) | ✅ | jam × hari |
-| Goals/target per cabang (§21A) | ✅ | set target views/ER/follower + progress bar |
-| Global search (§21E) | ✅ | kotak di header → cari cabang & video (RLS) |
-| Arsip cabang (§21D) | ✅ | toggle is_active di /settings |
-| Manajemen user & cabang (§21D) | ✅ | admin atur role, akses, cabang |
-| Log aktivitas / audit trail (§21B) | ✅ | /activity: siapa upload/ubah apa & kapan |
-| Peringatan/alert (§21C) | ✅ | panel dashboard: follower turun, ER rendah, stagnan, reminder upload, viral |
-| Reduce motion (§21E,§22) | ✅ | di globals.css |
+**Inti data & backend**
+- Parser/sync/metrics/upload TikTok (§2,§3,§5,§16,§19) — 174 tes; tervalidasi export asli & tulis DB nyata.
+- Database Supabase + RLS `can_access_account`, trigger profil, audit log, goals, anotasi (§13,§21A,§21B).
+- Auth email/password + 3 role, proteksi rute, ganti password + tombol mata, idle auto-logout (§13,§21F).
 
-## Sebagian (perlu dilengkapi)
+**Halaman & fitur**
+- Dashboard (§4): KPI, ranking + filter kategori, grafik, heatmap jam×hari, pemilih cabang, hashtag cloud (§21A), forecasting follower (§21A), peringatan/alert (§21C), target & progress (§21A), catatan/anotasi (§21A), insight 4-aspek + AI Groq (§5,§18).
+- Data (§20): tabel per aspek + filter bulan + search/sort/pagination.
+- Kalender konten (§21A). Global search (§21E). Upload (§19) dgn step-progress (§22).
+- Laporan per-akun (infografis PDF cetak) + Excel (§7,§8). Laporan Semua Cabang (PDF + Excel §9).
+- Pengaturan admin: kelola cabang/user/role/akses, arsip cabang, backup semua data (§21D,§21F).
+- Log aktivitas/audit trail (§21B). Onboarding tips (§21D).
 
-| Item | Status | Yang kurang |
-|---|---|---|
-| Komponen tabel standar (§20) | 🟡 | search/sort/pagination ✅; belum: filter tanggal/kolom, column visibility, download per tabel, clickable row, loading/error state |
-| Loading state (§22) | 🟡 | upload ada teks langkah; belum: progress bar + step indicator + animasi centang, skeleton/shimmer saat load |
-| AI Groq (§18) | 🟡 | jalan via Next API route (lokal); produksi idealnya Supabase Edge Function |
-| Laporan Semua Cabang (§9) | ✅ | /report/portfolio (cetak PDF) + Excel "Ringkasan Semua Cabang" |
-| Status Naik/Stabil/Turun (§25) | 🟡 | default ±5%; ambang resmi belum dikonfirmasi |
-| Analisis hashtag (§21A) | 🟡 | dihitung & dipakai insight; belum: halaman khusus/hashtag cloud/tren |
-| Kategori/tag cabang (§21D) | 🟡 | kolom `kategori` bisa diisi; belum: grup/filter apple-to-apple |
-| Navigasi (§11) | 🟡 | pakai top-nav responsif; blueprint minta sidebar (desktop) + bottom-nav (mobile) |
-| Offline mode (§21E) | 🟡 | SW cache dasar; belum diuji penuh untuk skenario lapangan |
+**Tampilan & PWA**
+- Tema teal 3D + Poppins + ikon Lucide (§11,§23). PWA installable + offline + safe-area (§11).
+- Skeleton/shimmer loading (§22), reduce-motion, upload step indicator (§22).
 
-## Belum dibangun
+## 🟡 Sebagian
 
-**Data & Analitik (§21A):** ~~goals/target~~ ✅ · ~~anotasi data~~ ✅ · ~~content calendar~~ ✅ · ~~analisis hashtag~~ ✅ · forecasting · perbandingan periode fleksibel (UI).
+- Navigasi (§11): top-nav responsif; blueprint minta sidebar desktop + bottom-nav mobile.
+- Tabel standar (§20): search/sort/pagination ✅; belum column-visibility, download per tabel, clickable row.
+- AI Groq (§18): via Next API route; produksi idealnya Supabase Edge Function.
+- Status Naik/Stabil/Turun (§25): default ±5%, ambang resmi belum dikonfirmasi.
+- Manajemen periode lengkap/parsial (§21B): `is_incomplete` ditandai di tabel; belum ada ringkasan periode.
 
-**Kolaborasi (§21B):** ~~log aktivitas/audit trail~~ ✅ · komentar internal · assignment tugas · approval workflow · manajemen periode lengkap/parsial.
+## ⬜ Belum — butuh usaha besar / sesi fokus
 
-**Keamanan (§21F):** ~~session timeout~~ ✅ · ~~rate limit upload~~ ✅ · backup berkala · 2FA admin.
+- **Dark mode** (§21E) — perlu refactor warna menyeluruh (banyak warna inline).
+- **Multi-bahasa** (§21E) — i18n semua teks.
+- **Migrasi `tiktok_accounts`→`social_accounts`** generik (§14) — menyentuh banyak query, risiko tinggi.
+- Komentar internal · assignment tugas · approval workflow (§21B) — kolaborasi tim.
+- Bulk action · template laporan custom (§21D).
 
-**UX (§22):** ~~skeleton/shimmer saat load~~ ✅ · belum: progress-bar step indicator upload + animasi centang.
+## 🔒 Belum — butuh Anda / infrastruktur eksternal
 
-**Manajemen (§21D):** ~~kategori/tag grouping~~ ✅ · onboarding · bulk action · template laporan custom.
-
-**Notifikasi (§21C):** ~~viral alert~~ ✅ · ~~anomaly alert~~ ✅ · ~~reminder upload~~ ✅ (semua via panel "Peringatan" di dashboard, dihitung on-the-fly) · belum: export terjadwal · push notification PWA (butuh web-push/cron).
-
-**Pengalaman (§21E):** dark mode · multi-bahasa · ~~global search~~ ✅.
-
-**Ekspansi (§14,§25):** migrasi `tiktok_accounts`→`social_accounts` (platform generik) · Instagram · TikTok oEmbed thumbnail.
-
-## Butuh keputusan/aksi Anda (non-kode)
-
-- ⬜ Deploy ke Vercel (§24) — akun Anda
-- ⬜ Ganti password admin sementara (`ElioAdmin#2026`)
-- ⬜ Leaked Password Protection (§25) — **N/A di paket Free** (fitur Pro); pakai min-length sebagai gantinya
-- ⬜ Konfirmasi lisensi Freepik untuk aset desain (§25)
-- ⬜ (opsional) Groq Edge Function untuk produksi (§18)
+- **Deploy ke Vercel** (§24) — akun Anda (panduan di README).
+- **Instagram** (§14) — perlu Meta Graph API + App Review.
+- **2FA admin** (§21F) — Supabase MFA (perlu keputusan kebijakan).
+- **Push notification PWA** (§21C) — perlu VAPID key + web-push.
+- **Export terjadwal** (§21C) — perlu cron (Supabase scheduled / eksternal).
+- **Groq Edge Function** produksi (§18) — deploy edge function + secret.
+- **TikTok oEmbed thumbnail** (§25) — validasi endpoint aktif.
+- Ganti password admin · Leaked Password Protection (N/A Free) · lisensi Freepik (§25).
