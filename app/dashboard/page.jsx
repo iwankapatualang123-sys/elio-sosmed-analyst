@@ -197,12 +197,26 @@ export default async function DashboardPage({ searchParams }) {
               <ProgressBar label="Net Follower" current={detail.growth.netGrowth} target={goal?.target_net_followers} />
             </div>
             {editable && (
-              <form action={setGoals} className="mt-4 grid gap-2 sm:grid-cols-4">
+              <form action={setGoals} className="mt-4 border-t pt-3" style={{ borderColor: "rgba(0,60,68,.1)" }}>
                 <input type="hidden" name="accountId" value={selectedId} />
-                <input name="target_total_views" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="Target views" defaultValue={goal?.target_total_views ?? ""} />
-                <input name="target_engagement_rate" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="Target ER %" defaultValue={goal?.target_engagement_rate ?? ""} />
-                <input name="target_net_followers" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="Target follower Δ" defaultValue={goal?.target_net_followers ?? ""} />
-                <button type="submit" className="btn btn-ghost !min-h-0 !py-1.5 text-sm">Simpan target</button>
+                <p className="mb-2 text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>Ubah target</p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <label className="flex flex-col gap-1 text-xs font-medium text-ink">
+                    Target Total Views
+                    <input name="target_total_views" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="mis. 50000" defaultValue={goal?.target_total_views ?? ""} />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs font-medium text-ink">
+                    Target Engagement Rate (%)
+                    <input name="target_engagement_rate" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="mis. 6" defaultValue={goal?.target_engagement_rate ?? ""} />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs font-medium text-ink">
+                    Target Net Follower
+                    <input name="target_net_followers" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="mis. 10" defaultValue={goal?.target_net_followers ?? ""} />
+                  </label>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <button type="submit" className="btn btn-primary !min-h-0 !px-4 !py-1.5 text-sm">Simpan target</button>
+                </div>
               </form>
             )}
           </section>
