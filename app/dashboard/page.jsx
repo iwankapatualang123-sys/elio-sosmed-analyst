@@ -10,6 +10,7 @@ import Nav from "@/components/Nav";
 import MetricCard from "@/components/MetricCard";
 import { LineChart, Donut, BarChartLabeled, Heatmap } from "@/components/Charts";
 import InsightAI from "@/components/InsightAI";
+import OnboardingTips from "@/components/OnboardingTips";
 import ProgressBar from "@/components/ProgressBar";
 import { forecastNext } from "@/lib/tiktok/forecast";
 import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
@@ -91,6 +92,8 @@ export default async function DashboardPage({ searchParams }) {
           Ringkasan performa TikTok lintas cabang
         </p>
       </div>
+
+      <OnboardingTips />
 
       {/* KPI portofolio */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">

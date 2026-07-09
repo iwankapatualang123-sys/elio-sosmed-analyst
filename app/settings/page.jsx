@@ -41,6 +41,15 @@ export default async function SettingsPage() {
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 p-4 sm:p-6">
       <Nav email={profile.email} role={profile.role} />
 
+      {/* Backup */}
+      <section className="card-3d flex flex-wrap items-center gap-3 p-4 sm:p-5">
+        <div>
+          <h2 className="text-base font-semibold text-ink">Backup Data</h2>
+          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Unduh seluruh data ke satu file Excel (penting untuk paket Free tanpa backup otomatis).</p>
+        </div>
+        <a href="/api/report/backup" className="ml-auto"><Button variant="success">⬇️ Backup semua data (.xlsx)</Button></a>
+      </section>
+
       {/* Cabang */}
       <section className="card-3d p-4 sm:p-6">
         <h2 className="mb-4 text-base font-semibold text-ink">Cabang / Akun TikTok</h2>
