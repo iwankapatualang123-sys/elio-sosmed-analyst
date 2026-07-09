@@ -46,5 +46,5 @@ Terakhir diperbarui: 2026-07-09.
 - **Push notification PWA** (§21C) — perlu VAPID key + web-push.
 - **Export terjadwal** (§21C) — perlu cron (Supabase scheduled / eksternal).
 - **Groq Edge Function** produksi (§18) — deploy edge function + secret.
-- **TikTok oEmbed thumbnail** (§25) — validasi endpoint aktif.
+- ~~TikTok oEmbed thumbnail~~ ✅ (§25) — /api/tiktok-thumbnail, thumbnail + klik ke TikTok di tabel Konten.
 - Ganti password admin · Leaked Password Protection (N/A Free) · lisensi Freepik (§25).
