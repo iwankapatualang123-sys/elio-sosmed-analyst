@@ -307,7 +307,10 @@ export default async function DashboardPage({ searchParams }) {
             </div>
 
             <div className="card-3d p-5">
-              <h3 className="mb-3 text-sm font-semibold text-ink">Jam Terbaik (follower aktif)</h3>
+              <h3 className="text-sm font-semibold text-ink">Jam Terbaik untuk Posting</h3>
+              <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
+                5 jam dengan follower paling aktif (angka = rata-rata follower online). Makin tinggi batangnya, makin ramai — waktu bagus untuk posting.
+              </p>
               <BarChartLabeled
                 data={detail.bestHours.topHours.map((h) => ({ label: `${String(h.hour).padStart(2, "0")}:00`, value: h.avgActive }))}
                 format={(v) => Math.round(v)}

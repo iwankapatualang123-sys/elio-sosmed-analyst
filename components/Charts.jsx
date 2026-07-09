@@ -53,32 +53,56 @@ export function BarChartLabeled({ data = [], height = 200, format = (v) => v }) 
   );
 }
 
-// Komponen: LineChart — garis + area untuk tren. data: [{x(label), y(value)}].
-export function LineChart({ data = [], height = 180 }) {
-  if (data.length < 2) return <Empty height={height} />;
-  const ys = data.map((d) => d.y);
+// Komponen: LineChart — garis + area untuk tren, dengan sumbu-Y berlabel & titik
+// bulat di tiap data point. data: [{x(label), y(value)}]. viewBox skala seragam
+// (tanpa distorsi) supaya lingkaran & teks tetap bulat/rapi.
+const idFmt = (n) => Number(n || 0).toLocaleString("id-ID");
+export function LineChart({ data = [] }) {
+  if (data.length < 2) return <Empty height={160} />;
+  const ys = data.map((d) => Number(d.y) || 0);
   const min = Math.min(...ys);
   const max = Math.max(...ys);
   const range = max - min || 1;
-  const W = 100;
-  const H = 50;
-  const pts = data.map((d, i) => {
-    const x = (i / (data.length - 1)) * W;
-    const y = H - ((d.y - min) / range) * (H - 6) - 3;
-    return [x, y];
-  });
-  const line = pts.map((p) => `${p[0]},${p[1]}`).join(" ");
-  const area = `0,${H} ${line} ${W},${H}`;
+
+  const VBW = 400; const VBH = 150;
+  const padL = 46; const padR = 10; const padT = 12; const padB = 24;
+  const plotW = VBW - padL - padR;
+  const plotH = VBH - padT - padB;
+  const xAt = (i) => padL + (i / (data.length - 1)) * plotW;
+  const yAt = (v) => padT + (1 - (v - min) / range) * plotH;
+
+  const pts = data.map((d, i) => [xAt(i), yAt(Number(d.y) || 0)]);
+  const line = pts.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const area = `${padL},${padT + plotH} ${line} ${padL + plotW},${padT + plotH}`;
+  const ticks = [max, (max + min) / 2, min];
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ height }} preserveAspectRatio="none" role="img">
+    <svg viewBox={`0 0 ${VBW} ${VBH}`} width="100%" style={{ height: "auto", display: "block" }} role="img">
       <defs>
         <linearGradient id="lc-area" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#4f9e7a" stopOpacity="0.35" />
           <stop offset="100%" stopColor="#4f9e7a" stopOpacity="0" />
         </linearGradient>
       </defs>
+      {/* Gridline + angka sumbu-Y */}
+      {ticks.map((t, i) => {
+        const y = yAt(t);
+        return (
+          <g key={i}>
+            <line x1={padL} y1={y} x2={padL + plotW} y2={y} stroke="rgba(0,60,68,.12)" strokeWidth="1" />
+            <text x={padL - 6} y={y + 3} textAnchor="end" fontSize="9" fill="var(--ink-soft)">{idFmt(Math.round(t))}</text>
+          </g>
+        );
+      })}
       <polygon points={area} fill="url(#lc-area)" />
-      <polyline points={line} fill="none" stroke="#006674" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      <polyline points={line} fill="none" stroke="#006674" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      {/* Titik bulat di tiap data point */}
+      {pts.map((p, i) => (
+        <circle key={i} cx={p[0]} cy={p[1]} r="3" fill="#006674" stroke="#fff" strokeWidth="1.5" />
+      ))}
+      {/* Label tanggal awal & akhir */}
+      <text x={padL} y={VBH - 7} fontSize="9" fill="var(--ink-soft)">{data[0].x}</text>
+      <text x={padL + plotW} y={VBH - 7} textAnchor="end" fontSize="9" fill="var(--ink-soft)">{data[data.length - 1].x}</text>
     </svg>
   );
 }
