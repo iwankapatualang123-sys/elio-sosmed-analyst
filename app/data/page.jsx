@@ -150,11 +150,11 @@ export default async function DataPage({ searchParams }) {
         <section className="card-3d p-6"><p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada cabang.</p></section>
       ) : (
         <>
-          <Section title="Konten" count={fContent.length}>
+          <Section title="Konten" count={content.length} subtitle="Semua video akun ini (tidak difilter bulan — filter Bulan hanya untuk data harian & tren mingguan).">
             <DataTable
-              rows={fContent}
+              rows={content}
               maxHeight={640}
-              emptyText="Tidak ada konten pada bulan ini."
+              emptyText="Belum ada konten."
               columns={[
                 { key: "video_link", label: "Preview", format: "thumbnail" },
                 { key: "video_title", label: "Judul", format: "title", width: 320 },
@@ -252,15 +252,17 @@ export default async function DataPage({ searchParams }) {
 }
 
 // Komponen: Section — kartu berjudul + jumlah baris untuk membungkus tiap tabel.
-function Section({ title, count, children }) {
+function Section({ title, count, subtitle, children }) {
   return (
     <section className="card-3d p-4 sm:p-5">
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-1 flex items-center gap-2">
         <h2 className="text-base font-semibold text-ink">{title}</h2>
         <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
           {count} baris
         </span>
       </div>
+      {subtitle && <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>{subtitle}</p>}
+      {!subtitle && <div className="mb-3" />}
       {children}
     </section>
   );
