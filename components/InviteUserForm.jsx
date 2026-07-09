@@ -7,17 +7,18 @@
 
 import { useActionState, useState } from "react";
 import { inviteUser } from "@/app/settings/actions";
+import { copyToClipboard } from "@/lib/copyToClipboard";
 import Button from "@/components/Button";
 
 export default function InviteUserForm() {
   const [state, formAction, pending] = useActionState(inviteUser, null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(null); // null | true | false
 
-  function copyPassword() {
+  async function copyPassword() {
     if (!state?.tempPassword) return;
-    navigator.clipboard.writeText(state.tempPassword);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    const ok = await copyToClipboard(state.tempPassword);
+    setCopied(ok);
+    setTimeout(() => setCopied(null), 2000);
   }
 
   return (
@@ -43,14 +44,14 @@ export default function InviteUserForm() {
         <div className="mt-3 rounded-xl border border-green-200 bg-green-50 p-3 text-sm">
           <p className="font-semibold text-ink">✅ Akun dibuat: {state.email}</p>
           <p className="mt-1 text-ink">
-            Password sementara: <code className="rounded bg-white px-2 py-0.5 font-mono">{state.tempPassword}</code>{" "}
+            Password sementara: <code className="select-all rounded bg-white px-2 py-0.5 font-mono" title="Klik untuk blok teks, lalu Ctrl+C kalau tombol Salin tidak berfungsi">{state.tempPassword}</code>{" "}
             <button type="button" onClick={copyPassword} className="text-xs font-semibold" style={{ color: "var(--teal-900)" }}>
-              {copied ? "Tersalin ✓" : "Salin"}
+              {copied === true ? "Tersalin ✓" : copied === false ? "Gagal, blok teks manual" : "Salin"}
             </button>
           </p>
           <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>
             Bagikan manual ke user ini (WA/email) — password ini tidak disimpan lagi setelah Anda tinggalkan halaman ini.
-            Minta mereka login lalu ganti password di menu Akun.
+            Minta mereka login lalu ganti password di menu Akun. (Kalau tombol Salin gagal, klik teks password untuk blok lalu Ctrl+C.)
           </p>
         </div>
       )}

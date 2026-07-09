@@ -5,7 +5,7 @@
 
 "use server";
 
-import { randomBytes } from "crypto";
+import { randomInt } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -66,9 +66,17 @@ export async function toggleUserActive(formData) {
   revalidatePath("/settings");
 }
 
-// Fungsi: generateTempPassword — password sementara acak (server-only, aman via crypto).
-function generateTempPassword() {
-  return randomBytes(9).toString("base64url");
+// Alfabet TANPA karakter ambigu (tidak ada 0/O, 1/l/I) — password sementara ini
+// sering dibagikan manual (WA/lisan) & diketik ulang orang lain, jadi salah
+// baca/ketik harus diminimalkan. ~5.78 bit/karakter; 14 karakter -> ~81 bit entropi.
+const TEMP_PW_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+
+// Fungsi: generateTempPassword — password sementara acak (server-only, crypto-safe,
+// tanpa karakter yang gampang tertukar saat dibagikan/diketik ulang manual).
+function generateTempPassword(length = 14) {
+  let out = "";
+  for (let i = 0; i < length; i += 1) out += TEMP_PW_ALPHABET[randomInt(TEMP_PW_ALPHABET.length)];
+  return out;
 }
 
 // Fungsi: inviteUser — admin buat akun user baru langsung (Admin API, service_role).

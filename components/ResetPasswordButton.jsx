@@ -7,17 +7,18 @@
 
 import { useActionState, useState } from "react";
 import { resetUserPassword } from "@/app/settings/actions";
+import { copyToClipboard } from "@/lib/copyToClipboard";
 import Button from "@/components/Button";
 
 export default function ResetPasswordButton({ userId, email }) {
   const [state, formAction, pending] = useActionState(resetUserPassword, null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(null); // null | true | false
 
-  function copyPassword() {
+  async function copyPassword() {
     if (!state?.tempPassword) return;
-    navigator.clipboard.writeText(state.tempPassword);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    const ok = await copyToClipboard(state.tempPassword);
+    setCopied(ok);
+    setTimeout(() => setCopied(null), 2000);
   }
 
   return (
@@ -36,12 +37,12 @@ export default function ResetPasswordButton({ userId, email }) {
       {state?.ok === true && (
         <div className="mt-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs">
           <p className="text-ink">
-            Password baru: <code className="rounded bg-white px-1.5 py-0.5 font-mono">{state.tempPassword}</code>{" "}
+            Password baru: <code className="select-all rounded bg-white px-1.5 py-0.5 font-mono" title="Klik untuk blok teks, lalu Ctrl+C kalau tombol Salin tidak berfungsi">{state.tempPassword}</code>{" "}
             <button type="button" onClick={copyPassword} className="font-semibold" style={{ color: "var(--teal-900)" }}>
-              {copied ? "Tersalin ✓" : "Salin"}
+              {copied === true ? "Tersalin ✓" : copied === false ? "Gagal, blok teks manual" : "Salin"}
             </button>
           </p>
-          <p className="mt-0.5" style={{ color: "var(--ink-soft)" }}>Bagikan manual — tidak akan muncul lagi setelah ini.</p>
+          <p className="mt-0.5" style={{ color: "var(--ink-soft)" }}>Bagikan manual — tidak akan muncul lagi setelah ini. (Kalau tombol Salin gagal, klik teks password untuk blok lalu Ctrl+C.)</p>
         </div>
       )}
     </div>
