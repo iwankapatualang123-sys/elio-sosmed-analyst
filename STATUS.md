@@ -14,9 +14,11 @@ Terakhir diperbarui: 2026-07-09.
 - Dashboard (§4): KPI, ranking + filter kategori, grafik, heatmap jam×hari, pemilih cabang, hashtag cloud (§21A), forecasting follower (§21A), peringatan/alert (§21C), target & progress (§21A), catatan/anotasi (§21A), insight 4-aspek + AI Groq (§5,§18).
 - Data (§20): tabel per aspek + filter bulan + search/sort/pagination + tren mingguan dalam bulan (§21A, diverging bar untuk follower yang bisa turun).
 - Kalender konten (§21A). Global search (§21E). Upload (§19) dgn step-progress (§22).
+- **Rencana Konten / Content Plan** (`/content-plan`) — kalender editorial per cabang meniru Excel "Content Plan": Post, PIC, Headline/Hook, Topic/Redaksi, Goals, Primary+Secondary Pillar, Type, Reference, ACC checkbox. **Verifikasi status via link**: tim menempel `posted_url` (link konten tayang) di kolom "Link tayang" → dicocokkan dgn `video_id`/`video_link` data report TikTok Studio → **Verified / Not verified** (lib/tiktok/content-plan, 16 tes). Hook-match hanya jadi *hint* non-otoritatif. Ringkasan "Rencana Konten Bulan Ini" tampil di Dashboard. CRUD via modal + RLS. Data Juni (20) & Juli (22) 2026 sudah diimpor.
 - Laporan per-akun (infografis PDF cetak) + Excel (§7,§8). Laporan Semua Cabang (PDF + Excel §9).
 - Pengaturan admin: kelola cabang/user/role/akses, arsip cabang, backup semua data (§21D,§21F).
 - Log aktivitas/audit trail (§21B). Onboarding tips (§21D).
+- **Deploy produksi ke Vercel** (§24) — live di https://elio-sosmed-analyst.vercel.app (env var Supabase/Groq terpasang, auto-deploy dari branch `main`).
 
 **Tampilan & PWA**
 - Tema teal 3D + Poppins + ikon Lucide (§11,§23). PWA installable + offline + safe-area (§11).
@@ -40,7 +42,6 @@ Terakhir diperbarui: 2026-07-09.
 
 ## 🔒 Belum — butuh Anda / infrastruktur eksternal
 
-- **Deploy ke Vercel** (§24) — akun Anda (panduan di README).
 - **Instagram** (§14) — perlu Meta Graph API + App Review.
 - **2FA admin** (§21F) — Supabase MFA (perlu keputusan kebijakan).
 - **Push notification PWA** (§21C) — perlu VAPID key + web-push.

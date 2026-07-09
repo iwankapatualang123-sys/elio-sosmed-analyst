@@ -13,6 +13,7 @@ import InsightAI from "@/components/InsightAI";
 import OnboardingTips from "@/components/OnboardingTips";
 import ProgressBar from "@/components/ProgressBar";
 import { forecastNext } from "@/lib/tiktok/forecast";
+import { matchPlanStatus, summarizePlans } from "@/lib/tiktok/content-plan";
 import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
 
 const INSIGHT_STYLE = {
@@ -82,6 +83,24 @@ export default async function DashboardPage({ searchParams }) {
     ? await supabase.from("branch_annotations").select("*").eq("tiktok_account_id", selectedId).order("note_date", { ascending: false }).limit(50)
     : { data: [] };
   const editable = canWrite(profile);
+
+  // Rencana konten BULAN INI + status verifikasi (untuk ringkasan di dashboard).
+  const nowMonth = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
+  let planThisMonth = [];
+  if (selectedId) {
+    const [{ data: plansM }, { data: contentsM }] = await Promise.all([
+      supabase.from("content_plans")
+        .select("id, post_date, pic, headline, primary_pillar, acc_to_posting, posted_url, status_override")
+        .eq("tiktok_account_id", selectedId).eq("plan_month", `${nowMonth}-01`)
+        .order("post_date", { ascending: true, nullsFirst: false }),
+      supabase.from("tiktok_content").select("video_id, video_title, video_link").eq("tiktok_account_id", selectedId),
+    ]);
+    planThisMonth = (plansM || []).map((p) => {
+      const r = matchPlanStatus(p, contentsM || []);
+      return { ...p, status: r.status, hint: r.hint };
+    });
+  }
+  const planSummary = summarizePlans(planThisMonth.map((p) => p.status));
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
@@ -191,6 +210,53 @@ export default async function DashboardPage({ searchParams }) {
               </div>
             )}
           </div>
+
+          {/* Rencana Konten bulan ini + status verifikasi */}
+          <section className="card-3d p-4 sm:p-5">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-semibold text-ink">🗂️ Rencana Konten Bulan Ini</h3>
+              <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(22,101,52,.1)", color: "#166534" }}>{planSummary.verified} Verified</span>
+              <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(0,60,68,.08)", color: "var(--ink-soft)" }}>{planSummary.notVerified} Not verified</span>
+              <Link href={`/content-plan?branch=${selectedId}&month=${nowMonth}`} className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+                Kelola →
+              </Link>
+            </div>
+            {planThisMonth.length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                Belum ada rencana konten bulan ini. <Link href={`/content-plan?branch=${selectedId}&month=${nowMonth}`} style={{ color: "var(--teal-900)", fontWeight: 600 }}>Buat rencana →</Link>
+              </p>
+            ) : (
+              <div className="overflow-auto" style={{ maxHeight: 300 }}>
+                <table className="w-full text-left text-sm">
+                  <thead className="sticky top-0" style={{ background: "#eaf5ec" }}>
+                    <tr style={{ color: "var(--ink-soft)" }}>
+                      <th className="py-2 pr-3 font-medium">Status</th>
+                      <th className="py-2 pr-3 font-medium">Post</th>
+                      <th className="py-2 pr-3 font-medium">Headline / Hook</th>
+                      <th className="py-2 pr-3 font-medium">PIC</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {planThisMonth.map((p) => {
+                      const verified = p.status === "Verified";
+                      return (
+                        <tr key={p.id} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                          <td className="py-2 pr-3">
+                            <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold" style={verified ? { background: "rgba(22,101,52,.1)", color: "#166534" } : { background: "rgba(0,60,68,.08)", color: "var(--ink-soft)" }}>
+                              {verified ? "✓ Verified" : "○ Not verified"}
+                            </span>
+                          </td>
+                          <td className="whitespace-nowrap py-2 pr-3" style={{ color: "var(--ink-soft)" }}>{p.post_date ? p.post_date.slice(0, 10) : "—"}</td>
+                          <td className="py-2 pr-3 text-ink"><span className="line-clamp-1 max-w-xs">{p.headline || "—"}</span></td>
+                          <td className="whitespace-nowrap py-2 pr-3" style={{ color: "var(--ink-soft)" }}>{p.pic || "—"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
           {/* Target & Progress (blueprint 21A) */}
           <section className="card-3d p-4 sm:p-5">
