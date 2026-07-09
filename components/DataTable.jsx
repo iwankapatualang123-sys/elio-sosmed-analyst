@@ -24,7 +24,7 @@ function erValue(row) {
 // Komponen: TitleCell — untuk judul/caption panjang (mis. video TikTok). Teks
 // utama dipotong 2 baris, hashtag dipisah jadi chip agar mudah dipindai, dan bisa
 // diperluas ("Lihat selengkapnya") tanpa membuat baris tabel lain jadi raksasa.
-function TitleCell({ value, width = 320 }) {
+function TitleCell({ value, width = 320, link = null }) {
   const [expanded, setExpanded] = useState(false);
   const text = String(value ?? "").trim();
   if (!text) return <span style={{ color: "var(--ink-soft)" }}>-</span>;
@@ -53,11 +53,16 @@ function TitleCell({ value, width = 320 }) {
           )}
         </div>
       )}
-      {isLong && (
-        <span className="mt-0.5 block text-[10px] font-semibold" style={{ color: "var(--teal-900)" }}>
-          {expanded ? "▲ Sembunyikan" : "▼ Lihat selengkapnya"}
-        </span>
-      )}
+      <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[10px] font-semibold">
+        {isLong && (
+          <button type="button" onClick={() => setExpanded((e) => !e)} style={{ color: "var(--teal-900)" }}>
+            {expanded ? "▲ Sembunyikan" : "▼ Lihat selengkapnya"}
+          </button>
+        )}
+        {link && (
+          <a href={link} target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal-900)" }}>↗ Buka di TikTok</a>
+        )}
+      </div>
     </div>
   );
 }
@@ -84,8 +89,20 @@ function cellContent(row, col) {
       return row.is_incomplete
         ? <span className="text-amber-700">⚠️ Belum lengkap</span>
         : <span style={{ color: "var(--ink-soft)" }}>Lengkap</span>;
+    case "thumbnail": {
+      const link = row.video_link;
+      const img = link
+        // Thumbnail di-proxy dinamis (/api/tiktok-thumbnail) — <img> polos lebih tepat
+        // daripada next/image di sini (tak perlu optimizer round-trip untuk proxy).
+        // eslint-disable-next-line @next/next/no-img-element
+        ? <img src={`/api/tiktok-thumbnail?url=${encodeURIComponent(link)}`} alt="thumbnail" loading="lazy" width={52} height={69} style={{ width: 52, height: 69, objectFit: "cover", borderRadius: 8, background: "rgba(0,60,68,.08)", display: "block" }} />
+        : <div style={{ width: 52, height: 69, borderRadius: 8, background: "rgba(0,60,68,.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🎬</div>;
+      return link
+        ? <a href={link} target="_blank" rel="noopener noreferrer" title="Buka di TikTok" className="inline-block transition-transform hover:scale-105">{img}</a>
+        : img;
+    }
     case "title":
-      return <TitleCell value={v} width={col.width || 320} />;
+      return <TitleCell value={v} link={row.video_link} width={col.width || 320} />;
     case "text":
       return <span className="line-clamp-1" style={{ maxWidth: col.width || 260 }} title={String(v ?? "")}>{v ?? "-"}</span>;
     default:

@@ -153,9 +153,11 @@ export default async function DataPage({ searchParams }) {
           <Section title="Konten" count={fContent.length}>
             <DataTable
               rows={fContent}
+              maxHeight={640}
               emptyText="Tidak ada konten pada bulan ini."
               columns={[
-                { key: "video_title", label: "Judul", format: "title", width: 340 },
+                { key: "video_link", label: "Preview", format: "thumbnail" },
+                { key: "video_title", label: "Judul", format: "title", width: 320 },
                 { key: "post_date", label: "Tanggal", format: "date" },
                 { key: "total_views", label: "Views", align: "right", format: "number" },
                 { key: "total_likes", label: "Likes", align: "right", format: "number" },
