@@ -87,6 +87,12 @@ export default async function DataPage({ searchParams }) {
 
       <DataFilters branches={branches || []} months={months} selectedBranch={selectedId} selectedMonth={selectedMonth} />
 
+      {!showWeekly && selectedId && months.length > 0 && (
+        <div className="rounded-xl px-4 py-2.5 text-sm" style={{ background: "rgba(240,180,90,.15)", color: "#8a5a12" }}>
+          💡 <b>Grafik tren mingguan</b> muncul kalau Anda memilih <b>satu bulan spesifik</b> di filter <b>Bulan</b> di atas (mis. {months[0]}). Sekarang filter di &quot;Semua bulan&quot;, jadi mingguan disembunyikan.
+        </div>
+      )}
+
       {showWeekly && (weeklyContent.length > 0 || weeklyOverview.length > 0 || weeklyFollower.length > 0) && (
         <section className="card-3d p-4 sm:p-5">
           <h2 className="mb-1 text-base font-semibold text-ink">📈 Tren Mingguan dalam Bulan Ini</h2>
