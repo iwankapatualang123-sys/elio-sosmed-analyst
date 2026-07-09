@@ -7,6 +7,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Nav from "@/components/Nav";
 import Button from "@/components/Button";
 import InviteUserForm from "@/components/InviteUserForm";
+import ResetPasswordButton from "@/components/ResetPasswordButton";
 import { addBranch, toggleBranchActive, setUserRole, toggleUserActive, saveUserBranches } from "./actions";
 
 export default async function SettingsPage() {
@@ -134,6 +135,7 @@ export default async function SettingsPage() {
                         {u.is_active ? "Nonaktifkan" : "Aktifkan"}
                       </Button>
                     </form>
+                    <ResetPasswordButton userId={u.id} email={u.email} />
                   </span>
                 </div>
 

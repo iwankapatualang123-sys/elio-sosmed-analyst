@@ -108,6 +108,29 @@ export async function inviteUser(prevState, formData) {
   }
 }
 
+// Fungsi: resetUserPassword — admin generate password sementara BARU untuk user
+// (Admin API, service_role). Dipakai saat password awal terlewat/lupa — password
+// lama tidak bisa "dilihat lagi" karena memang tidak pernah disimpan di mana pun.
+// Signature (prevState, formData) untuk useActionState di client.
+export async function resetUserPassword(prevState, formData) {
+  try {
+    const supabase = await requireAdmin();
+    const id = String(formData.get("id") || "");
+    const email = String(formData.get("email") || "");
+    if (!id) return { ok: false, error: "User tidak ditemukan." };
+
+    const admin = createSupabaseAdminClient();
+    const tempPassword = generateTempPassword();
+    const { error } = await admin.auth.admin.updateUserById(id, { password: tempPassword });
+    if (error) return { ok: false, error: error.message };
+
+    await logActivity(supabase, { action: "reset_password_user", entity: email, detail: { user_id: id } });
+    return { ok: true, email, tempPassword };
+  } catch (err) {
+    return { ok: false, error: err && err.message ? err.message : "Gagal reset password." };
+  }
+}
+
 // Fungsi: saveUserBranches — set ulang akses cabang seorang user (many-to-many).
 // Hapus semua akses lama user lalu insert daftar cabang terpilih.
 export async function saveUserBranches(formData) {
