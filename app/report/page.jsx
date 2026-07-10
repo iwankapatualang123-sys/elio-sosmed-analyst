@@ -9,9 +9,16 @@ import { getCurrentProfile } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Nav from "@/components/Nav";
 import Button from "@/components/Button";
+import MonthFilter from "@/components/MonthFilter";
 import { FileText, Download, LayoutGrid } from "lucide-react";
 
-export default async function ReportIndexPage() {
+const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+function labelBulan(ym) {
+  const [y, m] = ym.split("-");
+  return `${BULAN_NAMA[Number(m) - 1] || m} ${y}`;
+}
+
+export default async function ReportIndexPage({ searchParams }) {
   const profile = await getCurrentProfile();
   if (!profile?.role) {
     return (
@@ -22,6 +29,10 @@ export default async function ReportIndexPage() {
     );
   }
 
+  const sp = (await searchParams) || {};
+  const month = /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : null;
+  const monthQS = month ? `month=${month}` : "";
+
   const supabase = await createSupabaseServerClient();
   const { data: branchesRaw } = await supabase
     .from("tiktok_accounts")
@@ -31,15 +42,32 @@ export default async function ReportIndexPage() {
   // sudah nonaktif tetap berguna, sama seperti Rencana Konten).
   const branches = [...(branchesRaw || [])].sort((a, b) => (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0));
 
+  // Daftar bulan tersedia (gabungan SEMUA cabang di atas, termasuk yg diarsipkan)
+  // utk isi dropdown "Tinjau bulan" — 1 query gabungan, bukan per-cabang.
+  const branchIds = branches.map((b) => b.id);
+  const monthSet = new Set();
+  if (branchIds.length > 0) {
+    const [{ data: contentDates }, { data: historyDates }] = await Promise.all([
+      supabase.from("tiktok_content").select("post_date").in("tiktok_account_id", branchIds),
+      supabase.from("tiktok_follower_history").select("date").in("tiktok_account_id", branchIds),
+    ]);
+    (contentDates || []).forEach((r) => r.post_date && monthSet.add(r.post_date.slice(0, 7)));
+    (historyDates || []).forEach((r) => r.date && monthSet.add(r.date.slice(0, 7)));
+  }
+  const months = [...monthSet].sort().reverse();
+
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-5 p-4 sm:p-6">
       <Nav email={profile.email} role={profile.role} />
 
-      <div className="px-1">
-        <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">Laporan</h1>
-        <p className="mt-0.5 text-sm" style={{ color: "rgba(255,255,255,.75)" }}>
-          Pilih cabang untuk lihat/download laporannya (PDF &amp; Excel) — atau unduh laporan gabungan semua cabang.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3 px-1">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">Laporan</h1>
+          <p className="mt-0.5 text-sm" style={{ color: "rgba(255,255,255,.75)" }}>
+            {month ? `Semua laporan di bawah discope ke ${labelBulan(month)}.` : "Pilih cabang untuk lihat/download laporannya (PDF & Excel) — atau unduh laporan gabungan semua cabang."}
+          </p>
+        </div>
+        <MonthFilter months={months} />
       </div>
 
       {/* Laporan Semua Cabang */}
@@ -52,8 +80,8 @@ export default async function ReportIndexPage() {
           <p className="text-xs" style={{ color: "var(--ink-soft)" }}>Ringkasan portofolio gabungan — semua cabang yang bisa Anda akses.</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Link href="/report/portfolio"><Button variant="ghost"><FileText size={15} /> Lihat</Button></Link>
-          <a href="/api/report/portfolio-excel"><Button variant="success"><Download size={15} /> Excel</Button></a>
+          <Link href={`/report/portfolio${month ? `?${monthQS}` : ""}`}><Button variant="ghost"><FileText size={15} /> Lihat</Button></Link>
+          <a href={`/api/report/portfolio-excel${month ? `?${monthQS}` : ""}`}><Button variant="success"><Download size={15} /> Excel</Button></a>
         </div>
       </section>
 
@@ -79,8 +107,8 @@ export default async function ReportIndexPage() {
               </p>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <Link href={`/report/${b.id}`}><Button variant="ghost"><FileText size={15} /> Lihat</Button></Link>
-              <a href={`/api/report/excel?branch=${b.id}`}><Button variant="success"><Download size={15} /> Excel</Button></a>
+              <Link href={`/report/${b.id}${month ? `?${monthQS}` : ""}`}><Button variant="ghost"><FileText size={15} /> Lihat</Button></Link>
+              <a href={`/api/report/excel?branch=${b.id}${month ? `&${monthQS}` : ""}`}><Button variant="success"><Download size={15} /> Excel</Button></a>
             </div>
           </div>
         ))}
