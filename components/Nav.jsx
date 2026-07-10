@@ -8,7 +8,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, UploadCloud, Database, CalendarDays, ClipboardList, Settings, UserRound, ScrollText, LogOut, ChevronDown } from "lucide-react";
+import { LayoutDashboard, UploadCloud, Database, CalendarDays, ClipboardList, FileText, Settings, UserRound, ScrollText, LogOut, ChevronDown } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import GlobalSearch from "@/components/GlobalSearch";
 import IdleLogout from "@/components/IdleLogout";
@@ -16,6 +16,7 @@ import IdleLogout from "@/components/IdleLogout";
 const PRIMARY = [
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/data", label: "Data", Icon: Database },
+  { href: "/report", label: "Laporan", Icon: FileText },
   { href: "/content-plan", label: "Rencana", Icon: ClipboardList },
   { href: "/calendar", label: "Kalender", Icon: CalendarDays },
   { href: "/upload", label: "Upload", Icon: UploadCloud },

@@ -37,7 +37,7 @@ export default async function PortfolioReportPage({ searchParams }) {
   return (
     <main className="relative z-10 mx-auto w-full max-w-5xl p-4 sm:p-6">
       <div className="no-print mb-4 flex flex-wrap items-center gap-3">
-        <Link href="/dashboard"><Button variant="ghost">← Dashboard</Button></Link>
+        <Link href="/report"><Button variant="ghost">← Laporan</Button></Link>
         <a href={`/api/report/portfolio-excel${month ? `?month=${month}` : ""}`}><Button variant="success">⬇️ Download Excel</Button></a>
         <PrintButton />
         <div className="ml-auto"><MonthFilter months={months} /></div>
