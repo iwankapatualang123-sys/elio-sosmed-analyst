@@ -102,7 +102,11 @@ console.log('== bestPostingTimes ==');
   eq('byHour 24 entri', bt.byHour.length, 24);
   eq('jam 9 avg', bt.byHour[9], { hour: 9, totalActive: 300, avgActive: 150, days: 2 });
   eq('topHour', bt.topHours[0].hour, 9);
+  // heatmapPeak: sel paling ramai. 2026-07-01 = Rabu (weekday 3), 2026-07-02 = Kamis (4).
+  const peak = M.heatmapPeak(bt.heatmap);
+  eq('heatmapPeak = Kamis jam 9 (active 200)', [peak.weekday, peak.hour, peak.value], [4, 9, 200]);
 }
+eq('heatmapPeak kosong -> null', M.heatmapPeak({}), null);
 
 console.log('== benchmark & status ==');
 eq('naik 20%', M.benchmark(120, 100), { current: 120, previous: 100, deltaAbs: 20, deltaPct: 20, status: 'naik' });

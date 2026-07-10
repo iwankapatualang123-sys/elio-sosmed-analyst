@@ -9,7 +9,7 @@ import Nav from "@/components/Nav";
 import DataFilters from "@/components/DataFilters";
 import DataTable from "@/components/DataTable";
 import { BarChartLabeled, DivergingBarChart } from "@/components/Charts";
-import { weeklyContentTrend, weeklyOverviewTrend, weeklyFollowerTrend, weekOfMonth } from "@/lib/tiktok/weekly";
+import { weeklyReport } from "@/lib/tiktok/weekly";
 
 const monthOf = (d) => (typeof d === "string" ? d.slice(0, 7) : null);
 const fmtNum = (n) => Number(n || 0).toLocaleString("id-ID");
@@ -37,13 +37,6 @@ const KONTEN_COLUMNS = [
   { key: "er", label: "ER", align: "right", format: "er" },
 ];
 
-// Jumlah minggu (1-5) dalam sebuah bulan 'YYYY-MM' — dipakai supaya minggu tanpa
-// data tetap tampil sbg 0, bukan hilang dari grafik/tabel (blueprint 21A).
-function totalWeeksInMonth(ym) {
-  if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return null;
-  const [y, m] = ym.split("-").map(Number);
-  return weekOfMonth(new Date(y, m, 0).getDate());
-}
 
 export default async function DataPage({ searchParams }) {
   const profile = await getCurrentProfile();
@@ -115,10 +108,11 @@ export default async function DataPage({ searchParams }) {
   // Tren mingguan (hanya masuk akal kalau 1 bulan spesifik dipilih — kalau "semua
   // bulan", hari-5-Juni & hari-5-Juli akan ketumpuk jadi 1 minggu yang salah).
   const showWeekly = selectedMonth !== "all";
-  const totalWeeks = showWeekly ? totalWeeksInMonth(selectedMonth) : null;
-  const weeklyContent = showWeekly ? weeklyContentTrend(fContent, { totalWeeks }) : [];
-  const weeklyOverview = showWeekly ? weeklyOverviewTrend(fOverview, { totalWeeks }) : [];
-  const weeklyFollower = showWeekly ? weeklyFollowerTrend(fFollower, { totalWeeks }) : [];
+  const weekly = showWeekly ? weeklyReport({ content, overview, history: follower }, selectedMonth) : null;
+  const weeklyContent = weekly ? weekly.content : [];
+  const weeklyOverview = weekly ? weekly.overview : [];
+  const weeklyFollower = weekly ? weekly.follower : [];
+  const weeklyWeeks = weekly ? weekly.weeks : [];
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-5 p-4 sm:p-6">
@@ -143,8 +137,8 @@ export default async function DataPage({ searchParams }) {
         <section className="card-3d p-4 sm:p-5">
           <h2 className="mb-1 text-base font-semibold text-ink">📈 Tren Mingguan dalam Bulan Ini</h2>
           <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
-            Data bulan terpilih dipecah per minggu (Minggu 1 = tgl 1–7, Minggu 2 = 8–14, dst) — supaya kelihatan
-            naik/turunnya performa DALAM sebulan, bukan cuma total bulanannya.
+            Data {labelBulan(selectedMonth)} dipecah per minggu berdasarkan tanggal (mis. 1–7, 8–14, dst) — supaya kelihatan
+            naik/turunnya performa DALAM sebulan, bukan cuma total bulanannya. Label di grafik = rentang tanggal minggu itu.
           </p>
           <div className="grid gap-5 sm:grid-cols-3">
             <div>
@@ -152,15 +146,15 @@ export default async function DataPage({ searchParams }) {
               <p className="mb-2 text-[10px]" style={{ color: "var(--ink-soft)" }}>
                 Views video dihitung dari tanggal video PERTAMA TAYANG — angkanya akumulasi s/d hari ini, bukan cuma views hari itu (beda dari tabel di bawah).
               </p>
-              <BarChartLabeled data={weeklyContent.map((w) => ({ label: w.label.replace("Minggu ", "M"), value: w.views }))} format={fmtNum} height={150} />
+              <BarChartLabeled data={weeklyContent.map((w, i) => ({ label: weeklyWeeks[i]?.rangeShort || w.label, value: w.views }))} format={fmtNum} height={150} />
             </div>
             <div>
               <h3 className="mb-2 text-xs font-semibold text-ink">Jumlah Konten per Minggu</h3>
-              <BarChartLabeled data={weeklyContent.map((w) => ({ label: w.label.replace("Minggu ", "M"), value: w.count }))} format={fmtNum} height={150} />
+              <BarChartLabeled data={weeklyContent.map((w, i) => ({ label: weeklyWeeks[i]?.rangeShort || w.label, value: w.count }))} format={fmtNum} height={150} />
             </div>
             <div>
               <h3 className="mb-2 text-xs font-semibold text-ink">Pertumbuhan Follower per Minggu</h3>
-              <DivergingBarChart data={weeklyFollower.map((w) => ({ label: w.label.replace("Minggu ", "M"), value: w.netGrowth }))} format={fmtNum} height={150} />
+              <DivergingBarChart data={weeklyFollower.map((w, i) => ({ label: weeklyWeeks[i]?.rangeShort || w.label, value: w.netGrowth }))} format={fmtNum} height={150} />
             </div>
           </div>
           {weeklyOverview.length > 0 && (
@@ -173,6 +167,7 @@ export default async function DataPage({ searchParams }) {
                 <thead>
                   <tr style={{ color: "var(--ink-soft)" }}>
                     <th className="py-1.5 pr-3 font-medium">Minggu</th>
+                    <th className="py-1.5 pr-3 font-medium">Tanggal</th>
                     <th className="py-1.5 pr-3 font-medium text-right">Video views</th>
                     <th className="py-1.5 pr-3 font-medium text-right">Profile views</th>
                     <th className="py-1.5 pr-3 font-medium text-right">Likes</th>
@@ -181,9 +176,10 @@ export default async function DataPage({ searchParams }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {weeklyOverview.map((w) => (
+                  {weeklyOverview.map((w, i) => (
                     <tr key={w.week} className="border-t" style={{ borderColor: "rgba(0,60,68,.08)" }}>
                       <td className="py-1.5 pr-3 font-medium text-ink">{w.label}</td>
+                      <td className="whitespace-nowrap py-1.5 pr-3" style={{ color: "var(--ink-soft)" }}>{weeklyWeeks[i]?.rangeLabel || "—"}</td>
                       <td className="py-1.5 pr-3 text-right">{numCell(w.videoViews)}</td>
                       <td className="py-1.5 pr-3 text-right">{numCell(w.profileViews)}</td>
                       <td className="py-1.5 pr-3 text-right">{numCell(w.likes)}</td>

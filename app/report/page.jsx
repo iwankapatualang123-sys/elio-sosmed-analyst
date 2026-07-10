@@ -106,9 +106,10 @@ export default async function ReportIndexPage({ searchParams }) {
                 @{b.tiktok_username}{b.kategori ? ` · ${b.kategori}` : ""}
               </p>
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
               <Link href={`/report/${b.id}${month ? `?${monthQS}` : ""}`}><Button variant="ghost"><FileText size={15} /> Lihat</Button></Link>
-              <a href={`/api/report/excel?branch=${b.id}${month ? `&${monthQS}` : ""}`}><Button variant="success"><Download size={15} /> Excel</Button></a>
+              <a href={`/api/report/excel?branch=${b.id}${month ? `&${monthQS}` : ""}`}><Button variant="success"><Download size={15} /> Bulanan</Button></a>
+              <a href={`/api/report/weekly-excel?branch=${b.id}${month ? `&${monthQS}` : ""}`}><Button variant="success"><Download size={15} /> Mingguan</Button></a>
             </div>
           </div>
         ))}

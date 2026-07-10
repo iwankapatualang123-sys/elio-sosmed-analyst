@@ -23,6 +23,13 @@ function labelBulan(ym) {
   const [y, m] = ym.split("-");
   return `${BULAN_NAMA[Number(m) - 1] || m} ${y}`;
 }
+// Tanggal singkat "3 Jul" untuk label rentang aktivitas follower (jendela 7 hari).
+function tglSingkat(d) {
+  if (!d || !/^\d{4}-\d{2}-\d{2}/.test(d)) return "";
+  const [, m, day] = d.slice(0, 10).split("-");
+  return `${Number(day)} ${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"][Number(m) - 1]}`;
+}
+const HARI = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 // Bangun URL /dashboard dgn param yang masih relevan saja (kosong -> dibuang).
 function dashboardHref({ branch, cat, month } = {}) {
   const params = new URLSearchParams();
@@ -416,19 +423,30 @@ export default async function DashboardPage({ searchParams }) {
             </div>
 
             <div className="card-3d p-5">
-              <h3 className="text-sm font-semibold text-ink">Jam Terbaik untuk Posting{selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</h3>
-              <p className="mb-2 text-xs" style={{ color: "var(--ink-soft)" }}>
-                5 jam dengan follower paling aktif (angka = rata-rata follower online). Makin tinggi batangnya, makin ramai.
-              </p>
-              {detail.bestHours.topHours[0] && (
-                <p className="mb-3 rounded-lg px-3 py-2 text-xs" style={{ background: "rgba(240,180,90,.15)", color: "#8a5a12" }}>
-                  💡 Puncak jam <b>{String(detail.bestHours.topHours[0].hour).padStart(2, "0")}:00</b> — disarankan <b>upload ~{uploadHint(detail.bestHours.topHours[0].hour)}</b> (±30 menit sebelum puncak) supaya video sudah tayang & masuk &quot;golden hour&quot; saat follower ramai.
-                </p>
+              <h3 className="text-sm font-semibold text-ink">Jam Terbaik untuk Posting</h3>
+              {detail.activityRange ? (
+                <>
+                  <p className="mb-2 text-xs" style={{ color: "var(--ink-soft)" }}>
+                    5 jam dengan follower paling aktif — dari aktivitas <b>7 hari terakhir</b> ({tglSingkat(detail.activityRange.from)}–{tglSingkat(detail.activityRange.to)}). Data ini bukan per-bulan (TikTok cuma menyediakan 7 hari terakhir).
+                  </p>
+                  {detail.bestDayHour && (
+                    <p className="mb-2 text-xs font-semibold" style={{ color: "var(--teal-900)" }}>
+                      🏆 Hari &amp; jam paling ramai: <b>{HARI[detail.bestDayHour.weekday]} {String(detail.bestDayHour.hour).padStart(2, "0")}:00</b> (~{fmt(Math.round(detail.bestDayHour.value))} follower aktif)
+                    </p>
+                  )}
+                  {detail.bestHours.topHours[0] && (
+                    <p className="mb-3 rounded-lg px-3 py-2 text-xs" style={{ background: "rgba(240,180,90,.15)", color: "#8a5a12" }}>
+                      💡 Puncak jam <b>{String(detail.bestHours.topHours[0].hour).padStart(2, "0")}:00</b> — disarankan <b>upload ~{uploadHint(detail.bestHours.topHours[0].hour)}</b> (±30 menit sebelum puncak) supaya video sudah tayang & masuk &quot;golden hour&quot; saat follower ramai.
+                    </p>
+                  )}
+                  <BarChartLabeled
+                    data={detail.bestHours.topHours.map((h) => ({ label: `${String(h.hour).padStart(2, "0")}:00`, value: h.avgActive }))}
+                    format={(v) => Math.round(v)}
+                  />
+                </>
+              ) : (
+                <p className="mt-2 text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada data aktivitas follower per jam. Muncul setelah upload file <b>FollowerActivity</b> dari TikTok Studio (mencakup 7 hari terakhir).</p>
               )}
-              <BarChartLabeled
-                data={detail.bestHours.topHours.map((h) => ({ label: `${String(h.hour).padStart(2, "0")}:00`, value: h.avgActive }))}
-                format={(v) => Math.round(v)}
-              />
             </div>
 
             <div className="card-3d p-5">
@@ -486,8 +504,15 @@ export default async function DashboardPage({ searchParams }) {
           </section>
 
           <section className="card-3d p-5">
-            <h3 className="mb-3 text-sm font-semibold text-ink">Heatmap Jam × Hari (follower aktif){selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</h3>
-            <Heatmap heatmap={detail.bestHours.heatmap} />
+            <h3 className="mb-1 text-sm font-semibold text-ink">Heatmap Jam × Hari (follower aktif)</h3>
+            {detail.activityRange ? (
+              <>
+                <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>Dari aktivitas 7 hari terakhir ({tglSingkat(detail.activityRange.from)}–{tglSingkat(detail.activityRange.to)}) — bukan per-bulan.</p>
+                <Heatmap heatmap={detail.bestHours.heatmap} />
+              </>
+            ) : (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada data aktivitas follower per jam.</p>
+            )}
           </section>
 
           <section className="card-3d p-4 sm:p-6">

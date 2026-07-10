@@ -12,10 +12,17 @@ import Button from "@/components/Button";
 import MonthFilter from "@/components/MonthFilter";
 
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
+const HARI = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 function labelBulan(ym) {
   const [y, m] = ym.split("-");
   return `${BULAN_NAMA[Number(m) - 1] || m} ${y}`;
+}
+// Tanggal singkat "3 Jul" dari 'YYYY-MM-DD' untuk label rentang aktivitas.
+function tglSingkat(d) {
+  if (!d || !/^\d{4}-\d{2}-\d{2}/.test(d)) return "";
+  const [, m, day] = d.slice(0, 10).split("-");
+  return `${Number(day)} ${["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"][Number(m) - 1]}`;
 }
 
 export default async function ReportPage({ params, searchParams }) {
@@ -44,7 +51,8 @@ export default async function ReportPage({ params, searchParams }) {
       {/* Toolbar (tidak ikut tercetak) */}
       <div className="no-print mb-4 flex flex-wrap items-center gap-3">
         <Link href="/report"><Button variant="ghost">← Laporan</Button></Link>
-        <a href={`/api/report/excel?branch=${accountId}${month ? `&month=${month}` : ""}`}><Button variant="success">⬇️ Download Excel</Button></a>
+        <a href={`/api/report/excel?branch=${accountId}${month ? `&month=${month}` : ""}`}><Button variant="success">⬇️ Excel Bulanan</Button></a>
+        <a href={`/api/report/weekly-excel?branch=${accountId}${month ? `&month=${month}` : ""}`}><Button variant="success">⬇️ Excel Mingguan</Button></a>
         <PrintButton />
         <div className="ml-auto"><MonthFilter months={detail.months} /></div>
       </div>
@@ -81,8 +89,21 @@ export default async function ReportPage({ params, searchParams }) {
             <LineChart data={detail.history.map((h) => ({ x: h.date, y: h.followers }))} height={150} />
           </div>
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-ink">Jam Terbaik</h3>
-            <BarChartLabeled data={detail.bestHours.topHours.map((h) => ({ label: `${String(h.hour).padStart(2, "0")}:00`, value: h.avgActive }))} height={150} format={(v) => Math.round(v)} />
+            <h3 className="mb-1 text-sm font-semibold text-ink">Hari &amp; Jam Terbaik</h3>
+            {detail.activityRange ? (
+              <>
+                <p className="mb-2 text-xs" style={{ color: "var(--ink-soft)" }}>Berdasarkan aktivitas follower 7 hari terakhir ({tglSingkat(detail.activityRange.from)}–{tglSingkat(detail.activityRange.to)}).</p>
+                {detail.bestDayHour && (
+                  <p className="mb-2 rounded-lg px-3 py-2 text-sm font-semibold" style={{ background: "rgba(240,180,90,.15)", color: "#8a5a12" }}>
+                    🏆 Paling ramai: <b>{HARI[detail.bestDayHour.weekday]} {String(detail.bestDayHour.hour).padStart(2, "0")}:00</b> (~{fmt(Math.round(detail.bestDayHour.value))} follower aktif)
+                  </p>
+                )}
+                <BarChartLabeled data={detail.bestHours.topHours.map((h) => ({ label: `${String(h.hour).padStart(2, "0")}:00`, value: h.avgActive }))} height={140} format={(v) => Math.round(v)} />
+                <p className="mt-1 text-[11px]" style={{ color: "var(--ink-soft)" }}>5 jam paling ramai (gabungan semua hari).</p>
+              </>
+            ) : (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada data aktivitas follower per jam. Data ini muncul setelah Anda upload file <b>FollowerActivity</b> dari TikTok Studio (mencakup 7 hari terakhir).</p>
+            )}
           </div>
           {detail.gender && (
             <div>
@@ -102,6 +123,47 @@ export default async function ReportPage({ params, searchParams }) {
             ]} />
           </div>
         </section>
+
+        {/* Rincian Mingguan (hanya saat 1 bulan dipilih) */}
+        {detail.weekly && (
+          <section className="mb-6">
+            <h3 className="mb-1 text-sm font-semibold text-ink">Rincian Mingguan — {labelBulan(month)}</h3>
+            <p className="mb-2 text-xs" style={{ color: "var(--ink-soft)" }}>Bulan dipecah per minggu (dengan rentang tanggalnya) untuk melihat naik/turun DALAM sebulan.</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr style={{ color: "var(--ink-soft)" }}>
+                    <th className="py-1.5 pr-3 font-medium">Minggu</th>
+                    <th className="py-1.5 pr-3 font-medium">Tanggal</th>
+                    <th className="py-1.5 pr-3 font-medium text-right">Konten</th>
+                    <th className="py-1.5 pr-3 font-medium text-right">Views</th>
+                    <th className="py-1.5 pr-3 font-medium text-right">Eng. Rate</th>
+                    <th className="py-1.5 pr-3 font-medium text-right">Net Follower</th>
+                    <th className="py-1.5 pr-3 font-medium text-right">Follower Akhir</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detail.weekly.content.map((c, i) => {
+                    const f = detail.weekly.follower[i] || {};
+                    const wk = detail.weekly.weeks[i] || {};
+                    const net = Number(f.netGrowth) || 0;
+                    return (
+                      <tr key={c.week} className="border-t" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                        <td className="py-1.5 pr-3 font-medium text-ink">{c.label}</td>
+                        <td className="whitespace-nowrap py-1.5 pr-3" style={{ color: "var(--ink-soft)" }}>{wk.rangeLabel || "—"}</td>
+                        <td className="py-1.5 pr-3 text-right">{fmt(c.count)}</td>
+                        <td className="py-1.5 pr-3 text-right">{fmt(c.views)}</td>
+                        <td className="py-1.5 pr-3 text-right">{c.engagementRate}%</td>
+                        <td className="py-1.5 pr-3 text-right" style={net < 0 ? { color: "#b91c1c", fontWeight: 600 } : net > 0 ? { color: "#166534" } : undefined}>{net > 0 ? "+" : ""}{fmt(net)}</td>
+                        <td className="py-1.5 pr-3 text-right">{f.endFollowers != null ? fmt(f.endFollowers) : "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
         {/* Key Takeaways */}
         <section>

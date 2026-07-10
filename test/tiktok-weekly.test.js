@@ -1,7 +1,7 @@
 // File: test/tiktok-weekly.test.js
 // Tes pemecahan bulan jadi tren mingguan (lib/tiktok/weekly.js). Jalankan: npm run test:weekly.
 
-const { weekOfMonth, weeklyContentTrend, weeklyOverviewTrend, weeklyFollowerTrend } = require("../lib/tiktok/weekly.js");
+const { weekOfMonth, weeklyContentTrend, weeklyOverviewTrend, weeklyFollowerTrend, weeksInMonth, weeklyReport, weekDateRange, monthDateRange } = require("../lib/tiktok/weekly.js");
 
 let pass = 0;
 let fail = 0;
@@ -97,6 +97,47 @@ console.log("== options.totalWeeks (isi minggu kosong, tidak melompat) ==");
   eq("4 minggu semua muncul", w.map((x) => x.week), [1, 2, 3, 4]);
   eq("minggu 1 kosong -> 0 semua field", [w[0].videoViews, w[0].likes, w[0].comments], [0, 0, 0]);
 }
+
+console.log("== weeksInMonth ==");
+eq("Juli (31 hari) -> 5 minggu", weeksInMonth("2026-07"), 5);
+eq("Februari (28 hari) -> 4 minggu", weeksInMonth("2026-02"), 4);
+eq("Juni (30 hari) -> 5 minggu", weeksInMonth("2026-06"), 5);
+eq("input invalid -> default 5", weeksInMonth("bukan-bulan"), 5);
+
+console.log("== weeklyReport ==");
+{
+  const content = [
+    { post_date: "2026-06-30", total_views: 999, total_likes: 0, total_comments: 0, total_shares: 0 }, // BULAN LAIN, harus dibuang
+    { post_date: "2026-07-03", total_views: 100, total_likes: 10, total_comments: 0, total_shares: 0 },
+    { post_date: "2026-07-10", total_views: 50, total_likes: 5, total_comments: 0, total_shares: 0 },
+  ];
+  const overview = [
+    { date: "2026-06-15", video_views: 500, profile_views: 5, likes: 5, comments: 0, shares: 0 }, // BULAN LAIN
+    { date: "2026-07-02", video_views: 200, profile_views: 20, likes: 10, comments: 1, shares: 2 },
+  ];
+  const history = [
+    { date: "2026-07-01", followers: 100, diff_from_previous_day: 0 },
+    { date: "2026-07-05", followers: 115, diff_from_previous_day: 15 },
+  ];
+  const r = weeklyReport({ content, overview, history }, "2026-07");
+  eq("totalWeeks Juli = 5", r.totalWeeks, 5);
+  eq("month tersimpan", r.month, "2026-07");
+  eq("content: 5 minggu, buang bulan lain", r.content.map((x) => x.week), [1, 2, 3, 4, 5]);
+  eq("content minggu 1 = 1 video 100 views (Jun dibuang)", [r.content[0].count, r.content[0].views], [1, 100]);
+  eq("content minggu 2 = 1 video 50 views", [r.content[1].count, r.content[1].views], [1, 50]);
+  eq("overview minggu 1 (Jun dibuang)", [r.overview[0].videoViews, r.overview[0].profileViews], [200, 20]);
+  eq("follower minggu 1 net +15", r.follower[0].netGrowth, 15);
+  eq("weeks: 5 entri dgn rentang tanggal", r.weeks.map((w) => w.rangeShort), ["1–7", "8–14", "15–21", "22–28", "29–31"]);
+  eq("weeks[0] label & range lengkap", [r.weeks[0].label, r.weeks[0].rangeLabel, r.weeks[0].from, r.weeks[0].to], ["Minggu 1", "1–7 Jul", "2026-07-01", "2026-07-07"]);
+}
+
+console.log("== weekDateRange & monthDateRange ==");
+eq("Juli minggu 1 -> 1–7", weekDateRange("2026-07", 1).rangeShort, "1–7");
+eq("Juli minggu 5 -> 29–31 (akhir bulan)", weekDateRange("2026-07", 5).rangeShort, "29–31");
+eq("Juni minggu 5 -> 29–30 (30 hari)", weekDateRange("2026-06", 5).rangeShort, "29–30");
+eq("Februari minggu 5 -> null (tak ada)", weekDateRange("2026-02", 5), null);
+eq("Februari minggu 4 -> 22–28", weekDateRange("2026-02", 4).rangeShort, "22–28");
+eq("monthDateRange Juli", monthDateRange("2026-07").label, "1–31 Jul 2026");
 
 console.log(`\n==== ${pass} passed, ${fail} failed ====`);
 process.exit(fail === 0 ? 0 : 1);
