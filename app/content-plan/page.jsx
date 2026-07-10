@@ -11,7 +11,7 @@ import DataFilters from "@/components/DataFilters";
 import ContentPlanBoard from "@/components/ContentPlanBoard";
 import {
   matchPlanStatus, summarizePlans,
-  GOALS_OPTIONS, PILLAR_OPTIONS, TYPE_OPTIONS,
+  PIC_OPTIONS, GOALS_OPTIONS, PILLAR_OPTIONS, TYPE_OPTIONS,
 } from "@/lib/tiktok/content-plan";
 
 export default async function ContentPlanPage({ searchParams }) {
@@ -26,10 +26,31 @@ export default async function ContentPlanPage({ searchParams }) {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data: branches } = await supabase
-    .from("tiktok_accounts").select("id, nama_cabang, tiktok_username").eq("is_active", true).order("nama_cabang");
+  // Ambil SEMUA cabang (termasuk yang diarsipkan/nonaktif) — rencana konten milik
+  // cabang tetap harus bisa dibuka & dikelola walau cabangnya sedang diarsipkan
+  // (arsip = disembunyikan dari halaman lain, bukan dihapus datanya).
+  const [{ data: allBranches }, { data: categoriesRaw }] = await Promise.all([
+    supabase.from("tiktok_accounts").select("id, nama_cabang, tiktok_username, is_active").order("nama_cabang"),
+    supabase.from("content_plan_categories").select("category_type, value").order("value"),
+  ]);
+
+  // Kategori dropdown (PIC/Goals/Pillar/Type) dikelola admin di Pengaturan; fallback
+  // ke daftar resmi Excel hanya kalau tabel kosong (defensif, seharusnya tidak terjadi).
+  const catByType = { pic: [], goals: [], pillar: [], type: [] };
+  for (const c of categoriesRaw || []) { if (catByType[c.category_type]) catByType[c.category_type].push(c.value); }
+  const goalsOptions = catByType.goals.length ? catByType.goals : GOALS_OPTIONS;
+  const pillarOptions = catByType.pillar.length ? catByType.pillar : PILLAR_OPTIONS;
+  const typeOptions = catByType.type.length ? catByType.type : TYPE_OPTIONS;
+  const picOptions = catByType.pic.length ? catByType.pic : PIC_OPTIONS;
+  const sortedBranches = [...(allBranches || [])].sort((a, b) => (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0));
+  // Label dropdown: tandai cabang yang diarsipkan supaya tetap kelihatan & terpilih.
+  const branches = sortedBranches.map((b) => ({
+    ...b,
+    nama_cabang: b.is_active ? b.nama_cabang : `${b.nama_cabang} (diarsipkan)`,
+  }));
   const sp = (await searchParams) || {};
-  const selectedId = sp.branch || branches?.[0]?.id || null;
+  const selectedId = sp.branch || sortedBranches.find((b) => b.is_active)?.id || sortedBranches[0]?.id || null;
+  const selectedBranchRaw = sortedBranches.find((b) => b.id === selectedId);
 
   let plansRaw = [];
   let contents = [];
@@ -56,8 +77,9 @@ export default async function ContentPlanPage({ searchParams }) {
   const kpi = summarizePlans(filtered.map((p) => p.status));
   const accCount = filtered.filter((p) => p.acc_to_posting).length;
 
-  // Daftar PIC unik untuk datalist form.
-  const pics = [...new Set(plansRaw.map((p) => p.pic).filter(Boolean))].sort();
+  // Daftar PIC untuk dropdown form: kategori dari Pengaturan + PIC lama di data
+  // (kalau ada nama di luar daftar) supaya tidak hilang dari pilihan.
+  const pics = [...new Set([...picOptions, ...plansRaw.map((p) => p.pic).filter(Boolean)])];
 
   const cards = [
     { label: "Total rencana", value: kpi.total, fg: "var(--teal-900)" },
@@ -77,12 +99,20 @@ export default async function ContentPlanPage({ searchParams }) {
         </p>
       </div>
 
-      <DataFilters branches={branches || []} months={months} selectedBranch={selectedId} selectedMonth={selectedMonth} basePath="/content-plan" />
+      <DataFilters branches={branches} months={months} selectedBranch={selectedId} selectedMonth={selectedMonth} basePath="/content-plan" />
 
       {!selectedId ? (
-        <section className="card-3d p-6"><p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada cabang aktif.</p></section>
+        <section className="card-3d p-6"><p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada cabang. Tambah cabang dulu di Pengaturan.</p></section>
       ) : (
         <>
+          {selectedBranchRaw && !selectedBranchRaw.is_active && (
+            <section className="card-3d p-3 sm:p-4" style={{ background: "#fffbeb", border: "1px solid #fde68a" }}>
+              <p className="text-sm font-medium" style={{ color: "#854d0e" }}>
+                🗄️ Cabang <b>{selectedBranchRaw.nama_cabang}</b> sedang <b>diarsipkan (nonaktif)</b> — tersembunyi dari Dashboard/Data/Kalender/Upload, tapi rencananya tetap bisa dikelola di sini. Aktifkan lagi di Pengaturan bila perlu.
+              </p>
+            </section>
+          )}
+
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {cards.map((c) => (
               <div key={c.label} className="card-3d p-4">
@@ -95,8 +125,9 @@ export default async function ContentPlanPage({ searchParams }) {
           <section className="card-3d p-4 sm:p-5">
             <ContentPlanBoard
               accountId={selectedId}
+              accounts={branches}
               plans={filtered}
-              options={{ goals: GOALS_OPTIONS, pillars: PILLAR_OPTIONS, types: TYPE_OPTIONS }}
+              options={{ goals: goalsOptions, pillars: pillarOptions, types: typeOptions }}
               pics={pics}
             />
           </section>

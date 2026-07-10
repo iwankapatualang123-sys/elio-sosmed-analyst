@@ -15,11 +15,13 @@ export async function GET(request) {
   const profile = await getCurrentProfile();
   if (!profile?.role) return new Response(JSON.stringify({ error: "Belum login." }), { status: 401 });
 
-  const accountId = new URL(request.url).searchParams.get("branch");
+  const url = new URL(request.url);
+  const accountId = url.searchParams.get("branch");
+  const month = /^\d{4}-\d{2}$/.test(url.searchParams.get("month")) ? url.searchParams.get("month") : null;
   if (!accountId) return new Response(JSON.stringify({ error: "branch wajib." }), { status: 400 });
 
   const supabase = await createSupabaseServerClient();
-  const [{ data: account }, { data: content }, { data: history }, { data: viewers }] = await Promise.all([
+  const [{ data: account }, { data: contentAll }, { data: historyAll }, { data: viewersAll }] = await Promise.all([
     supabase.from("tiktok_accounts").select("nama_cabang, tiktok_username").eq("id", accountId).maybeSingle(),
     supabase.from("tiktok_content").select("*").eq("tiktok_account_id", accountId),
     supabase.from("tiktok_follower_history").select("*").eq("tiktok_account_id", accountId).order("date"),
@@ -27,9 +29,15 @@ export async function GET(request) {
   ]);
   if (!account) return new Response(JSON.stringify({ error: "Cabang tidak ditemukan/akses ditolak." }), { status: 403 });
 
-  const cs = metrics.summarizeContent(content || []);
-  const growth = metrics.followerGrowth(history || []);
-  const vr = metrics.viewersRatio(viewers || []);
+  // Scope ke 1 bulan kalau diminta (mis. laporan April 2026) — tanpa month = sepanjang masa (lama).
+  const inMonth = (d) => !month || (typeof d === "string" && d.slice(0, 7) === month);
+  const content = (contentAll || []).filter((r) => inMonth(r.post_date));
+  const history = (historyAll || []).filter((r) => inMonth(r.date));
+  const viewers = (viewersAll || []).filter((r) => inMonth(r.date));
+
+  const cs = metrics.summarizeContent(content);
+  const growth = metrics.followerGrowth(history);
+  const vr = metrics.viewersRatio(viewers);
   const insights = generateInsights({ summary: cs, growth, viewers: vr, bestHours: metrics.bestPostingTimes([]) });
 
   const wb = new ExcelJS.Workbook();
@@ -38,7 +46,7 @@ export async function GET(request) {
   // Sheet Ringkasan
   const ws = wb.addWorksheet("Ringkasan");
   ws.columns = [{ width: 28 }, { width: 40 }, { width: 40 }];
-  ws.addRow([`Laporan ${account.nama_cabang} (@${account.tiktok_username})`]);
+  ws.addRow([`Laporan ${account.nama_cabang} (@${account.tiktok_username})${month ? ` — ${month}` : " — sepanjang masa"}`]);
   ws.getRow(1).font = { bold: true, size: 14 };
   ws.addRow([]);
   ws.addRow(["Metrik", "Nilai"]).font = { bold: true };
@@ -74,11 +82,12 @@ export async function GET(request) {
 
   const buffer = await wb.xlsx.writeBuffer();
   const safeName = String(account.tiktok_username || "cabang").replace(/[^a-z0-9_-]/gi, "");
+  const fileSuffix = month ? `_${month}` : "";
   return new Response(buffer, {
     status: 200,
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="Laporan_${safeName}.xlsx"`,
+      "Content-Disposition": `attachment; filename="Laporan_${safeName}${fileSuffix}.xlsx"`,
     },
   });
 }

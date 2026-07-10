@@ -9,20 +9,29 @@ import { loadBranchDetail } from "@/lib/tiktok/analytics";
 import { LineChart, Donut, BarChartLabeled } from "@/components/Charts";
 import PrintButton from "@/components/PrintButton";
 import Button from "@/components/Button";
+import MonthFilter from "@/components/MonthFilter";
 
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
+const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+function labelBulan(ym) {
+  const [y, m] = ym.split("-");
+  return `${BULAN_NAMA[Number(m) - 1] || m} ${y}`;
+}
 
-export default async function ReportPage({ params }) {
+export default async function ReportPage({ params, searchParams }) {
   const { accountId } = await params;
   const profile = await getCurrentProfile();
   if (!profile?.role) {
     return <main className="relative z-10 p-8 text-white">Silakan login.</main>;
   }
 
+  const sp = (await searchParams) || {};
+  const month = /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : null;
+
   const supabase = await createSupabaseServerClient();
   const { data: account } = await supabase
     .from("tiktok_accounts").select("nama_cabang, tiktok_username").eq("id", accountId).maybeSingle();
-  const detail = await loadBranchDetail(supabase, accountId);
+  const detail = await loadBranchDetail(supabase, accountId, { month });
   if (!account || !detail) {
     return <main className="relative z-10 p-8 text-white">Cabang tidak ditemukan atau tidak ada akses.</main>;
   }
@@ -35,8 +44,9 @@ export default async function ReportPage({ params }) {
       {/* Toolbar (tidak ikut tercetak) */}
       <div className="no-print mb-4 flex flex-wrap items-center gap-3">
         <Link href="/dashboard"><Button variant="ghost">← Dashboard</Button></Link>
-        <a href={`/api/report/excel?branch=${accountId}`}><Button variant="success">⬇️ Download Excel</Button></a>
+        <a href={`/api/report/excel?branch=${accountId}${month ? `&month=${month}` : ""}`}><Button variant="success">⬇️ Download Excel</Button></a>
         <PrintButton />
+        <div className="ml-auto"><MonthFilter months={detail.months} /></div>
       </div>
 
       <article className="card-3d p-6 sm:p-8">
@@ -44,8 +54,8 @@ export default async function ReportPage({ params }) {
         <header className="mb-6 flex items-center gap-4 border-b pb-4" style={{ borderColor: "rgba(0,60,68,.15)" }}>
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-bold text-white" style={{ background: "linear-gradient(180deg,#0a8291,#00545e)" }}>TT</div>
           <div>
-            <h1 className="text-xl font-bold text-ink">Laporan Performa TikTok</h1>
-            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>{account.nama_cabang} · @{account.tiktok_username}</p>
+            <h1 className="text-xl font-bold text-ink">Laporan Performa TikTok{month ? ` — ${labelBulan(month)}` : ""}</h1>
+            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>{account.nama_cabang} · @{account.tiktok_username}{!month && " · sepanjang masa"}</p>
           </div>
         </header>
 

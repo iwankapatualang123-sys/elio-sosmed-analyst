@@ -9,10 +9,41 @@ import Nav from "@/components/Nav";
 import DataFilters from "@/components/DataFilters";
 import DataTable from "@/components/DataTable";
 import { BarChartLabeled, DivergingBarChart } from "@/components/Charts";
-import { weeklyContentTrend, weeklyOverviewTrend, weeklyFollowerTrend } from "@/lib/tiktok/weekly";
+import { weeklyContentTrend, weeklyOverviewTrend, weeklyFollowerTrend, weekOfMonth } from "@/lib/tiktok/weekly";
 
 const monthOf = (d) => (typeof d === "string" ? d.slice(0, 7) : null);
 const fmtNum = (n) => Number(n || 0).toLocaleString("id-ID");
+const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+function labelBulan(ym) {
+  const [y, m] = String(ym).split("-");
+  return `${BULAN_NAMA[Number(m) - 1] || m} ${y}`;
+}
+// Angka merah kalau minus (mis. komentar berkurang krn dihapus) — konsisten dgn
+// warna diff di tempat lain, supaya minus tidak terlihat seperti error tampilan.
+function numCell(n) {
+  const v = Number(n) || 0;
+  return <span style={v < 0 ? { color: "#b91c1c", fontWeight: 600 } : undefined}>{fmtNum(v)}</span>;
+}
+
+// Kolom tabel Konten — dipakai bersama utk tabel "bulan ini" & "bulan lain yg masih tinggi".
+const KONTEN_COLUMNS = [
+  { key: "video_link", label: "Preview", format: "thumbnail" },
+  { key: "video_title", label: "Judul", format: "title", width: 320 },
+  { key: "post_date", label: "Tanggal", format: "date" },
+  { key: "total_views", label: "Views", align: "right", format: "number" },
+  { key: "total_likes", label: "Likes", align: "right", format: "number" },
+  { key: "total_comments", label: "Komentar", align: "right", format: "number" },
+  { key: "total_shares", label: "Shares", align: "right", format: "number" },
+  { key: "er", label: "ER", align: "right", format: "er" },
+];
+
+// Jumlah minggu (1-5) dalam sebuah bulan 'YYYY-MM' — dipakai supaya minggu tanpa
+// data tetap tampil sbg 0, bukan hilang dari grafik/tabel (blueprint 21A).
+function totalWeeksInMonth(ym) {
+  if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return null;
+  const [y, m] = ym.split("-").map(Number);
+  return weekOfMonth(new Date(y, m, 0).getDate());
+}
 
 export default async function DataPage({ searchParams }) {
   const profile = await getCurrentProfile();
@@ -67,12 +98,27 @@ export default async function DataPage({ searchParams }) {
   const postDates = content.map((r) => r.post_date).filter(Boolean).sort();
   const periode = postDates.length ? `${postDates[0]} s/d ${postDates[postDates.length - 1]}` : "—";
 
+  // Pisahkan tabel Konten saat 1 bulan spesifik dipilih: (1) konten bulan itu, dan
+  // (2) konten BULAN LAIN yang masih menonjol (views di atas rata-rata seluruh
+  // konten akun) — supaya video lama yang masih ramai tidak tercampur diam-diam di
+  // tengah daftar bulan berjalan. Catatan: data cuma simpan angka views TERKINI per
+  // video (di-timpa tiap upload baru), bukan riwayat harian per video — jadi ini
+  // "masih tinggi performanya", BUKAN "sedang naik minggu ini" (itu tidak terukur).
+  const splitContent = selectedMonth !== "all";
+  const avgViewsAll = content.length ? content.reduce((s, r) => s + (Number(r.total_views) || 0), 0) / content.length : 0;
+  const contentOtherNotable = splitContent
+    ? content
+        .filter((r) => !inMonth(r.post_date) && (Number(r.total_views) || 0) >= avgViewsAll)
+        .sort((a, b) => (Number(b.total_views) || 0) - (Number(a.total_views) || 0))
+    : [];
+
   // Tren mingguan (hanya masuk akal kalau 1 bulan spesifik dipilih — kalau "semua
   // bulan", hari-5-Juni & hari-5-Juli akan ketumpuk jadi 1 minggu yang salah).
   const showWeekly = selectedMonth !== "all";
-  const weeklyContent = showWeekly ? weeklyContentTrend(fContent) : [];
-  const weeklyOverview = showWeekly ? weeklyOverviewTrend(fOverview) : [];
-  const weeklyFollower = showWeekly ? weeklyFollowerTrend(fFollower) : [];
+  const totalWeeks = showWeekly ? totalWeeksInMonth(selectedMonth) : null;
+  const weeklyContent = showWeekly ? weeklyContentTrend(fContent, { totalWeeks }) : [];
+  const weeklyOverview = showWeekly ? weeklyOverviewTrend(fOverview, { totalWeeks }) : [];
+  const weeklyFollower = showWeekly ? weeklyFollowerTrend(fFollower, { totalWeeks }) : [];
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-5 p-4 sm:p-6">
@@ -102,7 +148,10 @@ export default async function DataPage({ searchParams }) {
           </p>
           <div className="grid gap-5 sm:grid-cols-3">
             <div>
-              <h3 className="mb-2 text-xs font-semibold text-ink">Views per Minggu (Konten)</h3>
+              <h3 className="text-xs font-semibold text-ink">Total Views Video yang Terbit Minggu Ini</h3>
+              <p className="mb-2 text-[10px]" style={{ color: "var(--ink-soft)" }}>
+                Views video dihitung dari tanggal video PERTAMA TAYANG — angkanya akumulasi s/d hari ini, bukan cuma views hari itu (beda dari tabel di bawah).
+              </p>
               <BarChartLabeled data={weeklyContent.map((w) => ({ label: w.label.replace("Minggu ", "M"), value: w.views }))} format={fmtNum} height={150} />
             </div>
             <div>
@@ -116,7 +165,10 @@ export default async function DataPage({ searchParams }) {
           </div>
           {weeklyOverview.length > 0 && (
             <div className="mt-5 overflow-x-auto">
-              <h3 className="mb-2 text-xs font-semibold text-ink">Ringkasan Overview per Minggu</h3>
+              <h3 className="text-xs font-semibold text-ink">Ringkasan Overview per Minggu</h3>
+              <p className="mb-2 text-[10px]" style={{ color: "var(--ink-soft)" }}>
+                Angka resmi TikTok yang tercatat PADA hari-hari itu (semua video, bukan cuma yang baru terbit) — makanya &quot;Video views&quot; di sini wajar beda dengan grafik views di atas. Angka merah = berkurang (mis. komentar dihapus).
+              </p>
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr style={{ color: "var(--ink-soft)" }}>
@@ -132,11 +184,11 @@ export default async function DataPage({ searchParams }) {
                   {weeklyOverview.map((w) => (
                     <tr key={w.week} className="border-t" style={{ borderColor: "rgba(0,60,68,.08)" }}>
                       <td className="py-1.5 pr-3 font-medium text-ink">{w.label}</td>
-                      <td className="py-1.5 pr-3 text-right">{fmtNum(w.videoViews)}</td>
-                      <td className="py-1.5 pr-3 text-right">{fmtNum(w.profileViews)}</td>
-                      <td className="py-1.5 pr-3 text-right">{fmtNum(w.likes)}</td>
-                      <td className="py-1.5 pr-3 text-right">{fmtNum(w.comments)}</td>
-                      <td className="py-1.5 pr-3 text-right">{fmtNum(w.shares)}</td>
+                      <td className="py-1.5 pr-3 text-right">{numCell(w.videoViews)}</td>
+                      <td className="py-1.5 pr-3 text-right">{numCell(w.profileViews)}</td>
+                      <td className="py-1.5 pr-3 text-right">{numCell(w.likes)}</td>
+                      <td className="py-1.5 pr-3 text-right">{numCell(w.comments)}</td>
+                      <td className="py-1.5 pr-3 text-right">{numCell(w.shares)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -150,23 +202,27 @@ export default async function DataPage({ searchParams }) {
         <section className="card-3d p-6"><p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada cabang.</p></section>
       ) : (
         <>
-          <Section title="Konten" count={content.length} subtitle="Semua video akun ini (tidak difilter bulan — filter Bulan hanya untuk data harian & tren mingguan).">
-            <DataTable
-              rows={content}
-              maxHeight={640}
-              emptyText="Belum ada konten."
-              columns={[
-                { key: "video_link", label: "Preview", format: "thumbnail" },
-                { key: "video_title", label: "Judul", format: "title", width: 320 },
-                { key: "post_date", label: "Tanggal", format: "date" },
-                { key: "total_views", label: "Views", align: "right", format: "number" },
-                { key: "total_likes", label: "Likes", align: "right", format: "number" },
-                { key: "total_comments", label: "Komentar", align: "right", format: "number" },
-                { key: "total_shares", label: "Shares", align: "right", format: "number" },
-                { key: "er", label: "ER", align: "right", format: "er" },
-              ]}
-            />
-          </Section>
+          {splitContent ? (
+            <>
+              <Section title={`Konten ${labelBulan(selectedMonth)}`} count={fContent.length} subtitle="Video yang diposting pada bulan terpilih ini.">
+                <DataTable rows={fContent} maxHeight={480} emptyText="Belum ada konten bulan ini." columns={KONTEN_COLUMNS} />
+              </Section>
+
+              {contentOtherNotable.length > 0 && (
+                <Section
+                  title="📌 Konten Bulan Lain yang Masih Tinggi Performanya"
+                  count={contentOtherNotable.length}
+                  subtitle={`Video dari bulan LAIN dgn views di atas rata-rata seluruh konten akun (${fmtNum(Math.round(avgViewsAll))}) — masih menarik trafik meski lama, dipisah supaya tidak tercampur dgn konten bulan ini.`}
+                >
+                  <DataTable rows={contentOtherNotable} maxHeight={480} emptyText="Tidak ada." columns={KONTEN_COLUMNS} />
+                </Section>
+              )}
+            </>
+          ) : (
+            <Section title="Konten" count={content.length} subtitle="Semua video akun ini (tidak difilter bulan — filter Bulan hanya untuk data harian & tren mingguan).">
+              <DataTable rows={content} maxHeight={640} emptyText="Belum ada konten." columns={KONTEN_COLUMNS} />
+            </Section>
+          )}
 
           <Section title="Overview Harian" count={fOverview.length}>
             <DataTable

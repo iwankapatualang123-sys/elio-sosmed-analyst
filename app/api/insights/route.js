@@ -20,21 +20,23 @@ export async function POST(request) {
   try { body = await request.json(); } catch { /* biarkan kosong */ }
   const accountId = body.accountId;
   const namaCabang = body.namaCabang || "akun ini";
+  const month = /^\d{4}-\d{2}$/.test(body.month) ? body.month : null;
   if (!accountId) return NextResponse.json({ error: "accountId wajib." }, { status: 400 });
 
   const supabase = await createSupabaseServerClient();
-  const detail = await loadBranchDetail(supabase, accountId);
+  const detail = await loadBranchDetail(supabase, accountId, { month });
   if (!detail) return NextResponse.json({ error: "Cabang tidak ditemukan/tidak ada akses." }, { status: 403 });
 
   const insights = detail.insights || [];
   // Fallback naratif berbasis formula (selalu tersedia).
   const formulaNarrative = insights.map((i) => i.kesimpulan).join(" ");
+  const periodLabel = month ? `bulan ${month}` : null;
 
   if (!isGroqConfigured()) {
     return NextResponse.json({ source: "formula", narrative: formulaNarrative, configured: false });
   }
   try {
-    const narrative = await groqChat(buildInsightPrompt(namaCabang, insights));
+    const narrative = await groqChat(buildInsightPrompt(namaCabang, insights, periodLabel));
     return NextResponse.json({ source: "ai", narrative: narrative || formulaNarrative, configured: true });
   } catch (err) {
     // Kalau AI gagal, tetap balas versi formula (jangan bikin fitur mati).

@@ -9,8 +9,14 @@ import { loadPortfolio } from "@/lib/tiktok/analytics";
 import { BarChartLabeled } from "@/components/Charts";
 import PrintButton from "@/components/PrintButton";
 import Button from "@/components/Button";
+import MonthFilter from "@/components/MonthFilter";
 
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
+const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+function labelBulan(ym) {
+  const [y, m] = ym.split("-");
+  return `${BULAN_NAMA[Number(m) - 1] || m} ${y}`;
+}
 
 const STATUS_STYLE = {
   naik: { background: "#dcfce7", color: "#166534" },
@@ -18,32 +24,36 @@ const STATUS_STYLE = {
   turun: { background: "#fee2e2", color: "#991b1b" },
 };
 
-export default async function PortfolioReportPage() {
+export default async function PortfolioReportPage({ searchParams }) {
   const profile = await getCurrentProfile();
   if (!profile?.role) return <main className="relative z-10 p-8 text-white">Silakan login.</main>;
 
+  const sp = (await searchParams) || {};
+  const month = /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : null;
+
   const supabase = await createSupabaseServerClient();
-  const { branches, portfolio } = await loadPortfolio(supabase);
+  const { branches, portfolio, months } = await loadPortfolio(supabase, { month });
 
   return (
     <main className="relative z-10 mx-auto w-full max-w-5xl p-4 sm:p-6">
       <div className="no-print mb-4 flex flex-wrap items-center gap-3">
         <Link href="/dashboard"><Button variant="ghost">← Dashboard</Button></Link>
-        <a href="/api/report/portfolio-excel"><Button variant="success">⬇️ Download Excel</Button></a>
+        <a href={`/api/report/portfolio-excel${month ? `?month=${month}` : ""}`}><Button variant="success">⬇️ Download Excel</Button></a>
         <PrintButton />
+        <div className="ml-auto"><MonthFilter months={months} /></div>
       </div>
 
       <article className="card-3d p-6 sm:p-8">
         <header className="mb-6 border-b pb-4" style={{ borderColor: "rgba(0,60,68,.15)" }}>
-          <h1 className="text-xl font-bold text-ink">Laporan Semua Cabang</h1>
-          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Ringkasan portofolio · {portfolio.activeBranches} cabang aktif</p>
+          <h1 className="text-xl font-bold text-ink">Laporan Semua Cabang{month ? ` — ${labelBulan(month)}` : ""}</h1>
+          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Ringkasan portofolio · {portfolio.activeBranches} cabang aktif{!month && " · sepanjang masa"}</p>
         </header>
 
         {/* KPI portofolio */}
         <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             ["Total Views", fmt(portfolio.totalViews)],
-            ["Konten Bulan Ini", fmt(portfolio.totalContentThisMonth)],
+            [month ? `Konten ${labelBulan(month)}` : "Konten Bulan Ini", fmt(portfolio.totalContentThisMonth)],
             ["Avg Eng. Rate", `${portfolio.avgEngagementRate}%`],
             ["Net Follower", `${portfolio.netFollowerGrowth >= 0 ? "+" : ""}${fmt(portfolio.netFollowerGrowth)}`],
           ].map(([label, value]) => (

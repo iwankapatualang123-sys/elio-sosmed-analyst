@@ -208,6 +208,21 @@ export function Heatmap({ heatmap = {} }) {
   }
   if (max <= 0) return <Empty height={160} />;
 
+  // Jam puncak PER HARI (bukan cuma satu jam terbaik keseluruhan) — dasar tabel
+  // rekomendasi upload per hari di sebelah heatmap.
+  const perDayBest = DAYS.map((day, wd) => {
+    const row = heatmap[wd];
+    let bh = null;
+    let bv = 0;
+    if (row) {
+      for (const h of Object.keys(row)) {
+        const v = row[h] || 0;
+        if (v > bv) { bv = v; bh = Number(h); }
+      }
+    }
+    return { day, wd, hour: bh, value: bv };
+  });
+
   return (
     <div>
       {/* Penjelasan */}
@@ -222,46 +237,84 @@ export function Heatmap({ heatmap = {} }) {
         </p>
       )}
 
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ borderCollapse: "separate", borderSpacing: 2 }}>
-          <tbody>
-            {DAYS.map((day, wd) => (
-              <tr key={wd}>
-                <td style={{ fontSize: 11, color: "var(--ink-soft)", paddingRight: 8, whiteSpace: "nowrap" }}>{day}</td>
-                {Array.from({ length: 24 }, (_, h) => {
-                  const val = (heatmap[wd] && heatmap[wd][h]) || 0;
-                  const a = val / max;
-                  const isBest = best && best.wd === wd && best.h === h;
-                  return (
-                    <td
-                      key={h}
-                      title={`${day} ${String(h).padStart(2, "0")}:00 — ${Math.round(val)} follower aktif`}
-                      style={{
-                        width: 15, height: 15, borderRadius: 3, padding: 0,
-                        background: `rgba(0,102,116,${0.06 + a * 0.94})`,
-                        boxShadow: isBest ? "0 0 0 2px #f0b45a" : "none",
-                      }}
-                    />
-                  );
-                })}
-              </tr>
-            ))}
-            <tr>
-              <td style={{ fontSize: 10, color: "var(--ink-soft)", paddingRight: 8 }}>Jam</td>
-              {Array.from({ length: 24 }, (_, h) => (
-                <td key={h} style={{ fontSize: 9, color: "var(--ink-soft)", textAlign: "center" }}>{h % 3 === 0 ? h : ""}</td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+        <div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ borderCollapse: "separate", borderSpacing: 2 }}>
+              <tbody>
+                {DAYS.map((day, wd) => (
+                  <tr key={wd}>
+                    <td style={{ fontSize: 11, color: "var(--ink-soft)", paddingRight: 8, whiteSpace: "nowrap" }}>{day}</td>
+                    {Array.from({ length: 24 }, (_, h) => {
+                      const val = (heatmap[wd] && heatmap[wd][h]) || 0;
+                      const a = val / max;
+                      const isBest = best && best.wd === wd && best.h === h;
+                      return (
+                        <td
+                          key={h}
+                          title={`${day} ${String(h).padStart(2, "0")}:00 — ${Math.round(val)} follower aktif`}
+                          style={{
+                            width: 15, height: 15, borderRadius: 3, padding: 0,
+                            background: `rgba(0,102,116,${0.06 + a * 0.94})`,
+                            boxShadow: isBest ? "0 0 0 2px #f0b45a" : "none",
+                          }}
+                        />
+                      );
+                    })}
+                  </tr>
+                ))}
+                <tr>
+                  <td style={{ fontSize: 10, color: "var(--ink-soft)", paddingRight: 8 }}>Jam</td>
+                  {Array.from({ length: 24 }, (_, h) => (
+                    <td key={h} style={{ fontSize: 9, color: "var(--ink-soft)", textAlign: "center" }}>{h % 3 === 0 ? h : ""}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-      {/* Legenda warna */}
-      <div className="mt-3 flex items-center gap-2 text-xs" style={{ color: "var(--ink-soft)" }}>
-        <span>Sepi</span>
-        <span style={{ width: 120, height: 10, borderRadius: 5, background: "linear-gradient(90deg, rgba(0,102,116,.08), rgba(0,102,116,1))", display: "inline-block" }} />
-        <span>Ramai</span>
-        <span className="ml-3 flex items-center gap-1"><span style={{ width: 10, height: 10, borderRadius: 3, boxShadow: "0 0 0 2px #f0b45a", display: "inline-block" }} /> jam terbaik</span>
+          {/* Legenda warna */}
+          <div className="mt-3 flex items-center gap-2 text-xs" style={{ color: "var(--ink-soft)" }}>
+            <span>Sepi</span>
+            <span style={{ width: 120, height: 10, borderRadius: 5, background: "linear-gradient(90deg, rgba(0,102,116,.08), rgba(0,102,116,1))", display: "inline-block" }} />
+            <span>Ramai</span>
+            <span className="ml-3 flex items-center gap-1"><span style={{ width: 10, height: 10, borderRadius: 3, boxShadow: "0 0 0 2px #f0b45a", display: "inline-block" }} /> jam terbaik</span>
+          </div>
+        </div>
+
+        {/* Tabel rekomendasi upload per hari */}
+        <div className="lg:w-60 lg:flex-shrink-0">
+          <h4 className="mb-2 text-xs font-semibold" style={{ color: "var(--teal-900)" }}>📅 Rekomendasi upload per hari</h4>
+          <div className="overflow-hidden rounded-xl" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+            <table className="w-full text-left" style={{ borderCollapse: "collapse" }}>
+              <thead style={{ background: "rgba(0,102,116,.07)" }}>
+                <tr>
+                  <th className="px-2 py-1.5 text-[10px] font-semibold text-ink">Hari</th>
+                  <th className="px-2 py-1.5 text-[10px] font-semibold text-ink">Puncak</th>
+                  <th className="px-2 py-1.5 text-[10px] font-semibold" style={{ color: "#8a5a12" }}>Upload</th>
+                </tr>
+              </thead>
+              <tbody>
+                {perDayBest.map((d) => (
+                  <tr key={d.wd} className="border-t" style={{ borderColor: "rgba(0,60,68,.07)" }}>
+                    <td className="px-2 py-1.5 text-xs font-medium text-ink">{d.day}</td>
+                    {d.hour == null ? (
+                      <td colSpan={2} className="px-2 py-1.5 text-[10px]" style={{ color: "var(--ink-soft)" }}>Belum ada data</td>
+                    ) : (
+                      <>
+                        <td className="whitespace-nowrap px-2 py-1.5 text-xs">{String(d.hour).padStart(2, "0")}:00</td>
+                        <td className="whitespace-nowrap px-2 py-1.5 text-xs font-semibold" style={{ color: "#8a5a12" }}>{String((d.hour + 23) % 24).padStart(2, "0")}:30</td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-[10px]" style={{ color: "var(--ink-soft)" }}>
+            Jam Puncak = follower paling aktif hari itu. Upload disarankan ~30 menit sebelumnya.
+          </p>
+        </div>
       </div>
     </div>
   );

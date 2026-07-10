@@ -8,6 +8,7 @@ import { loadPortfolio, loadBranchDetail } from "@/lib/tiktok/analytics";
 import Link from "next/link";
 import Nav from "@/components/Nav";
 import MetricCard from "@/components/MetricCard";
+import MonthFilter from "@/components/MonthFilter";
 import { LineChart, Donut, BarChartLabeled, Heatmap } from "@/components/Charts";
 import InsightAI from "@/components/InsightAI";
 import OnboardingTips from "@/components/OnboardingTips";
@@ -15,6 +16,22 @@ import ProgressBar from "@/components/ProgressBar";
 import { forecastNext } from "@/lib/tiktok/forecast";
 import { matchPlanStatus, summarizePlans } from "@/lib/tiktok/content-plan";
 import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
+
+const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+function labelBulan(ym) {
+  if (!ym) return "";
+  const [y, m] = ym.split("-");
+  return `${BULAN_NAMA[Number(m) - 1] || m} ${y}`;
+}
+// Bangun URL /dashboard dgn param yang masih relevan saja (kosong -> dibuang).
+function dashboardHref({ branch, cat, month } = {}) {
+  const params = new URLSearchParams();
+  if (branch) params.set("branch", branch);
+  if (cat) params.set("cat", cat);
+  if (month) params.set("month", month);
+  const qs = params.toString();
+  return qs ? `/dashboard?${qs}` : "/dashboard";
+}
 
 const INSIGHT_STYLE = {
   naik: { background: "#dcfce7", color: "#166534" },
@@ -68,20 +85,28 @@ export default async function DashboardPage({ searchParams }) {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { branches, portfolio } = await loadPortfolio(supabase);
   const sp = (await searchParams) || {};
+  // Filter BULAN (blueprint 21A — evaluasi kinerja tim per bulan). Kosong/"all" =
+  // sepanjang masa (perilaku asli). Target & Progress + Peringatan SENGAJA tetap
+  // all-time walau bulan dipilih (lihat lib/tiktok/analytics.js).
+  const selectedMonth = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : null;
+  const { branches, portfolio, months } = await loadPortfolio(supabase, { month: selectedMonth });
   const selectedId = sp.branch || branches[0]?.id || null;
   const catFilter = sp.cat || null;
   const categories = [...new Set(branches.map((b) => b.kategori).filter(Boolean))];
   const rankedBranches = catFilter ? branches.filter((b) => b.kategori === catFilter) : branches;
-  const detail = await loadBranchDetail(supabase, selectedId);
+  const detail = await loadBranchDetail(supabase, selectedId, { month: selectedMonth });
   const selectedBranch = branches.find((b) => b.id === selectedId);
   const { data: goal } = selectedId
     ? await supabase.from("tiktok_account_goals").select("*").eq("tiktok_account_id", selectedId).maybeSingle()
     : { data: null };
-  const { data: annotations } = selectedId
+  const { data: annotationsRaw } = selectedId
     ? await supabase.from("branch_annotations").select("*").eq("tiktok_account_id", selectedId).order("note_date", { ascending: false }).limit(50)
     : { data: [] };
+  // Kalau lagi meninjau 1 bulan spesifik, catatan ikut disaring ke bulan itu saja.
+  const annotations = selectedMonth
+    ? (annotationsRaw || []).filter((a) => a.note_date && a.note_date.slice(0, 7) === selectedMonth)
+    : (annotationsRaw || []);
   const editable = canWrite(profile);
 
   // Rencana konten BULAN INI + status verifikasi (untuk ringkasan di dashboard).
@@ -107,21 +132,30 @@ export default async function DashboardPage({ searchParams }) {
       <Nav email={profile.email} role={profile.role} />
 
       {/* Hero judul */}
-      <div className="px-1">
-        <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">
-          Dashboard Analitik
-        </h1>
-        <p className="mt-0.5 text-sm" style={{ color: "rgba(255,255,255,.75)" }}>
-          Ringkasan performa TikTok lintas cabang
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3 px-1">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">
+            Dashboard Analitik
+          </h1>
+          <p className="mt-0.5 text-sm" style={{ color: "rgba(255,255,255,.75)" }}>
+            {selectedMonth ? `Meninjau ${labelBulan(selectedMonth)} — untuk evaluasi kinerja tim` : "Ringkasan performa TikTok lintas cabang (sepanjang masa)"}
+          </p>
+        </div>
+        <MonthFilter months={months} />
       </div>
+
+      {selectedMonth && (
+        <div className="rounded-xl px-4 py-2.5 text-sm" style={{ background: "rgba(240,180,90,.15)", color: "#8a5a12" }}>
+          📅 Semua angka di halaman ini (KPI, ranking, grafik, insight AI) dihitung khusus untuk <b>{labelBulan(selectedMonth)}</b>, kecuali <b>Target &amp; Progress</b> dan <b>Peringatan</b> yang tetap sepanjang masa (target itu tujuan berjalan, bukan target per bulan). Proyeksi follower disembunyikan saat meninjau bulan lampau.
+        </div>
+      )}
 
       <OnboardingTips />
 
       {/* KPI portofolio */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <MetricCard icon="🏢" accent="teal" label="Cabang aktif" value={fmt(portfolio.activeBranches)} />
-        <MetricCard icon="🎬" accent="amber" label="Konten bulan ini" value={fmt(portfolio.totalContentThisMonth)} />
+        <MetricCard icon="🎬" accent="amber" label={selectedMonth ? `Konten ${labelBulan(selectedMonth)}` : "Konten bulan ini"} value={fmt(portfolio.totalContentThisMonth)} />
         <MetricCard icon="👁️" accent="blue" label="Total views" value={fmt(portfolio.totalViews)} />
         <MetricCard icon="💬" accent="green" label="Avg engagement rate" value={`${portfolio.avgEngagementRate}%`} />
       </section>
@@ -132,9 +166,9 @@ export default async function DashboardPage({ searchParams }) {
           <h2 className="text-base font-semibold text-ink">Ranking Cabang</h2>
           {categories.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              <Link href="/dashboard" className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={!catFilter ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>Semua</Link>
+              <Link href={dashboardHref({ month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={!catFilter ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>Semua</Link>
               {categories.map((c) => (
-                <Link key={c} href={`/dashboard?cat=${encodeURIComponent(c)}`} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={catFilter === c ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>{c}</Link>
+                <Link key={c} href={dashboardHref({ cat: c, month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={catFilter === c ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>{c}</Link>
               ))}
             </div>
           )}
@@ -187,7 +221,7 @@ export default async function DashboardPage({ searchParams }) {
               Detail: {selectedBranch.nama_cabang}
             </h2>
             <Link
-              href={`/report/${selectedId}`}
+              href={selectedMonth ? `/report/${selectedId}?month=${selectedMonth}` : `/report/${selectedId}`}
               className="rounded-full bg-white px-3 py-1 text-xs font-semibold"
               style={{ color: "var(--teal-900)" }}
             >
@@ -198,7 +232,7 @@ export default async function DashboardPage({ searchParams }) {
                 {branches.map((b) => (
                   <Link
                     key={b.id}
-                    href={`/dashboard?branch=${b.id}`}
+                    href={dashboardHref({ branch: b.id, cat: catFilter, month: selectedMonth })}
                     className="rounded-full px-3 py-1 text-xs font-medium"
                     style={b.id === selectedId
                       ? { background: "#fff", color: "var(--teal-900)" }
@@ -258,13 +292,17 @@ export default async function DashboardPage({ searchParams }) {
             )}
           </section>
 
-          {/* Target & Progress (blueprint 21A) */}
+          {/* Target & Progress (blueprint 21A) — SENGAJA selalu sepanjang masa, tidak
+              ikut filter bulan di atas (target itu tujuan berjalan, bukan target per bulan). */}
           <section className="card-3d p-4 sm:p-5">
             <h3 className="mb-3 text-sm font-semibold text-ink">🎯 Target & Progress</h3>
+            {selectedMonth && (
+              <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>Progress dihitung sepanjang masa (tidak mengikuti filter bulan di atas).</p>
+            )}
             <div className="grid gap-4 sm:grid-cols-3">
-              <ProgressBar label="Total Views" current={detail.summary.totalViews} target={goal?.target_total_views} />
-              <ProgressBar label="Engagement Rate" current={detail.summary.engagementRateOverall} target={goal?.target_engagement_rate} suffix="%" />
-              <ProgressBar label="Net Follower" current={detail.growth.netGrowth} target={goal?.target_net_followers} />
+              <ProgressBar label="Total Views" current={detail.allTime.summary.totalViews} target={goal?.target_total_views} />
+              <ProgressBar label="Engagement Rate" current={detail.allTime.summary.engagementRateOverall} target={goal?.target_engagement_rate} suffix="%" />
+              <ProgressBar label="Net Follower" current={detail.allTime.growth.netGrowth} target={goal?.target_net_followers} />
             </div>
             {editable && (
               <form action={setGoals} className="mt-4 border-t pt-3" style={{ borderColor: "rgba(0,60,68,.1)" }}>
@@ -361,14 +399,15 @@ export default async function DashboardPage({ searchParams }) {
             ))}
           </section>
 
-          <InsightAI accountId={selectedId} namaCabang={selectedBranch.nama_cabang} />
+          <InsightAI accountId={selectedId} namaCabang={selectedBranch.nama_cabang} month={selectedMonth} />
 
           <section className="grid gap-4 lg:grid-cols-2">
             <div className="card-3d p-5">
-              <h3 className="mb-1 text-sm font-semibold text-ink">Pertumbuhan Follower</h3>
+              <h3 className="mb-1 text-sm font-semibold text-ink">Pertumbuhan Follower{selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</h3>
               <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
                 {detail.growth.startFollowers} → {detail.growth.endFollowers} ({detail.growth.netGrowth >= 0 ? "+" : ""}{detail.growth.netGrowth})
-                {detail.history.length >= 2 && (() => {
+                {/* Proyeksi cuma masuk akal meramal maju dari data terkini — disembunyikan saat meninjau bulan lampau. */}
+                {!selectedMonth && detail.history.length >= 2 && (() => {
                   const fc = forecastNext(detail.history.map((h) => h.followers), 7);
                   return <span> · proyeksi 7 hari: <b style={{ color: fc.trend === "naik" ? "#166534" : fc.trend === "turun" ? "#991b1b" : "inherit" }}>~{fmt(fc.nextValue)} ({fc.trend})</b></span>;
                 })()}
@@ -377,7 +416,7 @@ export default async function DashboardPage({ searchParams }) {
             </div>
 
             <div className="card-3d p-5">
-              <h3 className="text-sm font-semibold text-ink">Jam Terbaik untuk Posting</h3>
+              <h3 className="text-sm font-semibold text-ink">Jam Terbaik untuk Posting{selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</h3>
               <p className="mb-2 text-xs" style={{ color: "var(--ink-soft)" }}>
                 5 jam dengan follower paling aktif (angka = rata-rata follower online). Makin tinggi batangnya, makin ramai.
               </p>
@@ -393,7 +432,12 @@ export default async function DashboardPage({ searchParams }) {
             </div>
 
             <div className="card-3d p-5">
-              <h3 className="mb-3 text-sm font-semibold text-ink">Gender Follower</h3>
+              <h3 className="mb-0.5 text-sm font-semibold text-ink">Gender Follower</h3>
+              {/* Ini snapshot (potret sesaat) — dgn filter bulan, ambil snapshot terakhir
+                  yang sudah ada PADA/sebelum bulan itu, bukan snapshot dari masa depan. */}
+              {detail.genderSnapshotDate && (
+                <p className="mb-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>Snapshot {detail.genderSnapshotDate}</p>
+              )}
               {detail.gender ? (
                 <Donut
                   data={[
@@ -403,7 +447,9 @@ export default async function DashboardPage({ searchParams }) {
                   ]}
                 />
               ) : (
-                <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada data gender.</p>
+                <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                  {selectedMonth ? `Belum ada snapshot gender pada/sebelum ${labelBulan(selectedMonth)}.` : "Belum ada data gender."}
+                </p>
               )}
             </div>
 
@@ -420,7 +466,7 @@ export default async function DashboardPage({ searchParams }) {
           </section>
 
           <section className="card-3d p-4 sm:p-5">
-            <h3 className="mb-3 text-sm font-semibold text-ink"># Analisis Hashtag</h3>
+            <h3 className="mb-3 text-sm font-semibold text-ink"># Analisis Hashtag{selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</h3>
             {(detail.hashtags || []).length === 0 ? (
               <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada hashtag di judul video.</p>
             ) : (
@@ -440,12 +486,12 @@ export default async function DashboardPage({ searchParams }) {
           </section>
 
           <section className="card-3d p-5">
-            <h3 className="mb-3 text-sm font-semibold text-ink">Heatmap Jam × Hari (follower aktif)</h3>
+            <h3 className="mb-3 text-sm font-semibold text-ink">Heatmap Jam × Hari (follower aktif){selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</h3>
             <Heatmap heatmap={detail.bestHours.heatmap} />
           </section>
 
           <section className="card-3d p-4 sm:p-6">
-            <h3 className="mb-3 text-sm font-semibold text-ink">Top 5 Video (by views)</h3>
+            <h3 className="mb-3 text-sm font-semibold text-ink">Top 5 Video (by views){selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>

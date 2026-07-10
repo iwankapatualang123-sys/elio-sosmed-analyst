@@ -44,6 +44,79 @@ export async function toggleBranchActive(formData) {
   revalidatePath("/settings");
 }
 
+// Fungsi: updateBranch — ubah nama/username/kategori cabang (bukan hapus data, aman).
+export async function updateBranch(formData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id") || "");
+  const nama_cabang = String(formData.get("nama_cabang") || "").trim();
+  const tiktok_username = String(formData.get("tiktok_username") || "").trim().replace(/^@/, "").toLowerCase();
+  const kategori = String(formData.get("kategori") || "").trim() || null;
+  if (!id || !nama_cabang || !tiktok_username) throw new Error("Nama cabang dan username wajib diisi.");
+  const { error } = await supabase.from("tiktok_accounts").update({ nama_cabang, tiktok_username, kategori }).eq("id", id);
+  if (error) throw new Error(`Gagal memperbarui cabang: ${error.message}`);
+  await logActivity(supabase, { action: "ubah_cabang", entity: id, detail: { nama_cabang, tiktok_username } });
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+  revalidatePath("/data");
+  revalidatePath("/calendar");
+  revalidatePath("/content-plan");
+}
+
+// Fungsi: deleteBranch — hapus PERMANEN sebuah cabang beserta SEMUA data terkait
+// (konten, overview harian, riwayat follower, target, anotasi, rencana konten —
+// semua di-cascade lewat FK "on delete cascade"). Beda dari toggleBranchActive
+// (arsip, data tetap ada) — ini tidak bisa dibatalkan, jadi wajib konfirmasi nama
+// cabang PERSIS cocok (dicek di server, bukan cuma di UI) sebelum dieksekusi.
+export async function deleteBranch(formData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id") || "");
+  const confirmName = String(formData.get("confirmName") || "").trim();
+  if (!id) return;
+
+  const { data: branch } = await supabase.from("tiktok_accounts").select("nama_cabang").eq("id", id).maybeSingle();
+  if (!branch) throw new Error("Cabang tidak ditemukan.");
+  if (confirmName !== branch.nama_cabang) {
+    throw new Error("Nama konfirmasi tidak cocok — penghapusan dibatalkan.");
+  }
+
+  const { error } = await supabase.from("tiktok_accounts").delete().eq("id", id);
+  if (error) throw new Error(`Gagal menghapus cabang: ${error.message}`);
+  await logActivity(supabase, { action: "hapus_cabang_permanen", entity: id, detail: { nama_cabang: branch.nama_cabang } });
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+  revalidatePath("/data");
+  revalidatePath("/calendar");
+  revalidatePath("/content-plan");
+  revalidatePath("/upload");
+}
+
+// Fungsi: addCategory — tambah nilai baru ke kategori Rencana Konten (PIC/Goals/
+// Pillar/Type). Dipakai isi dropdown form Rencana Konten (app/content-plan).
+export async function addCategory(formData) {
+  const supabase = await requireAdmin();
+  const category_type = String(formData.get("category_type") || "");
+  const value = String(formData.get("value") || "").trim();
+  if (!["pic", "goals", "pillar", "type"].includes(category_type) || !value) return;
+  const { error } = await supabase.from("content_plan_categories").insert({ category_type, value });
+  // Duplikat (unique constraint) diabaikan senyap — bukan error yang perlu ditampilkan.
+  if (error && error.code !== "23505") throw new Error(`Gagal menambah kategori: ${error.message}`);
+  await logActivity(supabase, { action: "tambah_kategori_rencana", entity: value, detail: { category_type } });
+  revalidatePath("/settings");
+  revalidatePath("/content-plan");
+}
+
+// Fungsi: deleteCategory — hapus satu nilai kategori (baris rencana yang sudah
+// terlanjur memakai nilai ini TIDAK berubah — hanya tidak lagi jadi pilihan baru).
+export async function deleteCategory(formData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  await supabase.from("content_plan_categories").delete().eq("id", id);
+  await logActivity(supabase, { action: "hapus_kategori_rencana", entity: id });
+  revalidatePath("/settings");
+  revalidatePath("/content-plan");
+}
+
 // Fungsi: setUserRole — ubah role user (admin/manager/staff).
 export async function setUserRole(formData) {
   const supabase = await requireAdmin();

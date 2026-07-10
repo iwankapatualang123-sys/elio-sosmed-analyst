@@ -106,6 +106,13 @@ body::before {
 }
 .btn-ghost:active:not(:disabled) { box-shadow: 0 1px 0 rgba(0, 60, 68, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
 
+.btn-danger {
+  color: #fff;
+  background: linear-gradient(180deg, #ef5350 0%, #c62828 60%, #8e1a1a 100%);
+  box-shadow: 0 4px 0 #6b1414, 0 8px 16px rgba(139, 26, 26, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.btn-danger:active:not(:disabled) { box-shadow: 0 1px 0 #6b1414, 0 3px 8px rgba(139, 26, 26, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+
 /* Input dengan kesan inset/cekung (blueprint bagian 23). */
 .input-3d {
   width: 100%;

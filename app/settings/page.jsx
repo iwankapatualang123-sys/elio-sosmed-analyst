@@ -8,7 +8,10 @@ import Nav from "@/components/Nav";
 import Button from "@/components/Button";
 import InviteUserForm from "@/components/InviteUserForm";
 import ResetPasswordButton from "@/components/ResetPasswordButton";
-import { addBranch, toggleBranchActive, setUserRole, toggleUserActive, saveUserBranches } from "./actions";
+import BranchRow from "@/components/BranchRow";
+import { addBranch, setUserRole, toggleUserActive, saveUserBranches, addCategory, deleteCategory } from "./actions";
+
+const CATEGORY_TYPE_LABEL = { pic: "PIC", goals: "Goals Content", pillar: "Pillar", type: "Type of Content" };
 
 export default async function SettingsPage() {
   const profile = await getCurrentProfile();
@@ -26,10 +29,11 @@ export default async function SettingsPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const [{ data: branches }, { data: users }, { data: access }] = await Promise.all([
+  const [{ data: branches }, { data: users }, { data: access }, { data: categoriesRaw }] = await Promise.all([
     supabase.from("tiktok_accounts").select("*").order("nama_cabang"),
     supabase.from("profiles").select("*").order("created_at"),
     supabase.from("user_branch_access").select("user_id, tiktok_account_id"),
+    supabase.from("content_plan_categories").select("*").order("value"),
   ]);
 
   const accessByUser = new Map();
@@ -38,6 +42,12 @@ export default async function SettingsPage() {
     accessByUser.get(a.user_id).add(a.tiktok_account_id);
   }
   const activeBranches = (branches || []).filter((b) => b.is_active);
+
+  // Kelompokkan kategori Rencana Konten per tipe untuk ditampilkan sbg chip.
+  const categoriesByType = { pic: [], goals: [], pillar: [], type: [] };
+  for (const c of categoriesRaw || []) {
+    if (categoriesByType[c.category_type]) categoriesByType[c.category_type].push(c);
+  }
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 p-4 sm:p-6">
@@ -76,27 +86,50 @@ export default async function SettingsPage() {
             </thead>
             <tbody>
               {(branches || []).map((b) => (
-                <tr key={b.id} className="border-t" style={{ borderColor: "rgba(0,60,68,.1)" }}>
-                  <td className="py-2 pr-3 font-medium text-ink">{b.nama_cabang}</td>
-                  <td className="py-2 pr-3">@{b.tiktok_username}</td>
-                  <td className="py-2 pr-3">{b.kategori || "-"}</td>
-                  <td className="py-2 pr-3">{b.is_active ? "Aktif" : "Nonaktif"}</td>
-                  <td className="py-2 pr-3">
-                    <form action={toggleBranchActive}>
-                      <input type="hidden" name="id" value={b.id} />
-                      <input type="hidden" name="next" value={String(!b.is_active)} />
-                      <Button type="submit" variant="ghost" className="!min-h-0 !px-3 !py-1 text-xs">
-                        {b.is_active ? "Nonaktifkan" : "Aktifkan"}
-                      </Button>
-                    </form>
-                  </td>
-                </tr>
+                <BranchRow key={b.id} branch={b} />
               ))}
               {(branches || []).length === 0 && (
                 <tr><td colSpan={5} className="py-4 text-center" style={{ color: "var(--ink-soft)" }}>Belum ada cabang.</td></tr>
               )}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      {/* Kategori Rencana Konten */}
+      <section className="card-3d p-4 sm:p-6">
+        <h2 className="mb-1 text-base font-semibold text-ink">Kategori Rencana Konten</h2>
+        <p className="mb-4 text-xs" style={{ color: "var(--ink-soft)" }}>
+          Pilihan dropdown PIC, Goals Content, Pillar, dan Type of Content di halaman Rencana Konten. Tambah nilai baru di sini kalau ada PIC/kategori baru.
+        </p>
+
+        <form action={addCategory} className="mb-5 grid gap-3 sm:grid-cols-4">
+          <select name="category_type" required className="input-3d" defaultValue="">
+            <option value="" disabled>Jenis kategori</option>
+            {Object.entries(CATEGORY_TYPE_LABEL).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+          </select>
+          <input name="value" required placeholder="Nilai baru, mis. Video" className="input-3d sm:col-span-2" />
+          <Button type="submit" variant="success">+ Tambah</Button>
+        </form>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {Object.entries(CATEGORY_TYPE_LABEL).map(([type, label]) => (
+            <div key={type}>
+              <h3 className="mb-2 text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>{label}</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {categoriesByType[type].length === 0 && (
+                  <span className="text-xs" style={{ color: "var(--ink-soft)" }}>Belum ada nilai.</span>
+                )}
+                {categoriesByType[type].map((c) => (
+                  <form key={c.id} action={deleteCategory} className="inline-flex items-center gap-1 rounded-full py-1 pl-3 pr-1.5 text-xs font-medium" style={{ background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>
+                    <input type="hidden" name="id" value={c.id} />
+                    {c.value}
+                    <button type="submit" className="rounded-full px-1 hover:bg-[rgba(0,60,68,.12)]" title={`Hapus "${c.value}"`}>×</button>
+                  </form>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 

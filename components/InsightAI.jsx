@@ -7,7 +7,7 @@
 import { useState } from "react";
 import Button from "@/components/Button";
 
-export default function InsightAI({ accountId, namaCabang }) {
+export default function InsightAI({ accountId, namaCabang, month }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
@@ -18,7 +18,7 @@ export default function InsightAI({ accountId, namaCabang }) {
       const res = await fetch("/api/insights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId, namaCabang }),
+        body: JSON.stringify({ accountId, namaCabang, month }),
       });
       const data = await res.json();
       setResult(data);

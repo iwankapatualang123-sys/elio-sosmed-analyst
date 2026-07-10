@@ -63,5 +63,40 @@ console.log("== edge cases ==");
 eq("array kosong -> array kosong", weeklyContentTrend([]), []);
 eq("baris tanpa tanggal diabaikan", weeklyContentTrend([{ total_views: 5 }]), []);
 
+console.log("== options.totalWeeks (isi minggu kosong, tidak melompat) ==");
+{
+  // Konten cuma ada di minggu 2 & 5, tapi bulan itu ada 5 minggu -> minggu 1,3,4 harus tetap muncul (0).
+  const content = [
+    { post_date: "2026-07-10", total_views: 50, total_likes: 5, total_comments: 0, total_shares: 0 },
+    { post_date: "2026-07-31", total_views: 100, total_likes: 0, total_comments: 0, total_shares: 0 },
+  ];
+  const w = weeklyContentTrend(content, { totalWeeks: 5 });
+  eq("5 minggu semua muncul", w.map((x) => x.week), [1, 2, 3, 4, 5]);
+  eq("minggu 1 kosong -> 0", [w[0].count, w[0].views], [0, 0]);
+  eq("minggu 1 tetap punya label", w[0].label, "Minggu 1");
+  eq("minggu 2 tetap terisi data asli", [w[1].count, w[1].views], [1, 50]);
+  eq("tanpa totalWeeks tetap perilaku lama (lompat)", weeklyContentTrend(content).map((x) => x.week), [2, 5]);
+}
+{
+  // Follower: endFollowers minggu kosong harus mewarisi minggu terakhir yang ada data.
+  const history = [
+    { date: "2026-07-03", followers: 110, diff_from_previous_day: 10 },
+    { date: "2026-07-25", followers: 130, diff_from_previous_day: 5 },
+  ];
+  const w = weeklyFollowerTrend(history, { totalWeeks: 5 });
+  eq("5 minggu semua muncul", w.map((x) => x.week), [1, 2, 3, 4, 5]);
+  eq("minggu 2 (kosong) warisi endFollowers dari minggu 1", w[1].endFollowers, 110);
+  eq("minggu 3 (kosong) tetap warisi 110", w[2].endFollowers, 110);
+  eq("minggu 4 terisi data asli -> 130", w[3].endFollowers, 130);
+  eq("minggu 5 (kosong) warisi 130", w[4].endFollowers, 130);
+  eq("minggu kosong netGrowth 0", w[1].netGrowth, 0);
+}
+{
+  const overview = [{ date: "2026-07-08", video_views: 20, profile_views: 2, likes: 2, comments: 1, shares: 0 }];
+  const w = weeklyOverviewTrend(overview, { totalWeeks: 4 });
+  eq("4 minggu semua muncul", w.map((x) => x.week), [1, 2, 3, 4]);
+  eq("minggu 1 kosong -> 0 semua field", [w[0].videoViews, w[0].likes, w[0].comments], [0, 0, 0]);
+}
+
 console.log(`\n==== ${pass} passed, ${fail} failed ====`);
 process.exit(fail === 0 ? 0 : 1);

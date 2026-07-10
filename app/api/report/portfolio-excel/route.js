@@ -9,26 +9,29 @@ import ExcelJS from "exceljs";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request) {
   const profile = await getCurrentProfile();
   if (!profile?.role) return new Response(JSON.stringify({ error: "Belum login." }), { status: 401 });
 
+  const monthParam = new URL(request.url).searchParams.get("month");
+  const month = /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : null;
+
   const supabase = await createSupabaseServerClient();
-  const { branches, portfolio } = await loadPortfolio(supabase);
+  const { branches, portfolio } = await loadPortfolio(supabase, { month });
 
   const wb = new ExcelJS.Workbook();
   wb.creator = "Elio Sosmed Analyst";
   const ws = wb.addWorksheet("Ringkasan Semua Cabang");
   ws.columns = [{ width: 26 }, { width: 18 }, { width: 12 }, { width: 14 }, { width: 12 }, { width: 12 }, { width: 10 }];
 
-  ws.addRow(["Ringkasan Semua Cabang"]);
+  ws.addRow([`Ringkasan Semua Cabang${month ? ` — ${month}` : " — sepanjang masa"}`]);
   ws.getRow(1).font = { bold: true, size: 14 };
   ws.addRow([]);
 
   ws.addRow(["KPI Portofolio", "Nilai"]).font = { bold: true };
   [
     ["Cabang aktif", portfolio.activeBranches],
-    ["Total konten bulan ini", portfolio.totalContentThisMonth],
+    [month ? `Total konten ${month}` : "Total konten bulan ini", portfolio.totalContentThisMonth],
     ["Total views", portfolio.totalViews],
     ["Net pertumbuhan follower", portfolio.netFollowerGrowth],
     ["Avg engagement rate (%)", portfolio.avgEngagementRate],
@@ -47,11 +50,12 @@ export async function GET() {
   ]));
 
   const buffer = await wb.xlsx.writeBuffer();
+  const fileSuffix = month ? `_${month}` : "";
   return new Response(buffer, {
     status: 200,
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": 'attachment; filename="Laporan_Semua_Cabang.xlsx"',
+      "Content-Disposition": `attachment; filename="Laporan_Semua_Cabang${fileSuffix}.xlsx"`,
     },
   });
 }
