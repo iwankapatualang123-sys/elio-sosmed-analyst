@@ -237,8 +237,8 @@ export function Heatmap({ heatmap = {} }) {
         </p>
       )}
 
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-        <div>
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="lg:flex-1">
           <div style={{ overflowX: "auto" }}>
             <table style={{ borderCollapse: "separate", borderSpacing: 2 }}>
               <tbody>
@@ -254,7 +254,7 @@ export function Heatmap({ heatmap = {} }) {
                           key={h}
                           title={`${day} ${String(h).padStart(2, "0")}:00 — ${Math.round(val)} follower aktif`}
                           style={{
-                            width: 15, height: 15, borderRadius: 3, padding: 0,
+                            width: 17, height: 17, borderRadius: 3, padding: 0,
                             background: `rgba(0,102,116,${0.06 + a * 0.94})`,
                             boxShadow: isBest ? "0 0 0 2px #f0b45a" : "none",
                           }}
