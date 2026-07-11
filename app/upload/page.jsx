@@ -6,20 +6,45 @@ import { getCurrentProfile, canWrite } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Nav from "@/components/Nav";
 import UploadClient from "@/components/UploadClient";
+import SocialSnapshotCard from "@/components/SocialSnapshotCard";
+import { latestSnapshot } from "@/lib/social/snapshots";
 
 export default async function UploadPage() {
   const profile = await getCurrentProfile();
   const hasRole = !!profile?.role;
 
   let branches = [];
+  let latestSnaps = [];
   if (hasRole) {
     const supabase = await createSupabaseServerClient();
-    const { data } = await supabase
-      .from("tiktok_accounts")
-      .select("id, nama_cabang, tiktok_username")
-      .eq("is_active", true)
-      .order("nama_cabang");
+    const [{ data }, { data: snaps }] = await Promise.all([
+      supabase
+        .from("tiktok_accounts")
+        .select("id, nama_cabang, tiktok_username")
+        .eq("is_active", true)
+        .order("nama_cabang"),
+      supabase
+        .from("social_account_snapshots")
+        .select("tiktok_account_id, platform, snapshot_date, followers")
+        .order("snapshot_date", { ascending: false })
+        .limit(400),
+    ]);
     branches = data || [];
+    // Snapshot TERBARU per (cabang, platform) — untuk daftar "input terakhir".
+    const byBranch = new Map();
+    for (const b of branches) byBranch.set(b.id, b.nama_cabang);
+    const perKey = new Map(); // `${acc}|${platform}` -> rows
+    for (const s of snaps || []) {
+      if (!byBranch.has(s.tiktok_account_id)) continue; // cabang diarsipkan dilewati
+      const k = `${s.tiktok_account_id}|${s.platform}`;
+      if (!perKey.has(k)) perKey.set(k, []);
+      perKey.get(k).push(s);
+    }
+    latestSnaps = [...perKey.values()]
+      .map((rows) => latestSnapshot(rows))
+      .filter(Boolean)
+      .map((s) => ({ accountId: s.tiktok_account_id, branch: byBranch.get(s.tiktok_account_id), platform: s.platform, snapshot_date: s.snapshot_date, followers: s.followers }))
+      .sort((a, b) => a.branch.localeCompare(b.branch) || a.platform.localeCompare(b.platform));
   }
 
   return (
@@ -43,7 +68,12 @@ export default async function UploadPage() {
           </p>
         </section>
       ) : (
-        <UploadClient branches={branches} />
+        <>
+          <UploadClient branches={branches} />
+          {/* Lapis 1 laporan non-TikTok: snapshot manual mingguan IG/Threads —
+              ditaruh di sini supaya ritual mingguan tim tetap satu halaman. */}
+          <SocialSnapshotCard branches={branches} latest={latestSnaps} />
+        </>
       )}
     </main>
   );

@@ -15,6 +15,7 @@ import OnboardingTips from "@/components/OnboardingTips";
 import ProgressBar from "@/components/ProgressBar";
 import { forecastNext } from "@/lib/tiktok/forecast";
 import { matchPlanStatusMulti, summarizePlans } from "@/lib/tiktok/content-plan";
+import { SNAPSHOT_PLATFORMS, groupByPlatform, followerTrend, latestSnapshot, daysSince } from "@/lib/social/snapshots";
 import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
 
 const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -142,6 +143,21 @@ export default async function DashboardPage({ searchParams }) {
     });
   }
   const planSummary = summarizePlans(planThisMonth.map((p) => p.status));
+
+  // Snapshot manual Instagram/Threads cabang terpilih (Lapis 1 laporan non-TikTok):
+  // follower terakhir + delta vs snapshot sebelumnya + pengingat bila basi >7 hari.
+  let socialSnaps = [];
+  if (selectedId) {
+    const { data: snapRows } = await supabase
+      .from("social_account_snapshots")
+      .select("platform, snapshot_date, followers, reach_30d, profile_visits")
+      .eq("tiktok_account_id", selectedId)
+      .order("snapshot_date", { ascending: false })
+      .limit(24);
+    socialSnaps = snapRows || [];
+  }
+  const snapsByPlatform = groupByPlatform(socialSnaps);
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
@@ -308,6 +324,61 @@ export default async function DashboardPage({ searchParams }) {
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </section>
+
+          {/* Perkembangan Instagram/Threads — snapshot manual mingguan (Lapis 1).
+              Follower terakhir + delta vs snapshot sebelumnya; pengingat bila >7 hari. */}
+          <section className="card-3d p-4 sm:p-5">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-semibold text-ink">📸 Instagram & Threads (input manual)</h3>
+              {editable && (
+                <Link href="/upload" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+                  Perbarui data →
+                </Link>
+              )}
+            </div>
+            {snapsByPlatform.size === 0 ? (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                Belum ada data. Catat followers Instagram/Threads cabang ini <b>seminggu sekali</b> lewat halaman{" "}
+                <Link href="/upload" style={{ color: "var(--teal-900)", fontWeight: 600 }}>Upload</Link> untuk melihat perkembangannya di sini.
+              </p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {SNAPSHOT_PLATFORMS.filter((p) => snapsByPlatform.has(p.key)).map((p) => {
+                  const rows = snapsByPlatform.get(p.key);
+                  const { latest, delta } = followerTrend(rows);
+                  const last = latestSnapshot(rows);
+                  const age = daysSince(last?.snapshot_date, todayStr);
+                  const stale = age != null && age > 7;
+                  return (
+                    <div key={p.key} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>{p.icon} {p.label}</span>
+                        <span className="text-[11px] font-medium" style={{ color: stale ? "#b45309" : "var(--ink-soft)" }} title={stale ? "Sudah lewat seminggu — perbarui angkanya di halaman Upload" : "Tanggal snapshot terakhir"}>
+                          {stale ? `⚠ terakhir ${age} hari lalu` : last?.snapshot_date}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <span className="text-2xl font-extrabold" style={{ color: "var(--teal-900)" }}>{latest ? fmt(latest.followers) : "—"}</span>
+                        <span className="text-xs" style={{ color: "var(--ink-soft)" }}>followers</span>
+                        {delta != null && (
+                          <span className="text-xs font-semibold" style={{ color: delta > 0 ? "#166534" : delta < 0 ? "#b91c1c" : "var(--ink-soft)" }}>
+                            {delta > 0 ? `▲ +${fmt(delta)}` : delta < 0 ? `▼ ${fmt(delta)}` : "＝ 0"} vs sebelumnya
+                          </span>
+                        )}
+                      </div>
+                      {(last?.reach_30d != null || last?.profile_visits != null) && (
+                        <p className="mt-1 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+                          {last?.reach_30d != null && <>Reach 30 hari: <b className="text-ink">{fmt(last.reach_30d)}</b></>}
+                          {last?.reach_30d != null && last?.profile_visits != null && " · "}
+                          {last?.profile_visits != null && <>Kunjungan profil: <b className="text-ink">{fmt(last.profile_visits)}</b></>}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
