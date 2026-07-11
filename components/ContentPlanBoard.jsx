@@ -53,18 +53,32 @@ function StatusBadge({ status }) {
   );
 }
 
-// Chip mini status 1 platform (TT/IG/TH) — berjejer dengan input link-nya di kolom
-// Link tayang, warna mengikuti status platform itu (tooltip = nama + status lengkap).
-function PlatformChip({ option, status }) {
-  const meta = STATUS_META[status] || STATUS_META["On Going"];
+// Kolom Status utk rencana MULTI-platform: satu badge status penuh per platform,
+// tiap baris tingginya disamakan dgn baris input link di kolom sebelah supaya
+// TT sejajar link TT, IG sejajar link IG (tidak menumpuk di bawah 1 badge).
+function PlatformStatusRows({ plan }) {
+  const keys = planPlatforms(plan);
   return (
-    <span
-      className="inline-flex w-7 shrink-0 items-center justify-center rounded px-1 py-0.5 text-[9px] font-bold"
-      style={{ background: meta.bg, color: meta.fg }}
-      title={`${option.label}: ${status || "On Going"}`}
-    >
-      {option.short}
-    </span>
+    <div className="flex flex-col gap-1">
+      {PLATFORM_OPTIONS.filter((o) => keys.includes(o.key)).map((o) => {
+        const st = plan.perPlatform?.[o.key]?.status || "On Going";
+        const meta = STATUS_META[st] || STATUS_META["On Going"];
+        const Icon = meta.Icon;
+        return (
+          <div key={o.key} className="flex h-[26px] items-center">
+            <span
+              className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+              style={{ background: meta.bg, color: meta.fg }}
+              title={`${o.label}: ${st}`}
+            >
+              <b className="text-[9px]">{o.short}</b>
+              <Icon size={10} />
+              {st}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -250,10 +264,10 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
           <colgroup>
             <col style={{ width: 36 }} />
             <col style={{ width: 52 }} />
-            <col style={{ width: 96 }} />
+            <col style={{ width: 118 }} />
             <col style={{ width: 152 }} />
             <col style={{ width: 50 }} />
-            <col style={{ width: 306 }} />
+            <col style={{ width: 284 }} />
             <col style={{ width: 68 }} />
             <col style={{ width: 108 }} />
             <col style={{ width: 88 }} />
@@ -285,19 +299,19 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
                   <td className="px-1.5 py-1.5 text-[10px]" style={{ color: "var(--ink-soft)" }}>{p.seq || i + 1}</td>
                   <td className="overflow-hidden text-ellipsis whitespace-nowrap px-1.5 py-1.5 text-[10px]" title={fmtDateFull(p.post_date)}>{fmtDate(p.post_date)}</td>
                   <td className="overflow-hidden px-1.5 py-1.5">
-                    <StatusBadge status={p.status} />
+                    {planPlatforms(p).length > 1 ? <PlatformStatusRows plan={p} /> : <StatusBadge status={p.status} />}
                     {p.match && (
-                      <div className="mt-1 max-w-[86px] truncate text-[9px]" style={{ color: "#166534" }} title={p.match.video_title}>
+                      <div className="mt-1 max-w-[108px] truncate text-[9px]" style={{ color: "#166534" }} title={p.match.video_title}>
                         ✓ {p.match.video_title}
                       </div>
                     )}
                     {!p.match && p.hint && p.status !== "Replaced" && (
-                      <div className="mt-1 max-w-[86px] truncate text-[9px]" style={{ color: "var(--ink-soft)" }} title={`Mungkin sudah tayang — tempel linknya untuk verifikasi: ${p.hint.video_title}`}>
+                      <div className="mt-1 max-w-[108px] truncate text-[9px]" style={{ color: "var(--ink-soft)" }} title={`Mungkin sudah tayang — tempel linknya untuk verifikasi: ${p.hint.video_title}`}>
                         💡 {p.hint.video_title}
                       </div>
                     )}
                     {p.status === "Replaced" && (
-                      <div className="mt-1 max-w-[86px] truncate text-[9px]" style={{ color: "#a16207" }} title={p.replaced_by?.headline ? `Digantikan oleh: ${p.replaced_by.headline}` : "Digantikan oleh rencana lain"}>
+                      <div className="mt-1 max-w-[108px] truncate text-[9px]" style={{ color: "#a16207" }} title={p.replaced_by?.headline ? `Digantikan oleh: ${p.replaced_by.headline}` : "Digantikan oleh rencana lain"}>
                         ↪ {p.replaced_by?.headline || "rencana lain"}
                       </div>
                     )}
@@ -309,8 +323,8 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
                       const val = platformLink(p, o.key);
                       const multi = arr.length > 1;
                       return (
-                        <div key={o.key} className={idx > 0 ? "mt-1 flex items-center gap-1" : "flex items-center gap-1"}>
-                          {multi && <PlatformChip option={o} status={p.perPlatform?.[o.key]?.status} />}
+                        <div key={o.key} className={`flex h-[26px] items-center gap-1${idx > 0 ? " mt-1" : ""}`}>
+                          {multi && <span className="w-5 shrink-0 text-[9px] font-bold" style={{ color: "var(--ink-soft)" }}>{o.short}</span>}
                           <input
                             type="url"
                             defaultValue={val}
