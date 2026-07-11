@@ -110,9 +110,11 @@ function sortValue(row, col) {
   return String(row[col.key] ?? "").toLowerCase();
 }
 
-export default function DataTable({ columns = [], rows = [], emptyText = "Tidak ada data.", maxHeight = 380 }) {
+export default function DataTable({ columns = [], rows = [], emptyText = "Tidak ada data.", maxHeight = 380, defaultSort = null }) {
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState({ key: null, dir: "asc" });
+  // defaultSort {key, dir}: urutan awal tabel (mis. tanggal terbaru dulu) —
+  // tetap bisa diubah user dgn klik header seperti biasa.
+  const [sort, setSort] = useState(defaultSort || { key: null, dir: "asc" });
   const [pageSize, setPageSize] = useState(20);
   const [page, setPage] = useState(0);
 

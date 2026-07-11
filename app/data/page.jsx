@@ -252,7 +252,7 @@ export default async function DataPage({ searchParams }) {
           {splitContent ? (
             <>
               <Section title={`Konten ${labelBulan(selectedMonth)}`} count={fContent.length} subtitle="Video yang diposting pada bulan terpilih ini.">
-                <DataTable rows={fContent} maxHeight={480} emptyText="Belum ada konten bulan ini." columns={KONTEN_COLUMNS} />
+                <DataTable rows={fContent} maxHeight={480} emptyText="Belum ada konten bulan ini." columns={KONTEN_COLUMNS} defaultSort={{ key: "post_date", dir: "desc" }} />
               </Section>
 
               {contentOtherNotable.length > 0 && (
@@ -267,7 +267,7 @@ export default async function DataPage({ searchParams }) {
             </>
           ) : (
             <Section title="Konten" count={content.length} subtitle="Semua video akun ini (tidak difilter bulan — filter Bulan hanya untuk data harian & tren mingguan).">
-              <DataTable rows={content} maxHeight={640} emptyText="Belum ada konten." columns={KONTEN_COLUMNS} />
+              <DataTable rows={content} maxHeight={640} emptyText="Belum ada konten." columns={KONTEN_COLUMNS} defaultSort={{ key: "post_date", dir: "desc" }} />
             </Section>
           )}
 
@@ -280,6 +280,7 @@ export default async function DataPage({ searchParams }) {
             <DataTable
               rows={dailyMerged}
               maxHeight={440}
+              defaultSort={{ key: "date", dir: "desc" }}
               emptyText="Tidak ada data harian pada bulan ini."
               columns={[
                 { key: "date", label: "Tanggal", format: "date" },
@@ -309,6 +310,7 @@ export default async function DataPage({ searchParams }) {
                     <DataTable
                       rows={fActivity}
                       maxHeight={320}
+                      defaultSort={{ key: "date", dir: "desc" }}
                       emptyText="—"
                       columns={[
                         { key: "date", label: "Tanggal", format: "date" },
@@ -351,6 +353,7 @@ export default async function DataPage({ searchParams }) {
                   <DataTable
                     rows={gender}
                     maxHeight={280}
+                    defaultSort={{ key: "snapshot_date", dir: "desc" }}
                     emptyText="—"
                     columns={[
                       { key: "snapshot_date", label: "Tanggal", format: "date" },
@@ -384,6 +387,7 @@ export default async function DataPage({ searchParams }) {
                 <DataTable
                   rows={fIgContent}
                   maxHeight={480}
+                  defaultSort={{ key: "post_date", dir: "desc" }}
                   emptyText="Tidak ada konten IG pada bulan ini."
                   columns={[
                     { key: "jenis", label: "Jenis", format: "text", width: 70 },
@@ -409,6 +413,7 @@ export default async function DataPage({ searchParams }) {
               >
                 <DataTable
                   rows={igDailyRows}
+                  defaultSort={{ key: "date", dir: "desc" }}
                   emptyText="Tidak ada data harian IG pada bulan ini."
                   columns={[
                     { key: "date", label: "Tanggal", format: "date" },
