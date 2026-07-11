@@ -102,7 +102,9 @@ export default async function DataPage({ searchParams }) {
       ...c,
       jenis: String(c.post_type ?? "").replace(/\s*IG$/i, "") || "—",
       video_link: c.permalink,
-      video_title: (c.description || "(tanpa caption)").split("\n")[0],
+      // Caption UTUH (bukan cuma baris pertama) — sel 'title' sendiri yang melipat
+      // 2 baris + chip hashtag + "Lihat selengkapnya", persis tabel Konten TikTok.
+      video_title: c.description || "",
       post_date: String(c.published_at ?? "").slice(0, 10),
       er: erOf(c),
       kolab: c.is_collab ? "✓ kolab" : "",
@@ -391,7 +393,7 @@ export default async function DataPage({ searchParams }) {
                   emptyText="Tidak ada konten IG pada bulan ini."
                   columns={[
                     { key: "jenis", label: "Jenis", format: "text", width: 70 },
-                    { key: "video_title", label: "Caption", format: "title", width: 300 },
+                    { key: "video_title", label: "Caption", format: "title", width: 320 },
                     { key: "post_date", label: "Tanggal", format: "date" },
                     { key: "views", label: "Tayangan", align: "right", format: "number" },
                     { key: "reach", label: "Jangkauan", align: "right", format: "number" },
