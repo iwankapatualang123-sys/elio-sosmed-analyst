@@ -7,6 +7,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Nav from "@/components/Nav";
 import UploadClient from "@/components/UploadClient";
 import SocialSnapshotCard from "@/components/SocialSnapshotCard";
+import InstagramUploadCard from "@/components/InstagramUploadCard";
 import { latestSnapshot } from "@/lib/social/snapshots";
 
 export default async function UploadPage() {
@@ -70,8 +71,10 @@ export default async function UploadPage() {
       ) : (
         <>
           <UploadClient branches={branches} />
-          {/* Lapis 1 laporan non-TikTok: snapshot manual mingguan IG/Threads —
-              ditaruh di sini supaya ritual mingguan tim tetap satu halaman. */}
+          {/* Data IG dari export Meta Business Suite (harian + per konten). */}
+          <InstagramUploadCard branches={branches} />
+          {/* Snapshot manual mingguan IG/Threads (jangkar total follower) —
+              tetap dipakai; file export IG hanya berisi PERTAMBAHAN follower. */}
           <SocialSnapshotCard branches={branches} latest={latestSnaps} />
         </>
       )}
