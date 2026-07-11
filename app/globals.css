@@ -182,3 +182,13 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* Bottom-nav HP (Nav.jsx): beri ruang di bawah konten supaya tidak tertutup bar
+   navigasi tetap; ikut safe-area (notch iPhone). Hanya layar < md (768px). */
+@media (max-width: 767px) {
+  main { padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important; }
+}
+/* Bottom-nav jangan ikut tercetak. */
+@media print {
+  nav[aria-label="Navigasi bawah"] { display: none !important; }
+}

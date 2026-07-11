@@ -232,7 +232,7 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between gap-2">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs" style={{ color: "var(--ink-soft)" }}>
           {plans.length} baris rencana · <b>{accCount}</b> sudah ACC. Tempel <b>Link tayang</b> per platform setelah upload (TikTok: <b>Uploaded</b> → <b>Verified</b> saat cocok report; IG/Threads: <b>Uploaded</b>). Rencana bulan lampau tanpa link otomatis <b>Cancelled</b>. Platform diatur di form Edit.
         </p>

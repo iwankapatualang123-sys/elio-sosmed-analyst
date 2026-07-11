@@ -45,6 +45,7 @@ export default function Nav({ email, role }) {
   ];
 
   return (
+    <>
     <header
       className="flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5 sm:px-5"
       style={{
@@ -68,8 +69,9 @@ export default function Nav({ email, role }) {
         </div>
       </div>
 
-      {/* Menu utama */}
-      <nav className="flex items-center gap-1">
+      {/* Menu utama — hanya desktop; di HP pindah ke bottom-nav (blueprint §11)
+          supaya header tidak melipat jadi 2-3 baris di layar sempit. */}
+      <nav className="hidden items-center gap-1 md:flex">
         {PRIMARY.map((l) => {
           const active = isActive(l.href);
           return (
@@ -88,9 +90,10 @@ export default function Nav({ email, role }) {
         })}
       </nav>
 
-      {/* Kanan: pencarian + menu profil */}
-      <div className="ml-auto flex items-center gap-2">
-        <div className="hidden md:block"><GlobalSearch /></div>
+      {/* Kanan: pencarian + menu profil. Di HP pencarian melebar mengisi sisa header
+          (menu utama sudah pindah ke bawah, jadi ada ruang). */}
+      <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
+        <div className="min-w-0 flex-1 md:flex-none"><GlobalSearch /></div>
 
         <div className="relative">
           <button
@@ -131,5 +134,40 @@ export default function Nav({ email, role }) {
 
       <IdleLogout />
     </header>
+
+    {/* Bottom-nav HP (blueprint §11): 6 menu utama sebagai bar bawah tetap —
+        ikon + label kecil, aman terhadap notch (safe-area-inset-bottom).
+        Konten halaman diberi ruang lewat padding-bottom di globals.css. */}
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 md:hidden"
+      style={{
+        background: "linear-gradient(180deg,#ffffff,#f2f9f4)",
+        borderTop: "1px solid rgba(0,60,68,.12)",
+        boxShadow: "0 -10px 24px -12px rgba(0,36,42,.35)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+      aria-label="Navigasi bawah"
+    >
+      {PRIMARY.map((l) => {
+        const active = isActive(l.href);
+        return (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-semibold"
+            style={active ? { color: "var(--teal-900)" } : { color: "rgba(0,60,68,.5)" }}
+          >
+            <span
+              className="flex h-7 w-12 items-center justify-center rounded-full"
+              style={active ? { background: "rgba(0,102,116,.12)" } : undefined}
+            >
+              <l.Icon size={19} strokeWidth={2.2} aria-hidden />
+            </span>
+            {l.label}
+          </Link>
+        );
+      })}
+    </nav>
+    </>
   );
 }

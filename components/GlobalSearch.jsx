@@ -19,15 +19,15 @@ export default function GlobalSearch() {
   }
 
   return (
-    <form onSubmit={submit} className="relative">
+    <form onSubmit={submit} className="relative w-full md:w-auto">
       <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(255,255,255,.6)" }} aria-hidden />
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Cari cabang / video…"
         aria-label="Pencarian global"
-        className="rounded-full py-1.5 pl-8 pr-3 text-sm text-white outline-none placeholder:text-white/50"
-        style={{ background: "rgba(255,255,255,.12)", border: "1px solid rgba(255,255,255,.18)", minWidth: 170 }}
+        className="w-full rounded-full py-1.5 pl-8 pr-3 text-sm text-white outline-none placeholder:text-white/50 md:w-[190px]"
+        style={{ background: "rgba(255,255,255,.12)", border: "1px solid rgba(255,255,255,.18)", minWidth: 0 }}
       />
     </form>
   );
