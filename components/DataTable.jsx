@@ -12,6 +12,7 @@
 
 import { useMemo, useState } from "react";
 import Thumbnail from "@/components/Thumbnail";
+import IgThumbnail from "@/components/IgThumbnail";
 
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
 const HASHTAG_RE = /#[\p{L}\p{N}_]+/gu;
@@ -94,6 +95,10 @@ function cellContent(row, col) {
       // Thumbnail di-proxy & dikecilkan (/api/tiktok-thumbnail) + fallback 🎬 kalau
       // gagal — lihat components/Thumbnail.jsx.
       return <Thumbnail link={row.video_link} width={52} height={69} />;
+    case "ig-thumbnail":
+      // Preview Instagram: coba media endpoint dari browser, fallback tile ikon
+      // per jenis konten — lihat components/IgThumbnail.jsx.
+      return <IgThumbnail link={row.video_link} postType={row.post_type} width={52} height={69} />;
     case "title":
       return <TitleCell value={v} link={row.video_link} width={col.width || 320} />;
     case "text":
