@@ -14,7 +14,7 @@ import InsightAI from "@/components/InsightAI";
 import OnboardingTips from "@/components/OnboardingTips";
 import ProgressBar from "@/components/ProgressBar";
 import { forecastNext } from "@/lib/tiktok/forecast";
-import { matchPlanStatus, summarizePlans } from "@/lib/tiktok/content-plan";
+import { matchPlanStatusMulti, summarizePlans } from "@/lib/tiktok/content-plan";
 import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
 
 const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -131,13 +131,13 @@ export default async function DashboardPage({ searchParams }) {
   if (selectedId) {
     const [{ data: plansM }, { data: contentsM }] = await Promise.all([
       supabase.from("content_plans")
-        .select("id, post_date, plan_month, pic, headline, primary_pillar, acc_to_posting, posted_url, status_override, replaced_by_id")
+        .select("id, post_date, plan_month, pic, headline, primary_pillar, acc_to_posting, posted_url, status_override, replaced_by_id, platforms, platform_links")
         .eq("tiktok_account_id", selectedId).eq("plan_month", `${nowMonth}-01`)
         .order("post_date", { ascending: true, nullsFirst: false }),
       supabase.from("tiktok_content").select("video_id, video_title, video_link").eq("tiktok_account_id", selectedId),
     ]);
     planThisMonth = (plansM || []).map((p) => {
-      const r = matchPlanStatus(p, contentsM || [], { currentMonth: nowMonth });
+      const r = matchPlanStatusMulti(p, contentsM || [], { currentMonth: nowMonth });
       return { ...p, status: r.status, hint: r.hint };
     });
   }

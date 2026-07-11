@@ -9,7 +9,8 @@
 import { useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { Plus, Pencil, Trash2, X, ExternalLink, CheckCircle2, FileSpreadsheet, Download, UploadCloud, ArrowRight, ArrowLeft, Store, Repeat, Clock, UploadCloud as UploadIcon, Ban } from "lucide-react";
-import { createPlan, updatePlan, deletePlan, toggleAcc, setPostedUrl, analyzePlansExcel, importPlansExcelMapped, replacePlan, unreplacePlan } from "@/app/content-plan/actions";
+import { createPlan, updatePlan, deletePlan, toggleAcc, setPostedUrl, setPlatformLink, analyzePlansExcel, importPlansExcelMapped, replacePlan, unreplacePlan } from "@/app/content-plan/actions";
+import { PLATFORM_OPTIONS, planPlatforms, platformLink } from "@/lib/tiktok/content-plan";
 
 const BULAN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 // Format ringkas ("14 Jul") untuk kolom sempit di tabel; tahun tetap ada di tooltip
@@ -52,6 +53,25 @@ function StatusBadge({ status }) {
   );
 }
 
+// Chip mini status per platform (TT/IG/TH) di kolom Status — hanya tampil bila
+// rencana menarget lebih dari sekadar TikTok, supaya baris lama tetap bersih.
+function PlatformChips({ platforms = [], perPlatform = {} }) {
+  if (!platforms.length || (platforms.length === 1 && platforms[0] === "tiktok")) return null;
+  return (
+    <div className="mt-1 flex flex-wrap gap-0.5">
+      {PLATFORM_OPTIONS.filter((o) => platforms.includes(o.key)).map((o) => {
+        const st = perPlatform[o.key]?.status || "On Going";
+        const meta = STATUS_META[st] || STATUS_META["On Going"];
+        return (
+          <span key={o.key} className="rounded px-1 py-px text-[9px] font-bold" style={{ background: meta.bg, color: meta.fg }} title={`${o.label}: ${st}`}>
+            {o.short}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 // Satu field form berlabel.
 function Field({ label, children, hint }) {
   return (
@@ -67,6 +87,7 @@ const EMPTY = {
   id: null, post_date: "", pic: "", headline: "", topic: "", goals_content: "",
   primary_pillar: "", secondary_pillar: "", content_type: "Video", reference_url: "",
   posted_url: "", notes: "", acc_to_posting: false, status_override: "",
+  platforms: ["tiktok"], platform_links: {},
 };
 
 export default function ContentPlanBoard({ accountId, accounts = [], plans = [], options = {}, pics = [], accCount = 0 }) {
@@ -188,20 +209,22 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
   }
 
   // Simpan link tayang saat tim selesai mengetik (blur) — hanya jika berubah.
-  function saveLink(row, value) {
+  // TikTok -> posted_url (verifikasi otomatis); IG/Threads -> platform_links.
+  function saveLink(row, platform, value) {
     const next = value.trim();
-    if (next === String(row.posted_url || "").trim()) return;
+    if (next === platformLink(row, platform)) return;
     const fd = new FormData();
     fd.set("id", String(row.id));
+    fd.set("platform", platform);
     fd.set("posted_url", next);
-    startTransition(() => setPostedUrl(fd));
+    startTransition(() => (platform === "tiktok" ? setPostedUrl(fd) : setPlatformLink(fd)));
   }
 
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-xs" style={{ color: "var(--ink-soft)" }}>
-          {plans.length} baris rencana · <b>{accCount}</b> sudah ACC. Tempel <b>Link tayang</b> setelah upload (status jadi <b>Uploaded</b> → <b>Verified</b> saat cocok report). Rencana bulan lampau tanpa link otomatis <b>Cancelled</b>.
+          {plans.length} baris rencana · <b>{accCount}</b> sudah ACC. Tempel <b>Link tayang</b> per platform setelah upload (TikTok: <b>Uploaded</b> → <b>Verified</b> saat cocok report; IG/Threads: <b>Uploaded</b>). Rencana bulan lampau tanpa link otomatis <b>Cancelled</b>. Platform diatur di form Edit.
         </p>
         <div className="flex items-center gap-2">
           <button
@@ -267,6 +290,7 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
                   <td className="overflow-hidden text-ellipsis whitespace-nowrap px-1.5 py-1.5 text-[10px]" title={fmtDateFull(p.post_date)}>{fmtDate(p.post_date)}</td>
                   <td className="overflow-hidden px-1.5 py-1.5">
                     <StatusBadge status={p.status} />
+                    <PlatformChips platforms={p.platforms} perPlatform={p.perPlatform} />
                     {p.match && (
                       <div className="mt-1 max-w-[86px] truncate text-[9px]" style={{ color: "#166534" }} title={p.match.video_title}>
                         ✓ {p.match.video_title}
@@ -284,21 +308,34 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
                     )}
                   </td>
                   <td className="px-2 py-1.5">
-                    <input
-                      type="url"
-                      defaultValue={p.posted_url || ""}
-                      onBlur={(e) => saveLink(p, e.target.value)}
-                      placeholder="tempel link…"
-                      disabled={pending}
-                      className="input-3d !min-h-0 !py-1 !px-2 text-[11px]"
-                      style={{ width: "100%" }}
-                      title="Tempel link konten yang sudah tayang. Status jadi Verified bila cocok data report."
-                    />
-                    {p.posted_url && (
-                      <a href={p.posted_url} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-flex items-center gap-1 text-[9px] font-semibold" style={{ color: "var(--teal-900)" }}>
-                        <ExternalLink size={9} /> buka
-                      </a>
-                    )}
+                    {/* Satu input link per platform target. TikTok terverifikasi otomatis
+                        vs data report; IG/Threads berbasis link saja (Uploaded). */}
+                    {PLATFORM_OPTIONS.filter((o) => planPlatforms(p).includes(o.key)).map((o, idx, arr) => {
+                      const val = platformLink(p, o.key);
+                      const multi = arr.length > 1;
+                      return (
+                        <div key={o.key} className={idx > 0 ? "mt-1 flex items-center gap-1" : "flex items-center gap-1"}>
+                          {multi && <span className="w-5 shrink-0 text-[8.5px] font-bold" style={{ color: "var(--ink-soft)" }}>{o.short}</span>}
+                          <input
+                            type="url"
+                            defaultValue={val}
+                            onBlur={(e) => saveLink(p, o.key, e.target.value)}
+                            placeholder={multi ? `link ${o.label}…` : "tempel link…"}
+                            disabled={pending}
+                            className="input-3d !min-h-0 !py-1 !px-2 text-[11px]"
+                            style={{ width: "100%", minWidth: 0 }}
+                            title={o.key === "tiktok"
+                              ? "Tempel link konten TikTok yang sudah tayang. Status jadi Verified bila cocok data report."
+                              : `Tempel link konten ${o.label} yang sudah tayang (status jadi Uploaded).`}
+                          />
+                          {val && (
+                            <a href={val} target="_blank" rel="noopener noreferrer" className="shrink-0" style={{ color: "var(--teal-900)" }} title={`Buka link ${o.label}`}>
+                              <ExternalLink size={10} />
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
                   </td>
                   <td className="overflow-hidden text-ellipsis whitespace-nowrap px-1.5 py-1.5 text-[10px]" title={p.pic || ""}>{p.pic || "—"}</td>
                   <td className="px-2 py-1.5">
@@ -481,9 +518,7 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
                 </Field>
               </div>
               <div className="sm:col-span-2">
-                <Field label="Link konten tayang (diisi tim setelah upload)" hint="Tempel link TikTok konten yang sudah tayang. Status jadi Verified bila cocok dengan data report yang di-upload.">
-                  <input name="posted_url" type="url" defaultValue={draft.posted_url || ""} placeholder="https://www.tiktok.com/@.../video/..." className="input-3d" />
-                </Field>
+                <PlatformSection draft={draft} />
               </div>
               <div className="sm:col-span-2">
                 <Field label="Keterangan / Konten Pengganti">
@@ -513,6 +548,58 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Bagian PLATFORM di modal tambah/edit: centang platform target + link tayang per
+// platform yang dicentang. Platform yang TIDAK dicentang tetap mengirim link lamanya
+// lewat input hidden supaya nilainya tidak terhapus diam-diam saat disimpan.
+function PlatformSection({ draft }) {
+  const [checked, setChecked] = useState(() => new Set(planPlatforms(draft)));
+  function toggle(key) {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        if (next.size === 1) return prev; // minimal 1 platform
+        next.delete(key);
+      } else next.add(key);
+      return next;
+    });
+  }
+  const linkName = (key) => (key === "tiktok" ? "posted_url" : `link_${key}`);
+  return (
+    <div className="flex flex-col gap-2 rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.12)", background: "rgba(0,102,116,.03)" }}>
+      <span className="text-sm font-semibold text-ink">Platform tayang</span>
+      <div className="flex flex-wrap gap-3">
+        {PLATFORM_OPTIONS.map((o) => (
+          <label key={o.key} className="flex items-center gap-1.5 text-sm font-medium text-ink">
+            <input type="checkbox" name="platforms" value={o.key} checked={checked.has(o.key)} onChange={() => toggle(o.key)} className="h-4 w-4 accent-[#0a8291]" />
+            {o.label}
+          </label>
+        ))}
+      </div>
+      <span className="text-[11px]" style={{ color: "var(--ink-soft)" }}>
+        Link TikTok diverifikasi otomatis vs data report (Verified). Instagram/Threads belum punya data report — ada link = <b>Uploaded</b>.
+      </span>
+      {PLATFORM_OPTIONS.map((o) => {
+        const val = platformLink(draft, o.key);
+        if (!checked.has(o.key)) {
+          // Simpan nilai lama diam-diam supaya tidak hilang saat platform di-uncheck.
+          return val ? <input key={o.key} type="hidden" name={linkName(o.key)} value={val} /> : null;
+        }
+        return (
+          <Field key={o.key} label={`Link tayang ${o.label}`}>
+            <input
+              name={linkName(o.key)}
+              type="url"
+              defaultValue={val}
+              placeholder={o.key === "tiktok" ? "https://www.tiktok.com/@.../video/..." : `https://www.${o.key}.com/...`}
+              className="input-3d"
+            />
+          </Field>
+        );
+      })}
     </div>
   );
 }

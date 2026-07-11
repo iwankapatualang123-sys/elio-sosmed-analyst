@@ -10,7 +10,7 @@ import Nav from "@/components/Nav";
 import DataFilters from "@/components/DataFilters";
 import ContentPlanBoard from "@/components/ContentPlanBoard";
 import {
-  matchPlanStatus, summarizePlans,
+  matchPlanStatusMulti, summarizePlans,
   PIC_OPTIONS, GOALS_OPTIONS, PILLAR_OPTIONS, TYPE_OPTIONS,
 } from "@/lib/tiktok/content-plan";
 
@@ -72,11 +72,15 @@ export default async function ContentPlanPage({ searchParams }) {
   // Bulan berjalan -> untuk status Cancelled otomatis (rencana bulan lampau tanpa link).
   const currentMonth = new Date().toISOString().slice(0, 7);
 
-  // Hitung status otomatis tiap baris, lalu filter bulan bila dipilih.
+  // Hitung status otomatis tiap baris (per platform + keseluruhan), lalu filter bulan.
   const withStatus = plansRaw.map((p) => {
-    const r = matchPlanStatus(p, contents, { currentMonth });
+    const r = matchPlanStatusMulti(p, contents, { currentMonth });
     const rep = p.replaced_by_id ? byId.get(String(p.replaced_by_id)) : null;
-    return { ...p, status: r.status, match: r.match, hint: r.hint, replaced_by: rep ? { id: rep.id, headline: rep.headline } : null };
+    return {
+      ...p, status: r.status, match: r.match, hint: r.hint,
+      platforms: r.platforms, perPlatform: r.perPlatform,
+      replaced_by: rep ? { id: rep.id, headline: rep.headline } : null,
+    };
   });
   const filtered = selectedMonth === "all" ? withStatus : withStatus.filter((p) => (p.plan_month || "").slice(0, 7) === selectedMonth);
 

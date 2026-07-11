@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { logActivity } from "@/lib/audit";
+import { PLATFORM_KEYS } from "@/lib/tiktok/content-plan";
 
 // Ambil string rapi dari FormData; kosong -> null.
 function str(formData, key) {
@@ -42,9 +43,21 @@ function planFields(formData) {
     (/^\d{4}-\d{2}$/.test(explicitMonth) ? `${explicitMonth}-01` : null) ||
     `${new Date().toISOString().slice(0, 7)}-01`;
 
+  // Platform target (checkbox "platforms"): minimal 1, nilai di luar daftar dibuang.
+  // Link tayang IG/Threads dikumpulkan ke jsonb platform_links (TikTok tetap posted_url).
+  const platforms = formData.getAll("platforms").map(String).filter((p) => PLATFORM_KEYS.includes(p));
+  const platform_links = {};
+  for (const p of PLATFORM_KEYS) {
+    if (p === "tiktok") continue;
+    const url = str(formData, `link_${p}`);
+    if (url) platform_links[p] = url;
+  }
+
   return {
     plan_month,
     post_date,
+    platforms: platforms.length ? platforms : ["tiktok"],
+    platform_links,
     seq: toIntOrNull(formData.get("seq")),
     pic: str(formData, "pic"),
     headline: str(formData, "headline"),
@@ -190,6 +203,34 @@ export async function setPostedUrl(formData) {
     .eq("id", id);
   if (error) throw new Error(`Gagal menyimpan link: ${error.message}`);
   await logActivity(supabase, { action: "set_link_tayang_rencana", entity: id });
+  revalidatePath("/content-plan");
+  revalidatePath("/dashboard");
+}
+
+// Set cepat link tayang platform NON-TikTok (Instagram/Threads) dari input inline.
+// Merge di server (baca jsonb lama dulu) supaya link platform lain tidak tertimpa.
+export async function setPlatformLink(formData) {
+  const profile = await getCurrentProfile();
+  if (!profile?.role) throw new Error("Belum login.");
+  const id = String(formData.get("id") || "");
+  const platform = String(formData.get("platform") || "");
+  if (!id) return;
+  if (platform === "tiktok") return setPostedUrl(formData); // TikTok tetap lewat posted_url
+  if (!PLATFORM_KEYS.includes(platform)) throw new Error("Platform tidak dikenal.");
+
+  const url = String(formData.get("posted_url") || "").trim();
+  const supabase = await createSupabaseServerClient();
+  const { data: row, error: e1 } = await supabase.from("content_plans").select("platform_links").eq("id", id).single();
+  if (e1) throw new Error(`Gagal membaca rencana: ${e1.message}`);
+  const links = { ...(row?.platform_links || {}) };
+  if (url) links[platform] = url; else delete links[platform];
+
+  const { error } = await supabase
+    .from("content_plans")
+    .update({ platform_links: links, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(`Gagal menyimpan link: ${error.message}`);
+  await logActivity(supabase, { action: "set_link_tayang_rencana", entity: id, detail: { platform } });
   revalidatePath("/content-plan");
   revalidatePath("/dashboard");
 }

@@ -1,7 +1,10 @@
 // File: test/tiktok-content-plan.test.js
 // Tes status verifikasi Rencana Konten (lib/tiktok/content-plan.js). Jalankan: npm run test:content-plan
 
-const { normalizeText, similarity, extractVideoId, matchPlanStatus, summarizePlans } = require("../lib/tiktok/content-plan.js");
+const {
+  normalizeText, similarity, extractVideoId, matchPlanStatus, summarizePlans,
+  matchPlanStatusMulti, planPlatforms, platformLink,
+} = require("../lib/tiktok/content-plan.js");
 
 let pass = 0;
 let fail = 0;
@@ -60,6 +63,44 @@ ok("hint muncul saat hook mirip judul (On Going)", h.status === "On Going" && h.
 // --- override manual menang atas otomatis ---
 ok("override Verified menang", matchPlanStatus({ headline: "x", status_override: "Verified" }, []).status === "Verified");
 ok("override On Going menang atas Cancelled otomatis", matchPlanStatus({ headline: "x", plan_month: "2026-06-01", status_override: "On Going" }, [], { currentMonth: NOW }).status === "On Going");
+
+// --- multi-platform: planPlatforms & platformLink ---
+ok("planPlatforms data lama (tanpa kolom) -> ['tiktok']", JSON.stringify(planPlatforms({})) === '["tiktok"]');
+ok("planPlatforms buang nilai asing", JSON.stringify(planPlatforms({ platforms: ["instagram", "facebook"] })) === '["instagram"]');
+ok("platformLink tiktok pakai posted_url", platformLink({ posted_url: "https://t.tk/a" }, "tiktok") === "https://t.tk/a");
+ok("platformLink instagram pakai platform_links", platformLink({ platform_links: { instagram: "https://ig/x" } }, "instagram") === "https://ig/x");
+ok("platformLink kosong aman", platformLink({}, "threads") === "");
+
+// --- matchPlanStatusMulti ---
+// Data lama (TikTok saja) -> identik dgn matchPlanStatus.
+const m0 = matchPlanStatusMulti({ headline: "x", posted_url: "https://www.tiktok.com/@elio/video/222" }, contents, { currentMonth: NOW });
+ok("multi: TikTok-saja tetap Verified", m0.status === "Verified" && m0.perPlatform.tiktok.status === "Verified" && m0.platforms.length === 1);
+
+// IG-only: ada link -> Uploaded (tidak bisa Verified, tak ada data report IG).
+const m1 = matchPlanStatusMulti({ headline: "x", platforms: ["instagram"], platform_links: { instagram: "https://instagram.com/p/abc" }, plan_month: "2026-06-01" }, contents, { currentMonth: NOW });
+ok("multi: IG ada link -> Uploaded", m1.status === "Uploaded" && m1.perPlatform.instagram.status === "Uploaded");
+
+// TikTok+IG: TikTok verified, IG tanpa link bulan lewat -> overall tetap Verified.
+const m2 = matchPlanStatusMulti(
+  { headline: "x", platforms: ["tiktok", "instagram"], posted_url: "https://www.tiktok.com/@elio/video/222", plan_month: "2026-06-01" },
+  contents, { currentMonth: NOW });
+ok("multi: TT Verified + IG kosong -> overall Verified", m2.status === "Verified" && m2.perPlatform.instagram.status === "Cancelled");
+
+// TikTok tanpa link (bulan lewat) TAPI IG ada link -> overall Uploaded (bukan Cancelled).
+const m3 = matchPlanStatusMulti(
+  { headline: "x", platforms: ["tiktok", "instagram"], platform_links: { instagram: "https://instagram.com/p/abc" }, plan_month: "2026-06-01" },
+  contents, { currentMonth: NOW });
+ok("multi: TT kosong + IG link -> overall Uploaded", m3.status === "Uploaded" && m3.perPlatform.tiktok.status === "Cancelled");
+
+// Semua platform tanpa link & bulan lewat -> Cancelled.
+const m4 = matchPlanStatusMulti({ headline: "x", platforms: ["tiktok", "threads"], plan_month: "2026-06-01" }, contents, { currentMonth: NOW });
+ok("multi: semua kosong bulan lewat -> Cancelled", m4.status === "Cancelled" && m4.perPlatform.threads.status === "Cancelled");
+
+// Replaced/override berlaku ke SEMUA platform.
+const m5 = matchPlanStatusMulti({ headline: "x", platforms: ["tiktok", "instagram"], replaced_by_id: 9 }, contents, { currentMonth: NOW });
+ok("multi: Replaced berlaku semua platform", m5.status === "Replaced" && m5.perPlatform.instagram.status === "Replaced");
+const m6 = matchPlanStatusMulti({ headline: "x", platforms: ["instagram"], status_override: "Verified" }, [], { currentMonth: NOW });
+ok("multi: override menang di semua platform", m6.status === "Verified" && m6.perPlatform.instagram.status === "Verified");
 
 // --- summarizePlans (5 status) ---
 const sum = summarizePlans(["Verified", "Verified", "On Going", "Uploaded", "Cancelled", "Replaced"]);
