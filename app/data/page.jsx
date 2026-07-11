@@ -8,8 +8,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Nav from "@/components/Nav";
 import DataFilters from "@/components/DataFilters";
 import DataTable from "@/components/DataTable";
-import { BarChartLabeled, DivergingBarChart } from "@/components/Charts";
+import { BarChartLabeled, DivergingBarChart, Heatmap } from "@/components/Charts";
 import { weeklyReport } from "@/lib/tiktok/weekly";
+import { bestPostingTimes } from "@/lib/tiktok/metrics";
 import { erOf } from "@/lib/instagram/metrics";
 
 const monthOf = (d) => (typeof d === "string" ? d.slice(0, 7) : null);
@@ -116,6 +117,26 @@ export default async function DataPage({ searchParams }) {
   }
   const igDailyRows = [...igDailyByDate.values()].sort((a, b) => b.date.localeCompare(a.date));
   const hasIg = igContent.length > 0 || igDaily.length > 0;
+
+  // GABUNGAN data harian TikTok (Overview + Follower + Viewers) jadi 1 tabel
+  // per tanggal — pengganti 3 tabel terpisah yang bulky. Kolom kosong = aspek
+  // itu tidak punya data di tanggal tsb (bukan 0).
+  const dailyMap = new Map();
+  const rowFor = (d) => {
+    const k = String(d).slice(0, 10);
+    if (!dailyMap.has(k)) dailyMap.set(k, { date: k });
+    return dailyMap.get(k);
+  };
+  for (const r of fOverview) Object.assign(rowFor(r.date), { video_views: r.video_views, profile_views: r.profile_views, likes: r.likes, comments: r.comments, shares: r.shares });
+  for (const r of fFollower) Object.assign(rowFor(r.date), { followers: r.followers, follower_diff: r.diff_from_previous_day });
+  for (const r of fViewers) Object.assign(rowFor(r.date), { total_viewers: r.total_viewers, new_viewers: r.new_viewers, returning_viewers: r.returning_viewers, is_incomplete: r.is_incomplete });
+  const dailyMerged = [...dailyMap.values()].sort((a, b) => b.date.localeCompare(a.date));
+
+  // Aktivitas follower per jam -> heatmap hari×jam (ringkas), tabel mentah dilipat.
+  const bestAct = fActivity.length > 0 ? bestPostingTimes(fActivity, { top: 5 }) : null;
+
+  // Snapshot audiens terkini (gender & lokasi) utk kartu visual.
+  const latestGender = gender[0] || null;
 
   // Periode data konten (tanggal terlama–terbaru).
   const postDates = content.map((r) => r.post_date).filter(Boolean).sort();
@@ -250,9 +271,15 @@ export default async function DataPage({ searchParams }) {
             </Section>
           )}
 
-          <Section title="Overview Harian" count={fOverview.length}>
+          {/* 1 tabel harian gabungan — pengganti 3 tabel (Overview/Follower/Viewers). */}
+          <Section
+            title="📅 Data Harian Akun"
+            count={dailyMerged.length}
+            subtitle="Overview + follower + viewers digabung per tanggal (pengganti 3 tabel terpisah). Sel kosong = aspek itu tidak punya data di tanggal tsb. Angka merah = berkurang."
+          >
             <DataTable
-              rows={fOverview}
+              rows={dailyMerged}
+              maxHeight={440}
               emptyText="Tidak ada data harian pada bulan ini."
               columns={[
                 { key: "date", label: "Tanggal", format: "date" },
@@ -261,29 +288,9 @@ export default async function DataPage({ searchParams }) {
                 { key: "likes", label: "Likes", align: "right", format: "number" },
                 { key: "comments", label: "Komentar", align: "right", format: "number" },
                 { key: "shares", label: "Shares", align: "right", format: "number" },
-              ]}
-            />
-          </Section>
-
-          <Section title="Riwayat Follower" count={fFollower.length}>
-            <DataTable
-              rows={fFollower}
-              emptyText="Tidak ada data follower pada bulan ini."
-              columns={[
-                { key: "date", label: "Tanggal", format: "date" },
                 { key: "followers", label: "Followers", align: "right", format: "number" },
-                { key: "diff_from_previous_day", label: "Selisih", align: "right", format: "diff" },
-              ]}
-            />
-          </Section>
-
-          <Section title="Viewers Harian" count={fViewers.length}>
-            <DataTable
-              rows={fViewers}
-              emptyText="Tidak ada data viewers pada bulan ini."
-              columns={[
-                { key: "date", label: "Tanggal", format: "date" },
-                { key: "total_viewers", label: "Total", align: "right", format: "number" },
+                { key: "follower_diff", label: "Δ", align: "right", format: "diff" },
+                { key: "total_viewers", label: "Viewers", align: "right", format: "number" },
                 { key: "new_viewers", label: "Baru", align: "right", format: "number" },
                 { key: "returning_viewers", label: "Kembali", align: "right", format: "number" },
                 { key: "status", label: "Status", format: "incomplete" },
@@ -291,41 +298,80 @@ export default async function DataPage({ searchParams }) {
             />
           </Section>
 
-          <Section title="Aktivitas Follower (per jam)" count={fActivity.length}>
-            <DataTable
-              rows={fActivity}
-              emptyText="Tidak ada data aktivitas pada bulan ini."
-              columns={[
-                { key: "date", label: "Tanggal", format: "date" },
-                { key: "hour", label: "Jam", align: "right", format: "hour" },
-                { key: "active_followers", label: "Follower aktif", align: "right", format: "number" },
-              ]}
-            />
+          {/* Aktivitas follower: heatmap ringkas (spt Dashboard), tabel mentah dilipat. */}
+          <Section title="⏰ Aktivitas Follower (jam × hari)" count={fActivity.length}>
+            {bestAct ? (
+              <>
+                <Heatmap heatmap={bestAct.heatmap} />
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-xs font-semibold" style={{ color: "var(--teal-900)" }}>Lihat tabel mentah per jam</summary>
+                  <div className="mt-2">
+                    <DataTable
+                      rows={fActivity}
+                      maxHeight={320}
+                      emptyText="—"
+                      columns={[
+                        { key: "date", label: "Tanggal", format: "date" },
+                        { key: "hour", label: "Jam", align: "right", format: "hour" },
+                        { key: "active_followers", label: "Follower aktif", align: "right", format: "number" },
+                      ]}
+                    />
+                  </div>
+                </details>
+              </>
+            ) : (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Tidak ada data aktivitas pada bulan ini.</p>
+            )}
           </Section>
 
-          <Section title="Gender Follower (snapshot terkini)" count={gender.length}>
-            <DataTable
-              rows={gender}
-              emptyText="Belum ada data gender."
-              columns={[
-                { key: "snapshot_date", label: "Tanggal snapshot", format: "date" },
-                { key: "male_pct", label: "Pria", align: "right", format: "pct" },
-                { key: "female_pct", label: "Wanita", align: "right", format: "pct" },
-                { key: "other_pct", label: "Lainnya", align: "right", format: "pct" },
-              ]}
-            />
-          </Section>
-
-          <Section title="Lokasi Follower (snapshot terkini)" count={territories.length}>
-            <DataTable
-              rows={territories}
-              emptyText="Belum ada data lokasi."
-              columns={[
-                { key: "territory_code", label: "Kode wilayah", format: "text" },
-                { key: "distribution_pct", label: "Distribusi", align: "right", format: "pct" },
-                { key: "snapshot_date", label: "Tanggal snapshot", format: "date" },
-              ]}
-            />
+          {/* Audiens: gender & lokasi terkini sbg visual ringkas, riwayat dilipat. */}
+          <Section title="👥 Profil Audiens (snapshot terkini)" count={gender.length + territories.length}>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <h3 className="mb-2 text-xs font-semibold text-ink">
+                  Gender follower {latestGender?.snapshot_date ? <span className="font-normal" style={{ color: "var(--ink-soft)" }}>· per {latestGender.snapshot_date}</span> : null}
+                </h3>
+                {latestGender ? <GenderBar row={latestGender} /> : (
+                  <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada data gender.</p>
+                )}
+              </div>
+              <div>
+                <h3 className="mb-2 text-xs font-semibold text-ink">
+                  Lokasi follower teratas {territories[0]?.snapshot_date ? <span className="font-normal" style={{ color: "var(--ink-soft)" }}>· per {territories[0].snapshot_date}</span> : null}
+                </h3>
+                {territories.length > 0 ? <TerritoryBars rows={territories} limit={6} /> : (
+                  <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada data lokasi.</p>
+                )}
+              </div>
+            </div>
+            {(gender.length > 1 || territories.length > 6) && (
+              <details className="mt-4">
+                <summary className="cursor-pointer text-xs font-semibold" style={{ color: "var(--teal-900)" }}>Lihat riwayat & daftar lengkap</summary>
+                <div className="mt-2 grid gap-4 sm:grid-cols-2">
+                  <DataTable
+                    rows={gender}
+                    maxHeight={280}
+                    emptyText="—"
+                    columns={[
+                      { key: "snapshot_date", label: "Tanggal", format: "date" },
+                      { key: "male_pct", label: "Pria", align: "right", format: "pct" },
+                      { key: "female_pct", label: "Wanita", align: "right", format: "pct" },
+                      { key: "other_pct", label: "Lainnya", align: "right", format: "pct" },
+                    ]}
+                  />
+                  <DataTable
+                    rows={territories}
+                    maxHeight={280}
+                    emptyText="—"
+                    columns={[
+                      { key: "territory_code", label: "Wilayah", format: "text" },
+                      { key: "distribution_pct", label: "Distribusi", align: "right", format: "pct" },
+                      { key: "snapshot_date", label: "Tanggal", format: "date" },
+                    ]}
+                  />
+                </div>
+              </details>
+            )}
           </Section>
 
           {hasIg && (
@@ -378,6 +424,62 @@ export default async function DataPage({ searchParams }) {
         </>
       )}
     </main>
+  );
+}
+
+// Komponen: GenderBar — satu bar bertumpuk pria/wanita/lainnya + legenda persen.
+// Pengganti tabel gender (1 snapshot = 1 baris angka; visual jauh lebih cepat dibaca).
+function GenderBar({ row }) {
+  const male = Number(row.male_pct) || 0;
+  const female = Number(row.female_pct) || 0;
+  const other = Math.max(0, 100 - male - female);
+  const seg = [
+    { label: "Pria", pct: male, color: "#0a8291" },
+    { label: "Wanita", pct: female, color: "#e191ab" },
+    { label: "Lainnya", pct: Math.round(other * 10) / 10, color: "#c9c9c9" },
+  ].filter((s) => s.pct > 0);
+  return (
+    <div>
+      <div className="flex h-6 w-full overflow-hidden rounded-full" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+        {seg.map((s) => (
+          <div key={s.label} style={{ width: `${s.pct}%`, background: s.color }} title={`${s.label} ${s.pct}%`} />
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: "var(--ink-soft)" }}>
+        {seg.map((s) => (
+          <span key={s.label} className="inline-flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />
+            {s.label} <b className="text-ink">{s.pct}%</b>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Komponen: TerritoryBars — top-N lokasi sebagai bar horizontal (bukan tabel).
+function TerritoryBars({ rows = [], limit = 6 }) {
+  const top = rows.slice(0, limit);
+  const max = Number(top[0]?.distribution_pct) || 1;
+  const rest = rows.slice(limit).reduce((s, r) => s + (Number(r.distribution_pct) || 0), 0);
+  return (
+    <div className="flex flex-col gap-1.5">
+      {top.map((r) => {
+        const pct = Number(r.distribution_pct) || 0;
+        return (
+          <div key={r.territory_code} className="flex items-center gap-2 text-xs">
+            <span className="w-24 shrink-0 truncate font-medium text-ink" title={r.territory_code}>{r.territory_code}</span>
+            <div className="h-3.5 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(0,102,116,.08)" }}>
+              <div className="h-full rounded-full" style={{ width: `${Math.min(100, (pct / max) * 100)}%`, background: "linear-gradient(90deg,#0a8291,#006674)" }} />
+            </div>
+            <span className="w-12 shrink-0 text-right" style={{ color: "var(--ink-soft)" }}>{pct}%</span>
+          </div>
+        );
+      })}
+      {rest > 0 && (
+        <p className="mt-0.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>+ {rows.length - top.length} wilayah lain ({Math.round(rest * 10) / 10}%)</p>
+      )}
+    </div>
   );
 }
 
