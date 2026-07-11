@@ -66,6 +66,15 @@ const STATUS_STYLE = {
   turun: { background: "#fee2e2", color: "#991b1b" },
 };
 
+// Warna badge 5 status Rencana Konten (samakan dgn ContentPlanBoard).
+const PLAN_BADGE = {
+  "On Going": { bg: "rgba(3,105,161,.1)", fg: "#0369a1" },
+  Uploaded: { bg: "rgba(124,58,237,.1)", fg: "#7c3aed" },
+  Verified: { bg: "rgba(22,101,52,.1)", fg: "#166534" },
+  Cancelled: { bg: "rgba(180,83,9,.1)", fg: "#b45309" },
+  Replaced: { bg: "rgba(161,98,7,.1)", fg: "#a16207" },
+};
+
 function StatusBadge({ status }) {
   const s = STATUS_STYLE[status] || STATUS_STYLE.stabil;
   return (
@@ -122,13 +131,13 @@ export default async function DashboardPage({ searchParams }) {
   if (selectedId) {
     const [{ data: plansM }, { data: contentsM }] = await Promise.all([
       supabase.from("content_plans")
-        .select("id, post_date, pic, headline, primary_pillar, acc_to_posting, posted_url, status_override")
+        .select("id, post_date, plan_month, pic, headline, primary_pillar, acc_to_posting, posted_url, status_override, replaced_by_id")
         .eq("tiktok_account_id", selectedId).eq("plan_month", `${nowMonth}-01`)
         .order("post_date", { ascending: true, nullsFirst: false }),
       supabase.from("tiktok_content").select("video_id, video_title, video_link").eq("tiktok_account_id", selectedId),
     ]);
     planThisMonth = (plansM || []).map((p) => {
-      const r = matchPlanStatus(p, contentsM || []);
+      const r = matchPlanStatus(p, contentsM || [], { currentMonth: nowMonth });
       return { ...p, status: r.status, hint: r.hint };
     });
   }
@@ -256,8 +265,12 @@ export default async function DashboardPage({ searchParams }) {
           <section className="card-3d p-4 sm:p-5">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-semibold text-ink">🗂️ Rencana Konten Bulan Ini</h3>
-              <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(22,101,52,.1)", color: "#166534" }}>{planSummary.verified} Verified</span>
-              <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(0,60,68,.08)", color: "var(--ink-soft)" }}>{planSummary.notVerified} Not verified</span>
+              {[["Verified", planSummary.verified], ["Uploaded", planSummary.uploaded], ["On Going", planSummary.onGoing], ["Cancelled", planSummary.cancelled], ["Replaced", planSummary.replaced]]
+                .filter(([, n]) => n > 0)
+                .map(([label, n]) => {
+                  const c = PLAN_BADGE[label];
+                  return <span key={label} className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: c.bg, color: c.fg }}>{n} {label}</span>;
+                })}
               <Link href={`/content-plan?branch=${selectedId}&month=${nowMonth}`} className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
                 Kelola →
               </Link>
@@ -279,12 +292,12 @@ export default async function DashboardPage({ searchParams }) {
                   </thead>
                   <tbody>
                     {planThisMonth.map((p) => {
-                      const verified = p.status === "Verified";
+                      const c = PLAN_BADGE[p.status] || PLAN_BADGE["On Going"];
                       return (
-                        <tr key={p.id} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                        <tr key={p.id} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)", opacity: p.status === "Replaced" || p.status === "Cancelled" ? 0.6 : 1 }}>
                           <td className="py-2 pr-3">
-                            <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold" style={verified ? { background: "rgba(22,101,52,.1)", color: "#166534" } : { background: "rgba(0,60,68,.08)", color: "var(--ink-soft)" }}>
-                              {verified ? "✓ Verified" : "○ Not verified"}
+                            <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: c.bg, color: c.fg }}>
+                              {p.status || "On Going"}
                             </span>
                           </td>
                           <td className="whitespace-nowrap py-2 pr-3" style={{ color: "var(--ink-soft)" }}>{p.post_date ? p.post_date.slice(0, 10) : "—"}</td>

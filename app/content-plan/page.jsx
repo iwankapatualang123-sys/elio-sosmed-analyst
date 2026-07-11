@@ -67,10 +67,16 @@ export default async function ContentPlanPage({ searchParams }) {
   const months = [...new Set(plansRaw.map((p) => (p.plan_month || "").slice(0, 7)).filter(Boolean))].sort().reverse();
   const selectedMonth = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : "all";
 
+  // Peta id -> rencana (untuk menampilkan "Digantikan oleh <judul>" pada Replaced).
+  const byId = new Map(plansRaw.map((p) => [String(p.id), p]));
+  // Bulan berjalan -> untuk status Cancelled otomatis (rencana bulan lampau tanpa link).
+  const currentMonth = new Date().toISOString().slice(0, 7);
+
   // Hitung status otomatis tiap baris, lalu filter bulan bila dipilih.
   const withStatus = plansRaw.map((p) => {
-    const r = matchPlanStatus(p, contents);
-    return { ...p, status: r.status, match: r.match, hint: r.hint };
+    const r = matchPlanStatus(p, contents, { currentMonth });
+    const rep = p.replaced_by_id ? byId.get(String(p.replaced_by_id)) : null;
+    return { ...p, status: r.status, match: r.match, hint: r.hint, replaced_by: rep ? { id: rep.id, headline: rep.headline } : null };
   });
   const filtered = selectedMonth === "all" ? withStatus : withStatus.filter((p) => (p.plan_month || "").slice(0, 7) === selectedMonth);
 
@@ -82,10 +88,12 @@ export default async function ContentPlanPage({ searchParams }) {
   const pics = [...new Set([...picOptions, ...plansRaw.map((p) => p.pic).filter(Boolean)])];
 
   const cards = [
-    { label: "Total rencana", value: kpi.total, fg: "var(--teal-900)" },
+    { label: "Total", value: kpi.total, fg: "var(--teal-900)" },
+    { label: "On Going", value: kpi.onGoing, fg: "#0369a1" },
+    { label: "Uploaded", value: kpi.uploaded, fg: "#7c3aed" },
     { label: "Verified", value: kpi.verified, fg: "#166534" },
-    { label: "Not verified", value: kpi.notVerified, fg: "#b45309" },
-    { label: "Sudah ACC", value: accCount, fg: "var(--teal-900)" },
+    { label: "Cancelled", value: kpi.cancelled, fg: "#b45309" },
+    { label: "Replaced", value: kpi.replaced, fg: "#a16207" },
   ];
 
   return (
@@ -113,11 +121,11 @@ export default async function ContentPlanPage({ searchParams }) {
             </section>
           )}
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6 sm:gap-3">
             {cards.map((c) => (
-              <div key={c.label} className="card-3d p-4">
-                <div className="text-2xl font-extrabold" style={{ color: c.fg }}>{c.value}</div>
-                <div className="mt-0.5 text-xs font-medium" style={{ color: "var(--ink-soft)" }}>{c.label}</div>
+              <div key={c.label} className="card-3d p-3 sm:p-4">
+                <div className="text-xl font-extrabold sm:text-2xl" style={{ color: c.fg }}>{c.value}</div>
+                <div className="mt-0.5 text-[11px] font-medium sm:text-xs" style={{ color: "var(--ink-soft)" }}>{c.label}</div>
               </div>
             ))}
           </div>
@@ -129,6 +137,7 @@ export default async function ContentPlanPage({ searchParams }) {
               plans={filtered}
               options={{ goals: goalsOptions, pillars: pillarOptions, types: typeOptions }}
               pics={pics}
+              accCount={accCount}
             />
           </section>
         </>
