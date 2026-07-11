@@ -15,6 +15,8 @@ import Thumbnail from "@/components/Thumbnail";
 
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
 const HASHTAG_RE = /#[\p{L}\p{N}_]+/gu;
+// Format bernilai pendek yang tidak boleh wrap (tanggal patah di tanda minus, dsb).
+const NOWRAP_FORMATS = new Set(["date", "number", "pct", "diff", "er", "hour", "incomplete"]);
 
 function erValue(row) {
   const views = Number(row.total_views) || 0;
@@ -199,7 +201,13 @@ export default function DataTable({ columns = [], rows = [], emptyText = "Tidak 
               pageRows.map((row, i) => (
                 <tr key={i} className="border-t" style={{ borderColor: "rgba(0,60,68,.08)" }}>
                   {columns.map((c) => (
-                    <td key={c.key} className="px-3 py-1.5 text-ink" style={{ textAlign: c.align || "left", verticalAlign: "top" }}>
+                    <td
+                      key={c.key}
+                      // Nilai pendek (tanggal/angka/jam) jangan pernah patah ke bawah —
+                      // "2026-06-17" bisa pecah di tanda minus saat tabel sempit.
+                      className={`px-3 py-1.5 text-ink${NOWRAP_FORMATS.has(c.format) ? " whitespace-nowrap" : ""}`}
+                      style={{ textAlign: c.align || "left", verticalAlign: "top" }}
+                    >
                       {cellContent(row, c)}
                     </td>
                   ))}
