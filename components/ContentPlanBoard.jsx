@@ -53,22 +53,18 @@ function StatusBadge({ status }) {
   );
 }
 
-// Chip mini status per platform (TT/IG/TH) di kolom Status — hanya tampil bila
-// rencana menarget lebih dari sekadar TikTok, supaya baris lama tetap bersih.
-function PlatformChips({ platforms = [], perPlatform = {} }) {
-  if (!platforms.length || (platforms.length === 1 && platforms[0] === "tiktok")) return null;
+// Chip mini status 1 platform (TT/IG/TH) — berjejer dengan input link-nya di kolom
+// Link tayang, warna mengikuti status platform itu (tooltip = nama + status lengkap).
+function PlatformChip({ option, status }) {
+  const meta = STATUS_META[status] || STATUS_META["On Going"];
   return (
-    <div className="mt-1 flex flex-wrap gap-0.5">
-      {PLATFORM_OPTIONS.filter((o) => platforms.includes(o.key)).map((o) => {
-        const st = perPlatform[o.key]?.status || "On Going";
-        const meta = STATUS_META[st] || STATUS_META["On Going"];
-        return (
-          <span key={o.key} className="rounded px-1 py-px text-[9px] font-bold" style={{ background: meta.bg, color: meta.fg }} title={`${o.label}: ${st}`}>
-            {o.short}
-          </span>
-        );
-      })}
-    </div>
+    <span
+      className="inline-flex w-7 shrink-0 items-center justify-center rounded px-1 py-0.5 text-[9px] font-bold"
+      style={{ background: meta.bg, color: meta.fg }}
+      title={`${option.label}: ${status || "On Going"}`}
+    >
+      {option.short}
+    </span>
   );
 }
 
@@ -255,9 +251,9 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
             <col style={{ width: 36 }} />
             <col style={{ width: 52 }} />
             <col style={{ width: 96 }} />
-            <col style={{ width: 128 }} />
+            <col style={{ width: 152 }} />
             <col style={{ width: 50 }} />
-            <col style={{ width: 330 }} />
+            <col style={{ width: 306 }} />
             <col style={{ width: 68 }} />
             <col style={{ width: 108 }} />
             <col style={{ width: 88 }} />
@@ -290,7 +286,6 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
                   <td className="overflow-hidden text-ellipsis whitespace-nowrap px-1.5 py-1.5 text-[10px]" title={fmtDateFull(p.post_date)}>{fmtDate(p.post_date)}</td>
                   <td className="overflow-hidden px-1.5 py-1.5">
                     <StatusBadge status={p.status} />
-                    <PlatformChips platforms={p.platforms} perPlatform={p.perPlatform} />
                     {p.match && (
                       <div className="mt-1 max-w-[86px] truncate text-[9px]" style={{ color: "#166534" }} title={p.match.video_title}>
                         ✓ {p.match.video_title}
@@ -315,7 +310,7 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
                       const multi = arr.length > 1;
                       return (
                         <div key={o.key} className={idx > 0 ? "mt-1 flex items-center gap-1" : "flex items-center gap-1"}>
-                          {multi && <span className="w-5 shrink-0 text-[8.5px] font-bold" style={{ color: "var(--ink-soft)" }}>{o.short}</span>}
+                          {multi && <PlatformChip option={o} status={p.perPlatform?.[o.key]?.status} />}
                           <input
                             type="url"
                             defaultValue={val}
