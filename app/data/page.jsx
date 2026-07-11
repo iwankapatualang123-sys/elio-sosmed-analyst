@@ -386,7 +386,6 @@ export default async function DataPage({ searchParams }) {
                   maxHeight={480}
                   emptyText="Tidak ada konten IG pada bulan ini."
                   columns={[
-                    { key: "video_link", label: "Preview", format: "ig-thumbnail" },
                     { key: "jenis", label: "Jenis", format: "text", width: 70 },
                     { key: "video_title", label: "Caption", format: "title", width: 300 },
                     { key: "post_date", label: "Tanggal", format: "date" },

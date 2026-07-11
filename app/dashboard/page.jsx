@@ -17,7 +17,6 @@ import { forecastNext } from "@/lib/tiktok/forecast";
 import { matchPlanStatusMulti, summarizePlans } from "@/lib/tiktok/content-plan";
 import { SNAPSHOT_PLATFORMS, groupByPlatform, followerTrend, latestSnapshot, daysSince } from "@/lib/social/snapshots";
 import { sumDaily, contentInPeriod, contentSummary, topContents } from "@/lib/instagram/metrics";
-import IgThumbnail from "@/components/IgThumbnail";
 import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
 
 const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -419,15 +418,12 @@ export default async function DashboardPage({ searchParams }) {
                     </thead>
                     <tbody>
                       {igTopReels.map((c, i) => (
-                        <tr key={c.post_id} className="border-t align-middle" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                        <tr key={c.post_id} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)" }}>
                           <td className="py-1.5 pr-2 text-[12px]" style={{ color: "var(--ink-soft)" }}>{i + 1}</td>
                           <td className="max-w-xs py-1.5 pr-3">
-                            <div className="flex items-center gap-2">
-                              <IgThumbnail link={c.permalink} postType={c.post_type} width={36} height={48} />
-                              <a href={c.permalink || "#"} target="_blank" rel="noopener noreferrer" className="line-clamp-1 min-w-0 font-medium text-ink hover:underline" title={c.description || ""}>
-                                {(c.description || "(tanpa caption)").split("\n")[0]}
-                              </a>
-                            </div>
+                            <a href={c.permalink || "#"} target="_blank" rel="noopener noreferrer" className="line-clamp-1 font-medium text-ink hover:underline" title={c.description || ""}>
+                              {(c.description || "(tanpa caption)").split("\n")[0]}
+                            </a>
                           </td>
                           <td className="whitespace-nowrap py-1.5 pr-3 text-[12px]" style={{ color: "var(--ink-soft)" }}>{String(c.published_at || "").slice(0, 10) || "—"}</td>
                           <td className="whitespace-nowrap py-1.5 pr-3 font-semibold text-ink">{fmt(c.views)}</td>
