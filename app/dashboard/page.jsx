@@ -16,6 +16,7 @@ import ProgressBar from "@/components/ProgressBar";
 import { forecastNext } from "@/lib/tiktok/forecast";
 import { matchPlanStatusMulti, summarizePlans } from "@/lib/tiktok/content-plan";
 import { SNAPSHOT_PLATFORMS, groupByPlatform, followerTrend, latestSnapshot, daysSince } from "@/lib/social/snapshots";
+import { sumDaily, contentInPeriod, contentSummary, topContents } from "@/lib/instagram/metrics";
 import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
 
 const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -147,17 +148,43 @@ export default async function DashboardPage({ searchParams }) {
   // Snapshot manual Instagram/Threads cabang terpilih (Lapis 1 laporan non-TikTok):
   // follower terakhir + delta vs snapshot sebelumnya + pengingat bila basi >7 hari.
   let socialSnaps = [];
+  let igDaily = [];
+  let igContent = [];
   if (selectedId) {
-    const { data: snapRows } = await supabase
-      .from("social_account_snapshots")
-      .select("platform, snapshot_date, followers, reach_30d, profile_visits")
-      .eq("tiktok_account_id", selectedId)
-      .order("snapshot_date", { ascending: false })
-      .limit(24);
+    const [{ data: snapRows }, { data: igd }, { data: igc }] = await Promise.all([
+      supabase
+        .from("social_account_snapshots")
+        .select("platform, snapshot_date, followers, reach_30d, profile_visits")
+        .eq("tiktok_account_id", selectedId)
+        .order("snapshot_date", { ascending: false })
+        .limit(24),
+      supabase
+        .from("instagram_daily_metrics")
+        .select("metric, date, value")
+        .eq("tiktok_account_id", selectedId),
+      supabase
+        .from("instagram_content")
+        .select("post_id, description, permalink, post_type, published_at, views, reach, likes, comments, shares, saves, follows, is_collab")
+        .eq("tiktok_account_id", selectedId),
+    ]);
     socialSnaps = snapRows || [];
+    igDaily = igd || [];
+    igContent = igc || [];
   }
   const snapsByPlatform = groupByPlatform(socialSnaps);
   const todayStr = new Date().toISOString().slice(0, 10);
+
+  // Panel Instagram (Tahap B): agregat dari data upload Business Suite, mengikuti
+  // filter bulan halaman (tanpa filter = sepanjang data yang di-upload).
+  const hasIgData = igDaily.length > 0 || igContent.length > 0;
+  const igMonth = selectedMonth || null;
+  const igSum = sumDaily(igDaily, igMonth);
+  const igPeriodContents = contentInPeriod(igContent, igMonth);
+  const igCSummary = contentSummary(igPeriodContents);
+  const igTopReels = topContents(igPeriodContents, { onlyReels: true, limit: 5 });
+  const igFollowerAnchor = followerTrend(snapsByPlatform.get("instagram") || []); // total follower (snapshot manual)
+  // Bila IG sudah punya data upload, kartu snapshot manual cukup utk platform lain.
+  const snapsForCards = hasIgData ? new Map([...snapsByPlatform].filter(([k]) => k !== "instagram")) : snapsByPlatform;
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
@@ -328,26 +355,109 @@ export default async function DashboardPage({ searchParams }) {
             )}
           </section>
 
-          {/* Perkembangan Instagram/Threads — snapshot manual mingguan (Lapis 1).
-              Follower terakhir + delta vs snapshot sebelumnya; pengingat bila >7 hari. */}
+          {/* Panel Instagram (Tahap B) — agregat data upload Business Suite:
+              KPI akun harian + ER akun + Top 5 Reels, mengikuti filter bulan. */}
+          {hasIgData && (
+            <section className="card-3d p-4 sm:p-5">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <h3 className="text-sm font-semibold text-ink">📸 Instagram</h3>
+                <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>
+                  {igMonth ? labelBulan(igMonth) : "Sepanjang data ter-upload"}
+                </span>
+                {editable && (
+                  <Link href="/upload" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+                    Upload data →
+                  </Link>
+                )}
+              </div>
+
+              {/* KPI akun dari metrik harian */}
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+                {[
+                  ["Tayangan", igSum.views],
+                  ["Jangkauan", igSum.reach],
+                  ["Kunjungan profil", igSum.profile_visits],
+                  ["Follower baru", igSum.new_followers == null ? null : `+${fmt(igSum.new_followers)}`],
+                ].map(([label, val]) => (
+                  <div key={label} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+                    <div className="text-lg font-extrabold sm:text-xl" style={{ color: "var(--teal-900)" }}>
+                      {val == null ? "—" : typeof val === "string" ? val : fmt(val)}
+                    </div>
+                    <div className="mt-0.5 text-[11px] font-medium" style={{ color: "var(--ink-soft)" }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+                Dari data harian ({igSum.days} hari terekam{igMonth ? ` di ${labelBulan(igMonth)}` : ""}). Angka tayangan mencakup semua jenis konten termasuk Story.
+                {igFollowerAnchor.latest && (
+                  <> Total follower: <b className="text-ink">{fmt(igFollowerAnchor.latest.followers)}</b> (snapshot {igFollowerAnchor.latest.snapshot_date}).</>
+                )}
+              </p>
+
+              {/* Ringkasan konten + ER akun */}
+              {igCSummary.count > 0 && (
+                <p className="mt-2 text-sm" style={{ color: "var(--ink-soft)" }}>
+                  <b className="text-ink">{igCSummary.count}</b> konten ({igCSummary.reels} Reels) · ER akun{" "}
+                  <b className="text-ink">{igCSummary.er == null ? "—" : `${igCSummary.er}%`}</b> · <b className="text-ink">+{fmt(igCSummary.follows)}</b> follower datang dari konten
+                </p>
+              )}
+
+              {/* Top 5 Reels periode terpilih */}
+              {igTopReels.length > 0 && (
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr style={{ color: "var(--ink-soft)" }}>
+                        <th className="py-1.5 pr-2 font-medium">#</th>
+                        <th className="py-1.5 pr-3 font-medium">Top Reels</th>
+                        <th className="py-1.5 pr-3 font-medium">Tayang</th>
+                        <th className="py-1.5 pr-3 font-medium">Views</th>
+                        <th className="py-1.5 pr-3 font-medium">ER</th>
+                        <th className="py-1.5 pr-3 font-medium">+Follower</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {igTopReels.map((c, i) => (
+                        <tr key={c.post_id} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                          <td className="py-1.5 pr-2 text-[12px]" style={{ color: "var(--ink-soft)" }}>{i + 1}</td>
+                          <td className="max-w-xs py-1.5 pr-3">
+                            <a href={c.permalink || "#"} target="_blank" rel="noopener noreferrer" className="line-clamp-1 font-medium text-ink hover:underline" title={c.description || ""}>
+                              {(c.description || "(tanpa caption)").split("\n")[0]}
+                            </a>
+                          </td>
+                          <td className="whitespace-nowrap py-1.5 pr-3 text-[12px]" style={{ color: "var(--ink-soft)" }}>{String(c.published_at || "").slice(0, 10) || "—"}</td>
+                          <td className="whitespace-nowrap py-1.5 pr-3 font-semibold text-ink">{fmt(c.views)}</td>
+                          <td className="whitespace-nowrap py-1.5 pr-3">{c.er == null ? "—" : `${c.er}%`}</td>
+                          <td className="whitespace-nowrap py-1.5 pr-3" style={{ color: "#166534" }}>{c.follows == null ? "—" : `+${fmt(c.follows)}`}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Perkembangan platform snapshot manual (Threads; IG hanya bila belum
+              ada data upload). Follower terakhir + delta; pengingat bila >7 hari. */}
           <section className="card-3d p-4 sm:p-5">
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <h3 className="text-sm font-semibold text-ink">📸 Instagram & Threads (input manual)</h3>
+              <h3 className="text-sm font-semibold text-ink">📸 {hasIgData ? "Threads (input manual)" : "Instagram & Threads (input manual)"}</h3>
               {editable && (
                 <Link href="/upload" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
                   Perbarui data →
                 </Link>
               )}
             </div>
-            {snapsByPlatform.size === 0 ? (
+            {snapsForCards.size === 0 ? (
               <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
                 Belum ada data. Catat followers Instagram/Threads cabang ini <b>seminggu sekali</b> lewat halaman{" "}
                 <Link href="/upload" style={{ color: "var(--teal-900)", fontWeight: 600 }}>Upload</Link> untuk melihat perkembangannya di sini.
               </p>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                {SNAPSHOT_PLATFORMS.filter((p) => snapsByPlatform.has(p.key)).map((p) => {
-                  const rows = snapsByPlatform.get(p.key);
+                {SNAPSHOT_PLATFORMS.filter((p) => snapsForCards.has(p.key)).map((p) => {
+                  const rows = snapsForCards.get(p.key);
                   const { latest, delta } = followerTrend(rows);
                   const last = latestSnapshot(rows);
                   const age = daysSince(last?.snapshot_date, todayStr);
