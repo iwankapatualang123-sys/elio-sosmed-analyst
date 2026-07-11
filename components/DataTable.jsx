@@ -61,7 +61,7 @@ function TitleCell({ value, width = 320, link = null }) {
           </button>
         )}
         {link && (
-          <a href={link} target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal-900)" }}>↗ Buka di TikTok</a>
+          <a href={link} target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal-900)" }}>↗ Buka konten</a>
         )}
       </div>
     </div>

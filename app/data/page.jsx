@@ -10,6 +10,7 @@ import DataFilters from "@/components/DataFilters";
 import DataTable from "@/components/DataTable";
 import { BarChartLabeled, DivergingBarChart } from "@/components/Charts";
 import { weeklyReport } from "@/lib/tiktok/weekly";
+import { erOf } from "@/lib/instagram/metrics";
 
 const monthOf = (d) => (typeof d === "string" ? d.slice(0, 7) : null);
 const fmtNum = (n) => Number(n || 0).toLocaleString("id-ID");
@@ -58,7 +59,7 @@ export default async function DataPage({ searchParams }) {
   const sp = (await searchParams) || {};
   const selectedId = sp.branch || branches?.[0]?.id || null;
 
-  let content = [], overview = [], follower = [], viewers = [], activity = [], gender = [], territories = [];
+  let content = [], overview = [], follower = [], viewers = [], activity = [], gender = [], territories = [], igContent = [], igDaily = [];
   if (selectedId) {
     const res = await Promise.all([
       supabase.from("tiktok_content").select("*").eq("tiktok_account_id", selectedId).order("post_date", { ascending: false }),
@@ -68,14 +69,18 @@ export default async function DataPage({ searchParams }) {
       supabase.from("tiktok_follower_activity").select("*").eq("tiktok_account_id", selectedId).order("date", { ascending: false }).order("hour"),
       supabase.from("tiktok_follower_gender").select("*").eq("tiktok_account_id", selectedId).order("snapshot_date", { ascending: false }),
       supabase.from("tiktok_follower_territories").select("*").eq("tiktok_account_id", selectedId).order("distribution_pct", { ascending: false }),
+      supabase.from("instagram_content").select("*").eq("tiktok_account_id", selectedId).order("published_at", { ascending: false }),
+      supabase.from("instagram_daily_metrics").select("metric, date, value").eq("tiktok_account_id", selectedId).order("date", { ascending: false }),
     ]);
-    [content, overview, follower, viewers, activity, gender, territories] = res.map((r) => r.data || []);
+    [content, overview, follower, viewers, activity, gender, territories, igContent, igDaily] = res.map((r) => r.data || []);
   }
 
-  // Bulan tersedia (dari kolom tanggal aspek time-series).
+  // Bulan tersedia (dari kolom tanggal aspek time-series, TikTok + Instagram).
   const monthSet = new Set();
   content.forEach((r) => r.post_date && monthSet.add(monthOf(r.post_date)));
   [...overview, ...follower, ...viewers, ...activity].forEach((r) => r.date && monthSet.add(monthOf(r.date)));
+  igContent.forEach((r) => r.published_at && monthSet.add(monthOf(String(r.published_at))));
+  igDaily.forEach((r) => r.date && monthSet.add(monthOf(r.date)));
   const months = [...monthSet].filter(Boolean).sort().reverse();
   const selectedMonth = sp.month || "all";
 
@@ -86,6 +91,31 @@ export default async function DataPage({ searchParams }) {
   const fFollower = follower.filter((r) => inMonth(r.date));
   const fViewers = viewers.filter((r) => inMonth(r.date));
   const fActivity = activity.filter((r) => inMonth(r.date));
+
+  // Data Instagram (dari upload export Business Suite) — ikut filter bulan.
+  // Baris konten dipetakan ke bentuk kolom DataTable (video_link/video_title/
+  // post_date) supaya format 'title' & sorting jalan tanpa kolom khusus IG.
+  const fIgContent = igContent
+    .filter((r) => inMonth(String(r.published_at ?? "").slice(0, 10)))
+    .map((c) => ({
+      ...c,
+      jenis: String(c.post_type ?? "").replace(/\s*IG$/i, "") || "—",
+      video_link: c.permalink,
+      video_title: (c.description || "(tanpa caption)").split("\n")[0],
+      post_date: String(c.published_at ?? "").slice(0, 10),
+      er: erOf(c),
+      kolab: c.is_collab ? "✓ kolab" : "",
+    }));
+  // Pivot metrik harian: 1 baris per tanggal, kolom per metrik.
+  const igDailyByDate = new Map();
+  for (const r of igDaily) {
+    if (!inMonth(r.date)) continue;
+    const k = String(r.date).slice(0, 10);
+    if (!igDailyByDate.has(k)) igDailyByDate.set(k, { date: k });
+    igDailyByDate.get(k)[r.metric] = r.value;
+  }
+  const igDailyRows = [...igDailyByDate.values()].sort((a, b) => b.date.localeCompare(a.date));
+  const hasIg = igContent.length > 0 || igDaily.length > 0;
 
   // Periode data konten (tanggal terlama–terbaru).
   const postDates = content.map((r) => r.post_date).filter(Boolean).sort();
@@ -297,6 +327,54 @@ export default async function DataPage({ searchParams }) {
               ]}
             />
           </Section>
+
+          {hasIg && (
+            <>
+              <Section
+                title="📸 Konten Instagram"
+                count={fIgContent.length}
+                subtitle="Dari export per konten Meta Business Suite (angka kumulatif saat export — diperbarui tiap upload ulang). ER = (suka + komentar + share + simpan) ÷ tayangan. Konten kolaborasi akun lain ditandai di kolom Kolab."
+              >
+                <DataTable
+                  rows={fIgContent}
+                  maxHeight={480}
+                  emptyText="Tidak ada konten IG pada bulan ini."
+                  columns={[
+                    { key: "jenis", label: "Jenis", format: "text", width: 70 },
+                    { key: "video_title", label: "Caption", format: "title", width: 300 },
+                    { key: "post_date", label: "Tanggal", format: "date" },
+                    { key: "views", label: "Tayangan", align: "right", format: "number" },
+                    { key: "reach", label: "Jangkauan", align: "right", format: "number" },
+                    { key: "likes", label: "Suka", align: "right", format: "number" },
+                    { key: "comments", label: "Komentar", align: "right", format: "number" },
+                    { key: "shares", label: "Share", align: "right", format: "number" },
+                    { key: "saves", label: "Simpan", align: "right", format: "number" },
+                    { key: "follows", label: "+Follower", align: "right", format: "diff" },
+                    { key: "er", label: "ER", align: "right", format: "pct" },
+                    { key: "kolab", label: "Kolab", format: "text", width: 70 },
+                  ]}
+                />
+              </Section>
+
+              <Section
+                title="📸 Metrik Harian Instagram"
+                count={igDailyRows.length}
+                subtitle="Angka akun per hari dari export Business Suite. Tayangan mencakup semua jenis konten termasuk Story."
+              >
+                <DataTable
+                  rows={igDailyRows}
+                  emptyText="Tidak ada data harian IG pada bulan ini."
+                  columns={[
+                    { key: "date", label: "Tanggal", format: "date" },
+                    { key: "views", label: "Tayangan", align: "right", format: "number" },
+                    { key: "reach", label: "Jangkauan", align: "right", format: "number" },
+                    { key: "profile_visits", label: "Kunjungan profil", align: "right", format: "number" },
+                    { key: "new_followers", label: "Follower baru", align: "right", format: "diff" },
+                  ]}
+                />
+              </Section>
+            </>
+          )}
         </>
       )}
     </main>
