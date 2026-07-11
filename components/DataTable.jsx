@@ -11,6 +11,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Thumbnail from "@/components/Thumbnail";
 
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
 const HASHTAG_RE = /#[\p{L}\p{N}_]+/gu;
@@ -89,18 +90,10 @@ function cellContent(row, col) {
       return row.is_incomplete
         ? <span className="text-amber-700">⚠️ Belum lengkap</span>
         : <span style={{ color: "var(--ink-soft)" }}>Lengkap</span>;
-    case "thumbnail": {
-      const link = row.video_link;
-      const img = link
-        // Thumbnail di-proxy dinamis (/api/tiktok-thumbnail) — <img> polos lebih tepat
-        // daripada next/image di sini (tak perlu optimizer round-trip untuk proxy).
-        // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={`/api/tiktok-thumbnail?url=${encodeURIComponent(link)}`} alt="thumbnail" loading="lazy" width={52} height={69} style={{ width: 52, height: 69, objectFit: "cover", borderRadius: 8, background: "rgba(0,60,68,.08)", display: "block" }} />
-        : <div style={{ width: 52, height: 69, borderRadius: 8, background: "rgba(0,60,68,.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🎬</div>;
-      return link
-        ? <a href={link} target="_blank" rel="noopener noreferrer" title="Buka di TikTok" className="inline-block transition-transform hover:scale-105">{img}</a>
-        : img;
-    }
+    case "thumbnail":
+      // Thumbnail di-proxy & dikecilkan (/api/tiktok-thumbnail) + fallback 🎬 kalau
+      // gagal — lihat components/Thumbnail.jsx.
+      return <Thumbnail link={row.video_link} width={52} height={69} />;
     case "title":
       return <TitleCell value={v} link={row.video_link} width={col.width || 320} />;
     case "text":

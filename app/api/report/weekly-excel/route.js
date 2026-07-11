@@ -7,7 +7,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
-import { weeklyReport, monthDateRange } from "@/lib/tiktok/weekly";
+import { weeklyReport, monthDateRange, weekOfMonth } from "@/lib/tiktok/weekly";
 import ExcelJS from "exceljs";
 
 export const runtime = "nodejs";
@@ -30,7 +30,7 @@ export async function GET(request) {
   const supabase = await createSupabaseServerClient();
   const [{ data: account }, { data: content }, { data: overview }, { data: history }] = await Promise.all([
     supabase.from("tiktok_accounts").select("nama_cabang, tiktok_username").eq("id", accountId).maybeSingle(),
-    supabase.from("tiktok_content").select("post_date, total_views, total_likes, total_comments, total_shares").eq("tiktok_account_id", accountId),
+    supabase.from("tiktok_content").select("video_title, video_link, post_date, total_views, total_likes, total_comments, total_shares").eq("tiktok_account_id", accountId),
     supabase.from("tiktok_daily_overview").select("date, video_views, profile_views, likes, comments, shares").eq("tiktok_account_id", accountId),
     supabase.from("tiktok_follower_history").select("date, followers, diff_from_previous_day").eq("tiktok_account_id", accountId),
   ]);
@@ -83,6 +83,29 @@ export async function GET(request) {
   wo.addRow([]);
   wo.addRow(["Minggu", "Tanggal", "Video Views", "Profile Views", "Likes", "Komentar", "Shares"]).font = { bold: true };
   wr.overview.forEach((o, i) => { const wk = wr.weeks[i] || {}; wo.addRow([o.label, wk.rangeLabel || "-", o.videoViews, o.profileViews, o.likes, o.comments, o.shares]); });
+
+  // Sheet Daftar Konten — video yang tayang pada bulan itu, ditandai minggunya.
+  const eng = (v) => (Number(v.total_likes) || 0) + (Number(v.total_comments) || 0) + (Number(v.total_shares) || 0);
+  const er = (v) => (Number(v.total_views) > 0 ? Math.round((eng(v) / Number(v.total_views)) * 10000) / 100 : 0);
+  const konten = (content || [])
+    .filter((r) => r.post_date && r.post_date.slice(0, 7) === month)
+    .sort((a, b) => String(a.post_date).localeCompare(String(b.post_date)));
+  const wk = wb.addWorksheet("Daftar Konten");
+  wk.columns = [{ width: 12 }, { width: 10 }, { width: 50 }, { width: 45 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 12 }];
+  wk.addRow([`Daftar Konten ${labelBulan(month)} (${konten.length} video)`]).font = { bold: true, size: 12 };
+  wk.addRow([]);
+  wk.addRow(["Tanggal", "Minggu", "Judul", "Link", "Views", "Likes", "Komentar", "Shares", "Eng. Rate (%)"]).font = { bold: true };
+  konten.forEach((v) => wk.addRow([
+    v.post_date,
+    `Minggu ${weekOfMonth(Number(v.post_date.slice(8, 10)))}`,
+    v.video_title,
+    v.video_link,
+    Number(v.total_views) || 0,
+    Number(v.total_likes) || 0,
+    Number(v.total_comments) || 0,
+    Number(v.total_shares) || 0,
+    er(v),
+  ]));
 
   const buffer = await wb.xlsx.writeBuffer();
   const safeName = String(account.tiktok_username || "cabang").replace(/[^a-z0-9_-]/gi, "");

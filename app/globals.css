@@ -160,13 +160,22 @@ body::before {
 }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 
-/* Mode cetak (untuk "Simpan sebagai PDF" laporan). Latar putih, sembunyikan tombol. */
+/* Mode cetak (untuk "Simpan sebagai PDF" laporan). Latar putih, sembunyikan tombol,
+   PAKSA warna/gradasi ikut tercetak, kontrol pindah halaman (target 2 halaman). */
 @media print {
-  body { background: #ffffff !important; }
+  html, body { background: #ffffff !important; }
   body::before { display: none !important; }
   .no-print { display: none !important; }
-  .card-3d { box-shadow: none !important; border: 1px solid #d7e6da !important; }
-  @page { margin: 12mm; }
+  /* Paksa browser mencetak warna latar & gradasi (default-nya distrip). */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .card-3d { box-shadow: none !important; border: none !important; padding: 0 !important; }
+  /* Elemen yang tidak boleh terpotong antar halaman. */
+  .print-avoid { break-inside: avoid; page-break-inside: avoid; }
+  /* Paksa mulai halaman baru (halaman 2). */
+  .print-break { break-before: page; page-break-before: always; }
+  /* Rapatkan sedikit supaya muat 2 halaman. */
+  .print-tight table td, .print-tight table th { padding-top: 3px !important; padding-bottom: 3px !important; }
+  @page { margin: 11mm; size: A4; }
 }
 
 /* Hormati preferensi "kurangi gerak" (blueprint bagian 22). */

@@ -53,10 +53,34 @@ console.log("== weeklyFollowerTrend (boleh negatif) ==");
     { date: "2026-07-10", followers: 108, diff_from_previous_day: 3 },
   ];
   const w = weeklyFollowerTrend(history);
+  // net = endFollowers minggu ini − minggu lalu (baseline=100). Minggu 1: 110-100=+10.
   eq("minggu 1 net +10, endFollowers 110", [w[0].netGrowth, w[0].endFollowers], [10, 110]);
-  // Minggu 2 gabung 2 hari: -5 (9 Jul) + 3 (10 Jul) = -2 — total boleh negatif, tetap ditampilkan apa adanya.
-  eq("minggu 2 net -2 (gabungan turun+naik)", w[1].netGrowth, -2);
+  // Minggu 2 endFollowers 108, minggu lalu 110 -> 108-110 = -2.
+  eq("minggu 2 net -2 (108-110), endFollowers 108", [w[1].netGrowth, w[1].endFollowers], [-2, 108]);
   eq("urutan minggu naik", w.map((x) => x.week), [1, 2]);
+}
+
+console.log("== weeklyFollowerTrend KONSISTENSI (net = selisih follower akhir, total cocok) ==");
+{
+  // Skenario nyata: minggu 1 KOSONG, data mulai minggu 2. Baseline = 8524 (data pertama).
+  const history = [
+    { date: "2026-06-11", followers: 8524, diff_from_previous_day: 3 },
+    { date: "2026-06-14", followers: 8517, diff_from_previous_day: -2 }, // akhir minggu 2
+    { date: "2026-06-18", followers: 8509, diff_from_previous_day: -1 }, // akhir minggu 3
+    { date: "2026-06-25", followers: 8558, diff_from_previous_day: 4 },  // akhir minggu 4
+    { date: "2026-06-30", followers: 8576, diff_from_previous_day: 6 },  // akhir minggu 5
+  ];
+  const w = weeklyFollowerTrend(history, { totalWeeks: 5 });
+  eq("endFollowers per minggu", w.map((x) => x.endFollowers), [null, 8517, 8509, 8558, 8576]);
+  // net = end - endMingguLalu; minggu 2 pakai baseline 8524.
+  eq("net per minggu (selisih follower akhir)", w.map((x) => x.netGrowth), [0, 8517 - 8524, 8509 - 8517, 8558 - 8509, 8576 - 8558]);
+  const totalNet = w.reduce((s, x) => s + x.netGrowth, 0);
+  eq("JUMLAH net mingguan = pertumbuhan bulanan (8576-8524=52)", totalNet, 8576 - 8524);
+  // Konsistensi: tiap minggu berdata, net == endFollowers - endFollowers minggu berdata sebelumnya.
+  let prev = 8524;
+  let konsisten = true;
+  for (const x of w) { if (x.endFollowers != null) { if (x.netGrowth !== x.endFollowers - prev) konsisten = false; prev = x.endFollowers; } }
+  ok("net selalu = follower akhir - follower akhir sebelumnya", konsisten);
 }
 
 console.log("== edge cases ==");

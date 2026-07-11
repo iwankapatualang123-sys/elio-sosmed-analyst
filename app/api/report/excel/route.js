@@ -64,11 +64,17 @@ export async function GET(request) {
   ws.addRow(["Aspek", "Kesimpulan", "Saran"]).font = { bold: true };
   insights.forEach((i) => ws.addRow([i.aspek, i.kesimpulan, i.saran]));
 
-  // Sheet Data Konten
+  // Sheet Data Konten (video yang tayang pada periode; kolom Minggu = minggu ke-berapa
+  // dalam bulannya, berguna saat laporan discope 1 bulan).
   const wc = wb.addWorksheet("Data Konten");
-  wc.addRow(["Judul", "Link", "Tanggal Post", "Views", "Likes", "Comments", "Shares", "Eng. rate (%)"]).font = { bold: true };
-  wc.columns = [{ width: 50 }, { width: 45 }, { width: 14 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 12 }];
-  (cs.videos || []).forEach((v) => wc.addRow([v.video_title, v.video_link, v.post_date, v.total_views, v.total_likes, v.total_comments, v.total_shares, v.engagement_rate]));
+  wc.addRow(["Tanggal Post", "Minggu", "Judul", "Link", "Views", "Likes", "Comments", "Shares", "Eng. rate (%)"]).font = { bold: true };
+  wc.columns = [{ width: 14 }, { width: 10 }, { width: 50 }, { width: 45 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 12 }];
+  [...(cs.videos || [])]
+    .sort((a, b) => String(a.post_date).localeCompare(String(b.post_date)))
+    .forEach((v) => {
+      const wkNo = v.post_date ? Math.min(5, Math.ceil(Number(String(v.post_date).slice(8, 10)) / 7)) : "-";
+      wc.addRow([v.post_date, wkNo === "-" ? "-" : `Minggu ${wkNo}`, v.video_title, v.video_link, v.total_views, v.total_likes, v.total_comments, v.total_shares, v.engagement_rate]);
+    });
 
   // Sheet Follower
   const wf = wb.addWorksheet("Follower");
