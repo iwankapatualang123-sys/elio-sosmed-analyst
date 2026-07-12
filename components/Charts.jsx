@@ -95,26 +95,41 @@ export function DivergingBarChart({ data = [], height = 160, format = (v) => v }
 // bulat di tiap data point. data: [{x(label), y(value)}]. viewBox skala seragam
 // (tanpa distorsi) supaya lingkaran & teks tetap bulat/rapi.
 const idFmt = (n) => Number(n || 0).toLocaleString("id-ID");
-export function LineChart({ data = [] }) {
-  if (data.length < 2) return <Empty height={160} />;
-  const ys = data.map((d) => Number(d.y) || 0);
-  const min = Math.min(...ys);
-  const max = Math.max(...ys);
+// LineChart 1 garis (prop `data`) ATAU multi-garis (prop `series`:
+// [{ label, color, data: [{x,y}] }] — tanggal antar seri boleh beda; sumbu-X
+// dibangun dari gabungan tanggal semua seri). Area gradasi hanya utk 1 garis.
+export function LineChart({ data = [], series = null }) {
+  const multi = Array.isArray(series) && series.filter((s) => (s.data || []).length > 0).length > 0;
+  const sers = multi
+    ? series.filter((s) => (s.data || []).length > 0)
+    : [{ label: null, color: "#006674", data }];
+
+  // Sumbu-X = gabungan semua tanggal (urut); tiap seri plot di tanggal miliknya.
+  const xs = [...new Set(sers.flatMap((s) => s.data.map((d) => String(d.x))))].sort();
+  if (xs.length < 2) return <Empty height={160} />;
+  const xIndex = new Map(xs.map((x, i) => [x, i]));
+
+  const allYs = sers.flatMap((s) => s.data.map((d) => Number(d.y) || 0));
+  const min = Math.min(...allYs);
+  const max = Math.max(...allYs);
   const range = max - min || 1;
 
   const VBW = 400; const VBH = 150;
   const padL = 46; const padR = 10; const padT = 12; const padB = 24;
   const plotW = VBW - padL - padR;
   const plotH = VBH - padT - padB;
-  const xAt = (i) => padL + (i / (data.length - 1)) * plotW;
+  const xAt = (i) => padL + (i / (xs.length - 1)) * plotW;
   const yAt = (v) => padT + (1 - (v - min) / range) * plotH;
 
-  const pts = data.map((d, i) => [xAt(i), yAt(Number(d.y) || 0)]);
-  const line = pts.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
-  const area = `${padL},${padT + plotH} ${line} ${padL + plotW},${padT + plotH}`;
+  const linesOf = (s) => s.data
+    .map((d) => [xAt(xIndex.get(String(d.x))), yAt(Number(d.y) || 0)])
+    .sort((a, b) => a[0] - b[0]);
+  const toPoints = (pts) => pts.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
   const ticks = [max, (max + min) / 2, min];
+  const single = sers.length === 1 ? linesOf(sers[0]) : null;
 
   return (
+    <div>
     <svg viewBox={`0 0 ${VBW} ${VBH}`} width="100%" style={{ height: "auto", display: "block" }} role="img">
       <defs>
         <linearGradient id="lc-area" x1="0" y1="0" x2="0" y2="1">
@@ -132,16 +147,35 @@ export function LineChart({ data = [] }) {
           </g>
         );
       })}
-      <polygon points={area} fill="url(#lc-area)" />
-      <polyline points={line} fill="none" stroke="#006674" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-      {/* Titik bulat di tiap data point */}
-      {pts.map((p, i) => (
-        <circle key={i} cx={p[0]} cy={p[1]} r="3" fill="#006674" stroke="#fff" strokeWidth="1.5" />
-      ))}
+      {single && (
+        <polygon points={`${padL},${padT + plotH} ${toPoints(single)} ${padL + plotW},${padT + plotH}`} fill="url(#lc-area)" />
+      )}
+      {sers.map((s, si) => {
+        const pts = linesOf(s);
+        return (
+          <g key={si}>
+            <polyline points={toPoints(pts)} fill="none" stroke={s.color || "#006674"} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+            {pts.map((p, i) => (
+              <circle key={i} cx={p[0]} cy={p[1]} r={multi ? 2.4 : 3} fill={s.color || "#006674"} stroke="#fff" strokeWidth="1.5" />
+            ))}
+          </g>
+        );
+      })}
       {/* Label tanggal awal & akhir */}
-      <text x={padL} y={VBH - 7} fontSize="9" fill="var(--ink-soft)">{data[0].x}</text>
-      <text x={padL + plotW} y={VBH - 7} textAnchor="end" fontSize="9" fill="var(--ink-soft)">{data[data.length - 1].x}</text>
+      <text x={padL} y={VBH - 7} fontSize="9" fill="var(--ink-soft)">{xs[0]}</text>
+      <text x={padL + plotW} y={VBH - 7} textAnchor="end" fontSize="9" fill="var(--ink-soft)">{xs[xs.length - 1]}</text>
     </svg>
+    {multi && (
+      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: "var(--ink-soft)" }}>
+        {sers.map((s, i) => (
+          <span key={i} className="inline-flex items-center gap-1.5">
+            <span className="inline-block h-1 w-4 rounded-full" style={{ background: s.color || "#006674" }} />
+            {s.label}
+          </span>
+        ))}
+      </div>
+    )}
+    </div>
   );
 }
 

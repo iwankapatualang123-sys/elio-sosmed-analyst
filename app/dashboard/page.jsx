@@ -16,7 +16,8 @@ import ProgressBar from "@/components/ProgressBar";
 import { forecastNext } from "@/lib/tiktok/forecast";
 import { matchPlanStatusMulti, summarizePlans } from "@/lib/tiktok/content-plan";
 import { SNAPSHOT_PLATFORMS, groupByPlatform, followerTrend, latestSnapshot, daysSince } from "@/lib/social/snapshots";
-import { sumDaily, contentInPeriod, contentSummary, topContents } from "@/lib/instagram/metrics";
+import { sumDaily, contentInPeriod, contentSummary, topContents, cumulativeFollowerSeries } from "@/lib/instagram/metrics";
+import PlatformTabs from "@/components/PlatformTabs";
 import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
 
 const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -185,6 +186,12 @@ export default async function DashboardPage({ searchParams }) {
   const igFollowerAnchor = followerTrend(snapsByPlatform.get("instagram") || []); // total follower (snapshot manual)
   // Bila IG sudah punya data upload, kartu snapshot manual cukup utk platform lain.
   const snapsForCards = hasIgData ? new Map([...snapsByPlatform].filter(([k]) => k !== "instagram")) : snapsByPlatform;
+  // Garis follower IG utk grafik pertumbuhan: TOTAL per tanggal dari delta harian
+  // + jangkar snapshot manual, lalu discope ke bulan terpilih (spt garis TikTok).
+  const igFollowerSeriesAll = cumulativeFollowerSeries(igDaily, igFollowerAnchor.latest);
+  const igFollowerSeries = selectedMonth
+    ? igFollowerSeriesAll.filter((p) => p.x.slice(0, 7) === selectedMonth)
+    : igFollowerSeriesAll;
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
@@ -355,22 +362,51 @@ export default async function DashboardPage({ searchParams }) {
             )}
           </section>
 
-          {/* Panel Instagram (Tahap B) — agregat data upload Business Suite:
-              KPI akun harian + ER akun + Top 5 Reels, mengikuti filter bulan. */}
-          {hasIgData && (
-            <section className="card-3d p-4 sm:p-5">
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <h3 className="text-sm font-semibold text-ink">📸 Instagram</h3>
-                <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>
-                  {igMonth ? labelBulan(igMonth) : "Sepanjang data ter-upload"}
-                </span>
-                {editable && (
-                  <Link href="/upload" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
-                    Upload data →
-                  </Link>
-                )}
+          {/* Ringkasan Platform — tab TikTok/Instagram dgn gaya kartu yang sama
+              supaya gampang dibandingkan; keduanya ikut filter bulan halaman. */}
+          <section className="card-3d p-4 sm:p-5">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-semibold text-ink">📱 Ringkasan Platform</h3>
+              <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>
+                {igMonth ? labelBulan(igMonth) : selectedMonth ? labelBulan(selectedMonth) : "Sepanjang masa"}
+              </span>
+              {editable && (
+                <Link href="/upload" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+                  Upload data →
+                </Link>
+              )}
+            </div>
+            <PlatformTabs tabs={["TikTok", "Instagram"]}>
+              {/* Tab TikTok — KPI ringkas gaya sama dgn IG; rincian lengkap (grafik,
+                  heatmap, top video, insight) tetap di bagian-bagian bawah halaman. */}
+              <div>
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+                  {[
+                    ["Views", fmt(detail.summary.totalViews)],
+                    ["Engagement rate", `${detail.summary.engagementRateOverall}%`],
+                    ["Konten", fmt(detail.summary.totalVideos)],
+                    ["Follower Δ", `${detail.growth.netGrowth >= 0 ? "+" : ""}${fmt(detail.growth.netGrowth)}`],
+                  ].map(([label, val]) => (
+                    <div key={label} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+                      <div className="text-lg font-extrabold sm:text-xl" style={{ color: "var(--teal-900)" }}>{val}</div>
+                      <div className="mt-0.5 text-[11px] font-medium" style={{ color: "var(--ink-soft)" }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+                  Ringkasan dari data report TikTok Studio. Grafik, heatmap, top video, dan insight lengkap ada di bagian bawah halaman ini.
+                </p>
               </div>
 
+              {/* Tab Instagram — dari data upload Business Suite. */}
+              <div>
+              {!hasIgData ? (
+                <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                  Belum ada data Instagram untuk cabang ini. Upload export Meta Business Suite lewat halaman{" "}
+                  <Link href="/upload" style={{ color: "var(--teal-900)", fontWeight: 600 }}>Upload</Link>.
+                </p>
+              ) : (
+              <>
               {/* KPI akun dari metrik harian */}
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
                 {[
@@ -435,8 +471,11 @@ export default async function DashboardPage({ searchParams }) {
                   </table>
                 </div>
               )}
-            </section>
-          )}
+              </>
+              )}
+              </div>
+            </PlatformTabs>
+          </section>
 
           {/* Perkembangan platform snapshot manual (Threads; IG hanya bila belum
               ada data upload). Follower terakhir + delta; pengingat bila >7 hari. */}
@@ -613,7 +652,16 @@ export default async function DashboardPage({ searchParams }) {
                   return <span> · proyeksi 7 hari: <b style={{ color: fc.trend === "naik" ? "#166534" : fc.trend === "turun" ? "#991b1b" : "inherit" }}>~{fmt(fc.nextValue)} ({fc.trend})</b></span>;
                 })()}
               </p>
-              <LineChart data={detail.history.map((h) => ({ x: h.date, y: h.followers }))} />
+              {/* 2 garis: TikTok (total dari follower history) + Instagram (total dari
+                  delta harian + jangkar snapshot). Warna beda + legenda di bawah grafik. */}
+              <LineChart
+                series={[
+                  { label: "TikTok", color: "#006674", data: detail.history.map((h) => ({ x: h.date, y: h.followers })) },
+                  ...(igFollowerSeries.length >= 2
+                    ? [{ label: "Instagram", color: "#c13584", data: igFollowerSeries }]
+                    : []),
+                ]}
+              />
             </div>
 
             <div className="card-3d p-5">
@@ -644,7 +692,7 @@ export default async function DashboardPage({ searchParams }) {
             </div>
 
             <div className="card-3d p-5">
-              <h3 className="mb-0.5 text-sm font-semibold text-ink">Gender Follower</h3>
+              <h3 className="mb-0.5 text-sm font-semibold text-ink">Gender Follower (TikTok)</h3>
               {/* Ini snapshot (potret sesaat) — dgn filter bulan, ambil snapshot terakhir
                   yang sudah ada PADA/sebelum bulan itu, bukan snapshot dari masa depan. */}
               {detail.genderSnapshotDate && (
@@ -698,7 +746,7 @@ export default async function DashboardPage({ searchParams }) {
           </section>
 
           <section className="card-3d p-5">
-            <h3 className="mb-1 text-sm font-semibold text-ink">Heatmap Jam × Hari (follower aktif)</h3>
+            <h3 className="mb-1 text-sm font-semibold text-ink">Heatmap Jam × Hari (follower aktif TikTok)</h3>
             {detail.activityRange ? (
               <>
                 <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>Dari aktivitas 7 hari terakhir ({tglSingkat(detail.activityRange.from)}–{tglSingkat(detail.activityRange.to)}) — bukan per-bulan.</p>

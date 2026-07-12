@@ -3,7 +3,7 @@
 
 const {
   sumDaily, dailySeries, interactionsOf, erOf, contentInPeriod, isReel,
-  topContents, accountEr, contentSummary, availableMonths,
+  topContents, accountEr, contentSummary, availableMonths, cumulativeFollowerSeries,
 } = require("../lib/instagram/metrics.js");
 
 let pass = 0;
@@ -57,6 +57,20 @@ ok("accountEr agregat", accountEr(contents.slice(0, 3)) === 2.36);
 ok("accountEr kosong -> null", accountEr([]) === null);
 const sum = contentSummary(contents.slice(0, 3));
 ok("contentSummary lengkap", sum.count === 3 && sum.reels === 2 && sum.views === 107169 && sum.follows === 62 && sum.er === 2.36);
+
+// --- cumulativeFollowerSeries ---
+const fd = [
+  { metric: "new_followers", date: "2026-07-01", value: 5 },
+  { metric: "new_followers", date: "2026-07-02", value: 3 },
+  { metric: "new_followers", date: "2026-07-03", value: 2 },
+  { metric: "views", date: "2026-07-01", value: 999 }, // metrik lain diabaikan
+];
+// Jangkar snapshot 2 Jul = 1000 -> akhir 1 Jul 997, akhir 2 Jul 1000, akhir 3 Jul 1002.
+const cs1 = cumulativeFollowerSeries(fd, { snapshot_date: "2026-07-02", followers: 1000 });
+ok("cumSeries: jangkar tepat di tengah", cs1.length === 3 && cs1[0].y === 997 && cs1[1].y === 1000 && cs1[2].y === 1002);
+const cs2 = cumulativeFollowerSeries(fd, null);
+ok("cumSeries: tanpa jangkar mulai 0", cs2[0].y === 5 && cs2[2].y === 10);
+ok("cumSeries: kosong aman", cumulativeFollowerSeries([], null).length === 0);
 
 // --- availableMonths ---
 ok("availableMonths gabung 2 sumber, terbaru dulu", JSON.stringify(availableMonths(daily, contents)) === '["2026-07","2026-06"]');
