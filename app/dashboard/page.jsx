@@ -198,6 +198,22 @@ export default async function DashboardPage({ searchParams }) {
     .filter((r) => r.metric === "new_followers" && (!selectedMonth || String(r.date).slice(0, 7) === selectedMonth))
     .map((r) => ({ x: String(r.date).slice(0, 10), y: r.value || 0 }))
     .sort((a, b) => a.x.localeCompare(b.x));
+  // AGREGAT BULANAN utk tampilan "Semua bulan": titik harian akan bertumpuk terus
+  // seiring bulan bertambah — jadi tanpa filter bulan, grafik memakai net growth
+  // PER BULAN (bulan terlama → terbaru, otomatis ikut data laporan terbaru).
+  // Pilih 1 bulan di filter untuk kembali melihat detail harian.
+  const monthlySum = (points) => {
+    const m = new Map();
+    for (const p of points) {
+      const k = String(p.x).slice(0, 7);
+      m.set(k, (m.get(k) || 0) + (Number(p.y) || 0));
+    }
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([x, y]) => ({ x, y }));
+  };
+  const ttGrowthMonthly = monthlySum(detail.history.map((h) => ({ x: h.date, y: Number(h.diff_from_previous_day) || 0 })));
+  const igGrowthMonthly = monthlySum(
+    igDaily.filter((r) => r.metric === "new_followers").map((r) => ({ x: r.date, y: r.value || 0 }))
+  );
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
@@ -676,17 +692,39 @@ export default async function DashboardPage({ searchParams }) {
                   </span>
                 )}
               </div>
-              <LineChart
-                series={[
-                  { label: "TikTok", color: "#006674", data: detail.history.map((h) => ({ x: h.date, y: Number(h.diff_from_previous_day) || 0 })) },
-                  ...(igGrowthSeries.length >= 2
-                    ? [{ label: "Instagram", color: "#c13584", data: igGrowthSeries }]
-                    : []),
-                ]}
-              />
-              <p className="mt-1 text-[10px]" style={{ color: "var(--ink-soft)" }}>
-                Garis = pertambahan follower per hari (bisa minus saat ada unfollow). Total ada di ringkasan atas.
-              </p>
+              {selectedMonth || (ttGrowthMonthly.length < 2 && igGrowthMonthly.length < 2) ? (
+                <>
+                  {/* 1 bulan dipilih (atau data baru 1 bulan) -> detail HARIAN. */}
+                  <LineChart
+                    series={[
+                      { label: "TikTok", color: "#006674", data: detail.history.map((h) => ({ x: h.date, y: Number(h.diff_from_previous_day) || 0 })) },
+                      ...(igGrowthSeries.length >= 2
+                        ? [{ label: "Instagram", color: "#c13584", data: igGrowthSeries }]
+                        : []),
+                    ]}
+                  />
+                  <p className="mt-1 text-[10px]" style={{ color: "var(--ink-soft)" }}>
+                    Garis = pertambahan follower per hari (bisa minus saat ada unfollow). Total ada di ringkasan atas.
+                  </p>
+                </>
+              ) : (
+                <>
+                  {/* Semua bulan -> agregat PER BULAN (harian akan bertumpuk seiring
+                      bulan bertambah). Otomatis memanjang tiap ada laporan baru. */}
+                  <LineChart
+                    series={[
+                      { label: "TikTok", color: "#006674", data: ttGrowthMonthly },
+                      ...(igGrowthMonthly.length >= 2
+                        ? [{ label: "Instagram", color: "#c13584", data: igGrowthMonthly }]
+                        : []),
+                    ]}
+                  />
+                  <p className="mt-1 text-[10px]" style={{ color: "var(--ink-soft)" }}>
+                    Garis = pertambahan follower <b>per bulan</b> (bulan terlama s/d terbaru; bulan berjalan dihitung s/d data terakhir).
+                    Pilih satu bulan di filter atas untuk melihat detail hariannya.
+                  </p>
+                </>
+              )}
             </div>
 
             <div className="card-3d p-5">
