@@ -645,6 +645,49 @@ export default async function DashboardPage({ searchParams }) {
             </section>
           )}
 
+          {/* Analisis Pertumbuhan — muncul OTOMATIS saat kenaikan follower bulan yang
+              ditinjau < bulan sebelumnya: diagnosis sebab (kualitas/produksi/
+              normalisasi-viral/distribusi) supaya penurunan tidak salah dibaca. */}
+          {detail.growthDiagnosis && detail.comparison && (() => {
+            const dg = detail.growthDiagnosis;
+            const s = ALERT_STYLE[dg.level] || ALERT_STYLE.info;
+            const chip = {
+              turun: { bg: "#fee2e2", fg: "#991b1b" },
+              ada: { bg: "#fef3c7", fg: "#92400e" },
+              stabil: { bg: "#dcfce7", fg: "#166534" },
+              tidak: { bg: "rgba(0,102,116,.08)", fg: "var(--teal-900)" },
+            };
+            return (
+              <section className="card-3d p-4 sm:p-5">
+                <h3 className="mb-1 text-sm font-semibold text-ink">
+                  🔍 Analisis Pertumbuhan — {labelBulan(selectedMonth)} vs {labelBulan(detail.comparison.prevMonth)}
+                </h3>
+                <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
+                  Kenaikan follower melambat: <b className="text-ink">{dg.growth.prev >= 0 ? "+" : ""}{fmt(dg.growth.prev)}</b> →{" "}
+                  <b className="text-ink">{dg.growth.cur >= 0 ? "+" : ""}{fmt(dg.growth.cur)}</b>. Follower itu <i>akibat</i> — di bawah ini pemeriksaan <i>sebab</i>-nya.
+                </p>
+                <div className="mb-3 flex items-start gap-2 rounded-xl p-3 text-sm" style={{ background: s.bg, border: `1px solid ${s.border}` }}>
+                  <span>{s.icon}</span>
+                  <span className="text-ink"><b style={{ color: s.color }}>Kesimpulan:</b> {dg.summary}</span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {dg.findings.map((f) => {
+                    const c = chip[f.status] || chip.tidak;
+                    return (
+                      <div key={f.key} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-ink">{f.label}</span>
+                          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: c.bg, color: c.fg }}>{f.status}</span>
+                        </div>
+                        <p className="text-[12px]" style={{ color: "var(--ink-soft)" }}>{f.detail}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })()}
+
           {/* Insight otomatis (Kesimpulan + Saran per aspek) */}
           <section className="grid gap-4 sm:grid-cols-2">
             {(detail.insights || []).map((ins, i) => (

@@ -20,7 +20,8 @@
     "test:snapshots": "node test/social-snapshots.test.js",
     "test:ig-parser": "node test/instagram-parser.test.js",
     "test:ig-metrics": "node test/instagram-metrics.test.js",
-    "test": "node test/tiktok-parser.test.js && node test/tiktok-sync.test.js && node test/tiktok-metrics.test.js && node test/tiktok-upload.test.js && node test/tiktok-insights.test.js && node test/tiktok-alerts.test.js && node test/tiktok-forecast.test.js && node test/tiktok-weekly.test.js && node test/tiktok-content-plan.test.js && node test/tiktok-plan-import.test.js && node test/social-snapshots.test.js && node test/instagram-parser.test.js && node test/instagram-metrics.test.js"
+    "test": "node test/tiktok-parser.test.js && node test/tiktok-sync.test.js && node test/tiktok-metrics.test.js && node test/tiktok-upload.test.js && node test/tiktok-insights.test.js && node test/tiktok-alerts.test.js && node test/tiktok-forecast.test.js && node test/tiktok-weekly.test.js && node test/tiktok-content-plan.test.js && node test/tiktok-plan-import.test.js && node test/social-snapshots.test.js && node test/instagram-parser.test.js && node test/instagram-metrics.test.js && node test/tiktok-diagnosis.test.js",
+    "test:diagnosis": "node test/tiktok-diagnosis.test.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
