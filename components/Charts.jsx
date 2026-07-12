@@ -98,11 +98,12 @@ const idFmt = (n) => Number(n || 0).toLocaleString("id-ID");
 // LineChart 1 garis (prop `data`) ATAU multi-garis (prop `series`:
 // [{ label, color, data: [{x,y}] }] — tanggal antar seri boleh beda; sumbu-X
 // dibangun dari gabungan tanggal semua seri). Area gradasi hanya utk 1 garis.
-export function LineChart({ data = [], series = null }) {
+export function LineChart({ data = [], series = null, color = "#006674" }) {
   const multi = Array.isArray(series) && series.filter((s) => (s.data || []).length > 0).length > 0;
   const sers = multi
     ? series.filter((s) => (s.data || []).length > 0)
-    : [{ label: null, color: "#006674", data }];
+    : [{ label: null, color, data }];
+  const gradId = `lc-area-${String(color).replace(/[^a-zA-Z0-9]/g, "")}`;
 
   // Sumbu-X = gabungan semua tanggal (urut); tiap seri plot di tanggal miliknya.
   const xs = [...new Set(sers.flatMap((s) => s.data.map((d) => String(d.x))))].sort();
@@ -132,9 +133,9 @@ export function LineChart({ data = [], series = null }) {
     <div>
     <svg viewBox={`0 0 ${VBW} ${VBH}`} width="100%" style={{ height: "auto", display: "block" }} role="img">
       <defs>
-        <linearGradient id="lc-area" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4f9e7a" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#4f9e7a" stopOpacity="0" />
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
       {/* Gridline + angka sumbu-Y */}
@@ -148,16 +149,23 @@ export function LineChart({ data = [], series = null }) {
         );
       })}
       {single && (
-        <polygon points={`${padL},${padT + plotH} ${toPoints(single)} ${padL + plotW},${padT + plotH}`} fill="url(#lc-area)" />
+        <polygon points={`${padL},${padT + plotH} ${toPoints(single)} ${padL + plotW},${padT + plotH}`} fill={`url(#${gradId})`} />
       )}
       {sers.map((s, si) => {
         const pts = linesOf(s);
         return (
           <g key={si}>
             <polyline points={toPoints(pts)} fill="none" stroke={s.color || "#006674"} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-            {pts.map((p, i) => (
-              <circle key={i} cx={p[0]} cy={p[1]} r={multi ? 2.4 : 3} fill={s.color || "#006674"} stroke="#fff" strokeWidth="1.5" />
-            ))}
+            {s.data.map((d, i) => {
+              const px = xAt(xIndex.get(String(d.x)));
+              const py = yAt(Number(d.y) || 0);
+              return (
+                <circle key={i} cx={px} cy={py} r={multi ? 2.4 : 3} fill={s.color || "#006674"} stroke="#fff" strokeWidth="1.5">
+                  {/* Tooltip bawaan browser per titik: tanggal + nilai. */}
+                  <title>{`${d.x}: ${idFmt(d.y)}`}</title>
+                </circle>
+              );
+            })}
           </g>
         );
       })}
