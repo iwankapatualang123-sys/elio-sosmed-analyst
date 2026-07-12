@@ -654,41 +654,30 @@ export default async function DashboardPage({ searchParams }) {
                   </p>
                 );
               })() : <div className="mb-3" />}
-              {/* SMALL MULTIPLES: TikTok & Instagram digambar TERPISAH dgn skala
-                  masing-masing — skala follower kedua platform beda jauh, jadi kalau
-                  dipaksa 1 sumbu salah satunya pasti tampak datar & tak terbaca. */}
-              <div className="flex flex-col gap-4">
-                <div>
-                  <div className="mb-1 flex items-baseline justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink">
-                      <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: "#006674" }} /> TikTok
-                    </span>
-                    <span className="text-[11px]" style={{ color: "var(--ink-soft)" }}>
-                      {fmt(detail.growth.startFollowers)} → <b className="text-ink">{fmt(detail.growth.endFollowers)}</b>{" "}
-                      <b style={{ color: detail.growth.netGrowth > 0 ? "#166534" : detail.growth.netGrowth < 0 ? "#b91c1c" : "inherit" }}>
-                        ({detail.growth.netGrowth >= 0 ? "+" : ""}{fmt(detail.growth.netGrowth)})
-                      </b>
-                    </span>
-                  </div>
-                  <LineChart data={detail.history.map((h) => ({ x: h.date, y: h.followers }))} color="#006674" />
-                </div>
+              {/* 1 bidang, 2 garis warna beda (permintaan user) + legenda bawaan
+                  LineChart. Ringkasan awal→akhir per platform di atas grafik. */}
+              <div className="mb-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+                <span>
+                  <b style={{ color: "#006674" }}>TikTok</b> {fmt(detail.growth.startFollowers)} → <b className="text-ink">{fmt(detail.growth.endFollowers)}</b>{" "}
+                  <b style={{ color: detail.growth.netGrowth > 0 ? "#166534" : detail.growth.netGrowth < 0 ? "#b91c1c" : "inherit" }}>
+                    ({detail.growth.netGrowth >= 0 ? "+" : ""}{fmt(detail.growth.netGrowth)})
+                  </b>
+                </span>
                 {igFollowerSeries.length >= 2 && (
-                  <div>
-                    <div className="mb-1 flex items-baseline justify-between gap-2">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink">
-                        <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: "#c13584" }} /> Instagram
-                      </span>
-                      <span className="text-[11px]" style={{ color: "var(--ink-soft)" }}>
-                        {fmt(igFollowerSeries[0].y)} → <b className="text-ink">{fmt(igFollowerSeries[igFollowerSeries.length - 1].y)}</b>{" "}
-                        <b style={{ color: "#166534" }}>
-                          (+{fmt(igFollowerSeries[igFollowerSeries.length - 1].y - igFollowerSeries[0].y)})
-                        </b>
-                      </span>
-                    </div>
-                    <LineChart data={igFollowerSeries} color="#c13584" />
-                  </div>
+                  <span>
+                    <b style={{ color: "#c13584" }}>Instagram</b> {fmt(igFollowerSeries[0].y)} → <b className="text-ink">{fmt(igFollowerSeries[igFollowerSeries.length - 1].y)}</b>{" "}
+                    <b style={{ color: "#166534" }}>(+{fmt(igFollowerSeries[igFollowerSeries.length - 1].y - igFollowerSeries[0].y)})</b>
+                  </span>
                 )}
               </div>
+              <LineChart
+                series={[
+                  { label: "TikTok", color: "#006674", data: detail.history.map((h) => ({ x: h.date, y: h.followers })) },
+                  ...(igFollowerSeries.length >= 2
+                    ? [{ label: "Instagram", color: "#c13584", data: igFollowerSeries }]
+                    : []),
+                ]}
+              />
             </div>
 
             <div className="card-3d p-5">
