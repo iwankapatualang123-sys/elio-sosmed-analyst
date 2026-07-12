@@ -192,6 +192,12 @@ export default async function DashboardPage({ searchParams }) {
   const igFollowerSeries = selectedMonth
     ? igFollowerSeriesAll.filter((p) => p.x.slice(0, 7) === selectedMonth)
     : igFollowerSeriesAll;
+  // Garis grafik pakai PERTAMBAHAN follower per hari (bukan total) — skala kedua
+  // platform jadi sebanding; total awal→akhir tetap tampil di ringkasan atas grafik.
+  const igGrowthSeries = igDaily
+    .filter((r) => r.metric === "new_followers" && (!selectedMonth || String(r.date).slice(0, 7) === selectedMonth))
+    .map((r) => ({ x: String(r.date).slice(0, 10), y: r.value || 0 }))
+    .sort((a, b) => a.x.localeCompare(b.x));
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
@@ -672,12 +678,15 @@ export default async function DashboardPage({ searchParams }) {
               </div>
               <LineChart
                 series={[
-                  { label: "TikTok", color: "#006674", data: detail.history.map((h) => ({ x: h.date, y: h.followers })) },
-                  ...(igFollowerSeries.length >= 2
-                    ? [{ label: "Instagram", color: "#c13584", data: igFollowerSeries }]
+                  { label: "TikTok", color: "#006674", data: detail.history.map((h) => ({ x: h.date, y: Number(h.diff_from_previous_day) || 0 })) },
+                  ...(igGrowthSeries.length >= 2
+                    ? [{ label: "Instagram", color: "#c13584", data: igGrowthSeries }]
                     : []),
                 ]}
               />
+              <p className="mt-1 text-[10px]" style={{ color: "var(--ink-soft)" }}>
+                Garis = pertambahan follower per hari (bisa minus saat ada unfollow). Total ada di ringkasan atas.
+              </p>
             </div>
 
             <div className="card-3d p-5">
