@@ -614,19 +614,25 @@ export default async function DashboardPage({ searchParams }) {
                 </p>
               );
             })() : <div className="mb-2" />}
+            {/* Angka di sini = PERTAMBAHAN follower periode ini (agar konsisten dgn
+                grafik yg memang menggambar pertambahan, bukan jumlah total). Jumlah
+                follower terkini ditaruh sbg konteks kecil "kini …". */}
             <div className="mb-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px]" style={{ color: "var(--ink-soft)" }}>
               <span>
-                <b style={{ color: "#006674" }}>TikTok</b> {fmt(detail.growth.startFollowers)} → <b className="text-ink">{fmt(detail.growth.endFollowers)}</b>{" "}
+                <b style={{ color: "#006674" }}>TikTok</b>{" "}
                 <b style={{ color: detail.growth.netGrowth > 0 ? "#166534" : detail.growth.netGrowth < 0 ? "#b91c1c" : "inherit" }}>
-                  ({detail.growth.netGrowth >= 0 ? "+" : ""}{fmt(detail.growth.netGrowth)})
-                </b>
+                  {detail.growth.netGrowth >= 0 ? "+" : ""}{fmt(detail.growth.netGrowth)}
+                </b>{" "}follower · kini {fmt(detail.growth.endFollowers)}
               </span>
-              {igFollowerSeries.length >= 2 && (
-                <span>
-                  <b style={{ color: "#c13584" }}>Instagram</b> {fmt(igFollowerSeries[0].y)} → <b className="text-ink">{fmt(igFollowerSeries[igFollowerSeries.length - 1].y)}</b>{" "}
-                  <b style={{ color: "#166534" }}>(+{fmt(igFollowerSeries[igFollowerSeries.length - 1].y - igFollowerSeries[0].y)})</b>
-                </span>
-              )}
+              {igFollowerSeries.length >= 2 && (() => {
+                const igNet = igFollowerSeries[igFollowerSeries.length - 1].y - igFollowerSeries[0].y;
+                return (
+                  <span>
+                    <b style={{ color: "#c13584" }}>Instagram</b>{" "}
+                    <b style={{ color: igNet > 0 ? "#166534" : igNet < 0 ? "#b91c1c" : "inherit" }}>{igNet >= 0 ? "+" : ""}{fmt(igNet)}</b>{" "}follower · kini {fmt(igFollowerSeries[igFollowerSeries.length - 1].y)}
+                  </span>
+                );
+              })()}
             </div>
             {selectedMonth || (ttGrowthMonthly.length < 2 && igGrowthMonthly.length < 2) ? (
               <>
@@ -637,7 +643,7 @@ export default async function DashboardPage({ searchParams }) {
                   ]}
                 />
                 <p className="mt-1 text-[10px]" style={{ color: "var(--ink-soft)" }}>
-                  Garis = pertambahan follower per hari (bisa minus saat ada unfollow). Total ada di ringkasan atas.
+                  Garis = <b>pertambahan follower per hari</b> (bukan jumlah total; bisa minus saat unfollow). Angka di atas grafik = total pertambahan periode ini + jumlah follower terkini.
                 </p>
               </>
             ) : (
@@ -649,7 +655,7 @@ export default async function DashboardPage({ searchParams }) {
                   ]}
                 />
                 <p className="mt-1 text-[10px]" style={{ color: "var(--ink-soft)" }}>
-                  Garis = pertambahan follower <b>per bulan</b> (bulan terlama s/d terbaru; bulan berjalan s/d data terakhir). Pilih satu bulan di filter atas untuk detail harian.
+                  Garis = <b>pertambahan follower per bulan</b> (bukan jumlah total; bulan terlama s/d terbaru, bulan berjalan s/d data terakhir). Pilih satu bulan di filter atas untuk detail harian.
                 </p>
               </>
             )}
