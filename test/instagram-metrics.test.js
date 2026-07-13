@@ -4,6 +4,7 @@
 const {
   sumDaily, dailySeries, interactionsOf, erOf, contentInPeriod, isReel,
   topContents, accountEr, contentSummary, availableMonths, cumulativeFollowerSeries,
+  contentTypeBreakdown, hashtagStats, postTypeShort,
 } = require("../lib/instagram/metrics.js");
 
 let pass = 0;
@@ -57,6 +58,24 @@ ok("accountEr agregat", accountEr(contents.slice(0, 3)) === 2.36);
 ok("accountEr kosong -> null", accountEr([]) === null);
 const sum = contentSummary(contents.slice(0, 3));
 ok("contentSummary lengkap", sum.count === 3 && sum.reels === 2 && sum.views === 107169 && sum.follows === 62 && sum.er === 2.36);
+
+// --- contentTypeBreakdown ---
+const ctb = contentTypeBreakdown([
+  { post_type: "Reel IG", views: 1000, likes: 50, comments: 0, shares: 0, saves: 0, follows: 5 },
+  { post_type: "Reel IG", views: 3000, likes: 100, comments: 0, shares: 0, saves: 0, follows: 3 },
+  { post_type: "Gambar IG", views: 500, likes: 25, comments: 0, shares: 0, saves: 0, follows: 1 },
+]);
+ok("breakdown: Reel teratas (views)", ctb[0].type === "Reel" && ctb[0].count === 2 && ctb[0].views === 4000 && ctb[0].follows === 8);
+ok("breakdown: ER agregat per jenis", ctb[0].er === 3.75 && ctb[1].er === 5);
+ok("postTypeShort buang suffix IG", postTypeShort("Carousel IG") === "Carousel" && postTypeShort("") === "Lainnya");
+
+// --- hashtagStats ---
+const hs = hashtagStats([
+  { description: "seru #eliocoffeehouse #event", views: 1000, likes: 100, comments: 0, shares: 0, saves: 0 },
+  { description: "#ElioCoffeeHouse lagi", views: 3000, likes: 60, comments: 0, shares: 0, saves: 0 },
+], { limit: 5 });
+ok("hashtag: case-insensitive digabung", hs[0].hashtag === "#eliocoffeehouse" && hs[0].count === 2);
+ok("hashtag: avgViews & avgEr", hs[0].avgViews === 2000 && hs[0].avgEr === 4);
 
 // --- cumulativeFollowerSeries ---
 const fd = [

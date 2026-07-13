@@ -16,7 +16,7 @@ import ProgressBar from "@/components/ProgressBar";
 import { forecastNext } from "@/lib/tiktok/forecast";
 import { matchPlanStatusMulti, summarizePlans } from "@/lib/tiktok/content-plan";
 import { SNAPSHOT_PLATFORMS, groupByPlatform, followerTrend, latestSnapshot, daysSince } from "@/lib/social/snapshots";
-import { sumDaily, contentInPeriod, contentSummary, topContents, cumulativeFollowerSeries } from "@/lib/instagram/metrics";
+import { sumDaily, dailySeries, contentInPeriod, contentSummary, topContents, cumulativeFollowerSeries, contentTypeBreakdown, hashtagStats as igHashtagStats } from "@/lib/instagram/metrics";
 import PlatformTabs from "@/components/PlatformTabs";
 import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
 
@@ -183,6 +183,15 @@ export default async function DashboardPage({ searchParams }) {
   const igPeriodContents = contentInPeriod(igContent, igMonth);
   const igCSummary = contentSummary(igPeriodContents);
   const igTopReels = topContents(igPeriodContents, { onlyReels: true, limit: 5 });
+  // Detail Instagram (per aspek, sejajar detail TikTok): tren harian, performa per
+  // jenis konten, top konten semua jenis, pendatang follower, hashtag.
+  const igViewsSeries = dailySeries(igDaily, "views", igMonth);
+  const igReachSeries = dailySeries(igDaily, "reach", igMonth);
+  const igVisitsSeries = dailySeries(igDaily, "profile_visits", igMonth);
+  const igTypeBreakdown = contentTypeBreakdown(igPeriodContents);
+  const igTopAll = topContents(igPeriodContents, { limit: 5 });
+  const igTopFollows = topContents(igPeriodContents.filter((c) => (c.follows || 0) > 0), { by: "follows", limit: 5 });
+  const igHashtags = igHashtagStats(igPeriodContents, { limit: 12 });
   const igFollowerAnchor = followerTrend(snapsByPlatform.get("instagram") || []); // total follower (snapshot manual)
   // Bila IG sudah punya data upload, kartu snapshot manual cukup utk platform lain.
   const snapsForCards = hasIgData ? new Map([...snapsByPlatform].filter(([k]) => k !== "instagram")) : snapsByPlatform;
@@ -706,6 +715,12 @@ export default async function DashboardPage({ searchParams }) {
 
           <InsightAI accountId={selectedId} namaCabang={selectedBranch.nama_cabang} month={selectedMonth} />
 
+          {/* ————— Detail per platform ————— */}
+          <div className="mt-1 flex items-center gap-2 px-1">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-sm" style={{ background: "rgba(0,102,116,.12)" }}>🎵</span>
+            <h2 className="text-lg font-bold text-white drop-shadow-sm">Detail TikTok</h2>
+          </div>
+
           <section className="grid gap-4 lg:grid-cols-2">
             <div className="card-3d p-5">
               <h3 className="mb-1 text-sm font-semibold text-ink">Pertumbuhan Follower{selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</h3>
@@ -888,8 +903,147 @@ export default async function DashboardPage({ searchParams }) {
               </table>
             </div>
           </section>
+
+          {/* ————— Detail Instagram (dari upload Business Suite) ————— */}
+          {hasIgData && (
+            <>
+              <div className="mt-3 flex items-center gap-2 px-1">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-sm" style={{ background: "rgba(193,53,132,.14)" }}>📸</span>
+                <h2 className="text-lg font-bold text-white drop-shadow-sm">Detail Instagram</h2>
+                <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(255,255,255,.2)", color: "#fff" }}>
+                  {igMonth ? labelBulan(igMonth) : "Sepanjang data"}
+                </span>
+              </div>
+
+              {/* Tren harian: Tayangan, Jangkauan, Kunjungan profil */}
+              <section className="grid gap-4 lg:grid-cols-3">
+                {[
+                  ["Tayangan / hari", igViewsSeries, "#c13584"],
+                  ["Jangkauan / hari", igReachSeries, "#8a3ab9"],
+                  ["Kunjungan profil / hari", igVisitsSeries, "#e1306c"],
+                ].map(([title, ser, color]) => (
+                  <div key={title} className="card-3d p-5">
+                    <h3 className="mb-1 text-sm font-semibold text-ink">{title}</h3>
+                    <p className="mb-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+                      Total {fmt(ser.reduce((s, p) => s + p.y, 0))} · {ser.length} hari
+                    </p>
+                    <LineChart data={ser.map((p) => ({ x: p.x, y: p.y }))} color={color} />
+                  </div>
+                ))}
+              </section>
+
+              {/* Performa per jenis konten + hashtag IG */}
+              <section className="grid gap-4 lg:grid-cols-2">
+                <div className="card-3d p-4 sm:p-5">
+                  <h3 className="mb-3 text-sm font-semibold text-ink">Performa per Jenis Konten</h3>
+                  {igTypeBreakdown.length === 0 ? (
+                    <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada konten pada periode ini.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead>
+                          <tr style={{ color: "var(--ink-soft)" }}>
+                            <th className="py-2 pr-3 font-medium">Jenis</th>
+                            <th className="py-2 pr-3 font-medium text-right">Jml</th>
+                            <th className="py-2 pr-3 font-medium text-right">Tayangan</th>
+                            <th className="py-2 pr-3 font-medium text-right">ER</th>
+                            <th className="py-2 pr-3 font-medium text-right">+Follower</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {igTypeBreakdown.map((t) => (
+                            <tr key={t.type} className="border-t" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                              <td className="py-2 pr-3 font-medium text-ink">{t.type}</td>
+                              <td className="py-2 pr-3 text-right">{fmt(t.count)}</td>
+                              <td className="py-2 pr-3 text-right">{fmt(t.views)}</td>
+                              <td className="py-2 pr-3 text-right">{t.er == null ? "—" : `${t.er}%`}</td>
+                              <td className="py-2 pr-3 text-right" style={{ color: "#166534" }}>{t.follows ? `+${fmt(t.follows)}` : "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                <div className="card-3d p-4 sm:p-5">
+                  <h3 className="mb-3 text-sm font-semibold text-ink"># Hashtag Instagram</h3>
+                  {igHashtags.length === 0 ? (
+                    <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada hashtag di caption.</p>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {igHashtags.map((h) => (
+                        <span
+                          key={h.hashtag}
+                          title={`${h.count}x dipakai · avg ${fmt(h.avgViews)} tayangan · ER ${h.avgEr}%`}
+                          className="rounded-full px-3 py-1 font-medium"
+                          style={{ background: "rgba(193,53,132,.08)", color: "#a12472", fontSize: `${12 + Math.min(8, h.count)}px` }}
+                        >
+                          {h.hashtag} <b>{h.count}</b>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Top konten IG + pendatang follower */}
+              <section className="grid gap-4 lg:grid-cols-2">
+                <div className="card-3d p-4 sm:p-6">
+                  <h3 className="mb-3 text-sm font-semibold text-ink">Top 5 Konten (by tayangan)</h3>
+                  <IgContentTable rows={igTopAll} valueKey="views" valueLabel="Tayangan" fmt={fmt} />
+                </div>
+                <div className="card-3d p-4 sm:p-6">
+                  <h3 className="mb-1 text-sm font-semibold text-ink">Pendatang Follower Terbanyak</h3>
+                  <p className="mb-3 text-[11px]" style={{ color: "var(--ink-soft)" }}>Konten yang paling banyak menghasilkan follower baru — jenis yang layak diperbanyak.</p>
+                  {igTopFollows.length === 0 ? (
+                    <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada konten yang tercatat mendatangkan follower.</p>
+                  ) : (
+                    <IgContentTable rows={igTopFollows} valueKey="follows" valueLabel="+Follower" fmt={fmt} accent="#166534" />
+                  )}
+                </div>
+              </section>
+            </>
+          )}
         </>
       )}
     </main>
+  );
+}
+
+// Tabel ringkas Top konten IG (dipakai 2x: by tayangan & by follower). valueKey =
+// kolom angka utama; selalu tampilkan jenis, caption ber-link, ER.
+function IgContentTable({ rows = [], valueKey, valueLabel, fmt, accent }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead>
+          <tr style={{ color: "var(--ink-soft)" }}>
+            <th className="py-2 pr-2 font-medium">#</th>
+            <th className="py-2 pr-3 font-medium">Konten</th>
+            <th className="py-2 pr-3 font-medium">Jenis</th>
+            <th className="py-2 pr-3 font-medium text-right">{valueLabel}</th>
+            <th className="py-2 pr-3 font-medium text-right">ER</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((c, i) => (
+            <tr key={c.post_id || i} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+              <td className="py-2 pr-2 text-[12px]" style={{ color: "var(--ink-soft)" }}>{i + 1}</td>
+              <td className="max-w-xs py-2 pr-3">
+                <a href={c.permalink || "#"} target="_blank" rel="noopener noreferrer" className="line-clamp-1 font-medium text-ink hover:underline" title={c.description || ""}>
+                  {(c.description || "(tanpa caption)").split("\n")[0]}
+                </a>
+              </td>
+              <td className="whitespace-nowrap py-2 pr-3 text-[12px]" style={{ color: "var(--ink-soft)" }}>{String(c.post_type || "").replace(/\s*IG$/i, "") || "—"}</td>
+              <td className="whitespace-nowrap py-2 pr-3 text-right font-semibold" style={accent ? { color: accent } : { color: "var(--ink)" }}>
+                {valueKey === "follows" ? `+${fmt(c[valueKey] || 0)}` : fmt(c[valueKey] || 0)}
+              </td>
+              <td className="whitespace-nowrap py-2 pr-3 text-right">{c.er == null ? "—" : `${c.er}%`}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
