@@ -8,7 +8,7 @@ import { loadPortfolio, loadPortfolioInstagram, loadBranchDetail } from "@/lib/t
 import Link from "next/link";
 import Nav from "@/components/Nav";
 import MonthFilter from "@/components/MonthFilter";
-import { LineChart, BarChartLabeled, Heatmap } from "@/components/Charts";
+import { LineChart, Donut, BarChartLabeled, Heatmap } from "@/components/Charts";
 import InsightAI from "@/components/InsightAI";
 import OnboardingTips from "@/components/OnboardingTips";
 import ProgressBar from "@/components/ProgressBar";
@@ -604,43 +604,6 @@ export default async function DashboardPage({ searchParams }) {
               </>
             )}
 
-            {/* Strip info ringkas TikTok — pengganti kartu views/ER/follower/gender/retensi terpisah */}
-            <div className="mt-4 border-t pt-3" style={{ borderColor: "rgba(0,60,68,.1)" }}>
-              <p className="mb-2 text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>Info performa TikTok{selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</p>
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-                <div className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
-                  <div className="text-lg font-extrabold" style={{ color: "var(--teal-900)" }}>{fmt(detail.summary.totalViews)}</div>
-                  <div className="mt-0.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>Views</div>
-                </div>
-                <div className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
-                  <div className="text-lg font-extrabold" style={{ color: "var(--teal-900)" }}>{detail.summary.engagementRateOverall}%</div>
-                  <div className="mt-0.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>Engagement rate</div>
-                </div>
-                <div className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
-                  <div className="text-lg font-extrabold" style={{ color: detail.growth.netGrowth < 0 ? "#b91c1c" : "var(--teal-900)" }}>{detail.growth.netGrowth >= 0 ? "+" : ""}{fmt(detail.growth.netGrowth)}</div>
-                  <div className="mt-0.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>Follower Δ</div>
-                </div>
-                <div className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
-                  {detail.gender ? (
-                    <>
-                      <div className="flex h-3.5 w-full overflow-hidden rounded-full" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
-                        <div style={{ width: `${Number(detail.gender.male_pct) || 0}%`, background: "#2c5f9e" }} title={`Pria ${detail.gender.male_pct}%`} />
-                        <div style={{ width: `${Number(detail.gender.female_pct) || 0}%`, background: "#c85a8a" }} title={`Wanita ${detail.gender.female_pct}%`} />
-                        <div style={{ width: `${Number(detail.gender.other_pct) || 0}%`, background: "#93bcad" }} />
-                      </div>
-                      <div className="mt-1 text-[10px]" style={{ color: "var(--ink-soft)" }}>P {detail.gender.male_pct}% · W {detail.gender.female_pct}%</div>
-                    </>
-                  ) : (
-                    <div className="text-sm" style={{ color: "var(--ink-soft)" }}>—</div>
-                  )}
-                  <div className="mt-0.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>Audiens (gender)</div>
-                </div>
-                <div className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
-                  <div className="text-lg font-extrabold" style={{ color: "var(--teal-900)" }}>{detail.viewers.newPct}%</div>
-                  <div className="mt-0.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>Penonton baru (retensi)</div>
-                </div>
-              </div>
-            </div>
           </section>
 
           {/* Analisis Pertumbuhan — tepat di bawah grafik pertumbuhan. Muncul
@@ -801,7 +764,8 @@ export default async function DashboardPage({ searchParams }) {
             <h2 className="text-lg font-bold text-white drop-shadow-sm">Detail TikTok</h2>
           </div>
 
-          <section className="card-3d p-5">
+          <section className="grid gap-4 lg:grid-cols-2">
+            <div className="card-3d p-5">
               <h3 className="text-sm font-semibold text-ink">Jam Terbaik untuk Posting</h3>
               {detail.activityRange ? (
                 <>
@@ -826,6 +790,38 @@ export default async function DashboardPage({ searchParams }) {
               ) : (
                 <p className="mt-2 text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada data aktivitas follower per jam. Muncul setelah upload file <b>FollowerActivity</b> dari TikTok Studio (mencakup 7 hari terakhir).</p>
               )}
+            </div>
+
+            <div className="card-3d p-5">
+              <h3 className="mb-0.5 text-sm font-semibold text-ink">Gender Follower (TikTok)</h3>
+              {detail.genderSnapshotDate && (
+                <p className="mb-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>Snapshot {detail.genderSnapshotDate}</p>
+              )}
+              {detail.gender ? (
+                <Donut
+                  data={[
+                    { label: "Pria", value: Number(detail.gender.male_pct) || 0, color: "#2c5f9e" },
+                    { label: "Wanita", value: Number(detail.gender.female_pct) || 0, color: "#c85a8a" },
+                    { label: "Lainnya", value: Number(detail.gender.other_pct) || 0, color: "#93bcad" },
+                  ]}
+                />
+              ) : (
+                <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                  {selectedMonth ? `Belum ada snapshot gender pada/sebelum ${labelBulan(selectedMonth)}.` : "Belum ada data gender."}
+                </p>
+              )}
+            </div>
+
+            <div className="card-3d p-5">
+              <h3 className="mb-3 text-sm font-semibold text-ink">Penonton: Baru vs Kembali</h3>
+              <Donut
+                center={`${detail.viewers.newPct}%`}
+                data={[
+                  { label: "Baru", value: detail.viewers.totalNew, color: "#4f9e7a" },
+                  { label: "Kembali", value: detail.viewers.totalReturning, color: "#006674" },
+                ]}
+              />
+            </div>
           </section>
 
           <section className="card-3d p-4 sm:p-5">
