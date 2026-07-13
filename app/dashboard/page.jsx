@@ -663,7 +663,7 @@ export default async function DashboardPage({ searchParams }) {
           {(detail.growthDiagnosis || (detail.insights || []).length > 0) && (
             <section className="card-3d p-4 sm:p-5">
               <h3 className="mb-3 text-sm font-semibold text-ink">
-                🔍 Analisis Pertumbuhan{detail.growthDiagnosis ? ` — ${labelBulan(detail.growthDiagnosis.curMonth)} vs ${labelBulan(detail.growthDiagnosis.prevMonth)}` : ""}
+                🔍 Analisis Pertumbuhan (TikTok){detail.growthDiagnosis ? ` — ${labelBulan(detail.growthDiagnosis.curMonth)} vs ${labelBulan(detail.growthDiagnosis.prevMonth)}` : ""}
               </h3>
 
               {/* (a) Diagnosis perlambatan follower — hanya saat melambat */}
@@ -708,7 +708,7 @@ export default async function DashboardPage({ searchParams }) {
               {(detail.insights || []).length > 0 && (
                 <>
                   {detail.growthDiagnosis && (
-                    <p className="mb-2 text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>Insight per aspek</p>
+                    <p className="mb-2 text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>Insight per aspek (dari data TikTok)</p>
                   )}
                   <div className="grid gap-3 sm:grid-cols-2">
                     {detail.insights.map((ins, i) => (
@@ -910,9 +910,9 @@ export default async function DashboardPage({ searchParams }) {
                   <div key={title} className="card-3d p-5">
                     <h3 className="mb-1 text-sm font-semibold text-ink">{title}</h3>
                     <p className="mb-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>
-                      Total {fmt(ser.reduce((s, p) => s + p.y, 0))} · {ser.length} hari
+                      Total {fmt(ser.reduce((s, p) => s + p.value, 0))} · {ser.length} hari
                     </p>
-                    <LineChart data={ser.map((p) => ({ x: p.x, y: p.y }))} color={color} />
+                    <LineChart data={ser.map((p) => ({ x: p.date, y: p.value }))} color={color} />
                   </div>
                 ))}
               </section>
