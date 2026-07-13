@@ -472,13 +472,15 @@ export default async function DashboardPage({ searchParams }) {
                     </table>
                   </div>
                 )}
-                <GoalProgress
-                  goal={goalTiktok}
-                  views={ttProg.views}
-                  er={ttProg.er}
-                  net={ttProg.net}
-                  monthLabel={progMonthLabel}
-                />
+                {selectedMonth && (
+                  <GoalProgress
+                    goal={goalTiktok}
+                    views={ttProg.views}
+                    er={ttProg.er}
+                    net={ttProg.net}
+                    monthLabel={progMonthLabel}
+                  />
+                )}
               </div>
 
               {/* Tab Instagram — data upload Business Suite; fallback ke snapshot
@@ -566,13 +568,15 @@ export default async function DashboardPage({ searchParams }) {
                   </table>
                 </div>
               )}
-              <GoalProgress
-                goal={goalInstagram}
-                views={igProgSum.views || 0}
-                er={igProgSummary.er || 0}
-                net={igProgSum.new_followers || 0}
-                monthLabel={progMonthLabel}
-              />
+              {selectedMonth && (
+                <GoalProgress
+                  goal={goalInstagram}
+                  views={igProgSum.views || 0}
+                  er={igProgSummary.er || 0}
+                  net={igProgSum.new_followers || 0}
+                  monthLabel={progMonthLabel}
+                />
+              )}
               </>
               )}
               </div>
