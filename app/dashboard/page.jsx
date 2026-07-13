@@ -4,10 +4,9 @@
 
 import { getCurrentProfile, canWrite } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { loadPortfolio, loadBranchDetail } from "@/lib/tiktok/analytics";
+import { loadPortfolio, loadPortfolioInstagram, loadBranchDetail } from "@/lib/tiktok/analytics";
 import Link from "next/link";
 import Nav from "@/components/Nav";
-import MetricCard from "@/components/MetricCard";
 import MonthFilter from "@/components/MonthFilter";
 import { LineChart, Donut, BarChartLabeled, Heatmap } from "@/components/Charts";
 import InsightAI from "@/components/InsightAI";
@@ -18,6 +17,7 @@ import { matchPlanStatusMulti, summarizePlans } from "@/lib/tiktok/content-plan"
 import { SNAPSHOT_PLATFORMS, groupByPlatform, followerTrend, latestSnapshot, daysSince } from "@/lib/social/snapshots";
 import { sumDaily, dailySeries, contentInPeriod, contentSummary, topContents, cumulativeFollowerSeries, contentTypeBreakdown, hashtagStats as igHashtagStats } from "@/lib/instagram/metrics";
 import PlatformTabs from "@/components/PlatformTabs";
+import PortfolioSummary from "@/components/PortfolioSummary";
 import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
 
 const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -63,11 +63,6 @@ const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
 // & masuk "golden hour" saat follower ramai). Puncak HH:00 -> (HH-1):30.
 const uploadHint = (hour) => `${String((Number(hour) + 23) % 24).padStart(2, "0")}:30`;
 
-const STATUS_STYLE = {
-  naik: { background: "#dcfce7", color: "#166534" },
-  stabil: { background: "#fef9c3", color: "#854d0e" },
-  turun: { background: "#fee2e2", color: "#991b1b" },
-};
 
 // Warna badge 5 status Rencana Konten (samakan dgn ContentPlanBoard).
 const PLAN_BADGE = {
@@ -77,15 +72,6 @@ const PLAN_BADGE = {
   Cancelled: { bg: "rgba(180,83,9,.1)", fg: "#b45309" },
   Replaced: { bg: "rgba(161,98,7,.1)", fg: "#a16207" },
 };
-
-function StatusBadge({ status }) {
-  const s = STATUS_STYLE[status] || STATUS_STYLE.stabil;
-  return (
-    <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={s}>
-      {status}
-    </span>
-  );
-}
 
 export default async function DashboardPage({ searchParams }) {
   const profile = await getCurrentProfile();
@@ -110,10 +96,12 @@ export default async function DashboardPage({ searchParams }) {
   // all-time walau bulan dipilih (lihat lib/tiktok/analytics.js).
   const selectedMonth = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : null;
   const { branches, portfolio, months } = await loadPortfolio(supabase, { month: selectedMonth });
+  const igPortfolioData = await loadPortfolioInstagram(supabase, { month: selectedMonth });
   const selectedId = sp.branch || branches[0]?.id || null;
   const catFilter = sp.cat || null;
   const categories = [...new Set(branches.map((b) => b.kategori).filter(Boolean))];
   const rankedBranches = catFilter ? branches.filter((b) => b.kategori === catFilter) : branches;
+  const rankedBranchesIg = catFilter ? igPortfolioData.branches.filter((b) => b.kategori === catFilter) : igPortfolioData.branches;
   const detail = await loadBranchDetail(supabase, selectedId, { month: selectedMonth });
   const selectedBranch = branches.find((b) => b.id === selectedId);
   const { data: goal } = selectedId
@@ -249,65 +237,15 @@ export default async function DashboardPage({ searchParams }) {
 
       <OnboardingTips />
 
-      {/* KPI portofolio */}
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <MetricCard icon="🏢" accent="teal" label="Cabang aktif" value={fmt(portfolio.activeBranches)} />
-        <MetricCard icon="🎬" accent="amber" label={selectedMonth ? `Konten ${labelBulan(selectedMonth)}` : "Konten bulan ini"} value={fmt(portfolio.totalContentThisMonth)} />
-        <MetricCard icon="👁️" accent="blue" label="Total views" value={fmt(portfolio.totalViews)} />
-        <MetricCard icon="💬" accent="green" label="Avg engagement rate" value={`${portfolio.avgEngagementRate}%`} />
-      </section>
-
-      {/* Ranking cabang */}
-      <section className="card-3d p-4 sm:p-6">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <h2 className="text-base font-semibold text-ink">Ranking Cabang</h2>
-          {categories.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              <Link href={dashboardHref({ month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={!catFilter ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>Semua</Link>
-              {categories.map((c) => (
-                <Link key={c} href={dashboardHref({ cat: c, month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={catFilter === c ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>{c}</Link>
-              ))}
-            </div>
-          )}
-          <Link href="/report/portfolio" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
-            📄 Laporan Semua Cabang
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr style={{ color: "var(--ink-soft)" }}>
-                <th className="py-2 pr-3 font-medium">Cabang</th>
-                <th className="py-2 pr-3 font-medium">Kategori</th>
-                <th className="py-2 pr-3 font-medium">Konten/bln</th>
-                <th className="py-2 pr-3 font-medium">Views</th>
-                <th className="py-2 pr-3 font-medium">Eng. rate</th>
-                <th className="py-2 pr-3 font-medium">Follower Δ</th>
-                <th className="py-2 pr-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rankedBranches.map((b) => (
-                <tr key={b.id} className="border-t" style={{ borderColor: "rgba(0,60,68,.1)" }}>
-                  <td className="py-2 pr-3 font-medium text-ink">
-                    {b.nama_cabang}
-                    {b.tiktok_username ? <span style={{ color: "var(--ink-soft)" }}> @{b.tiktok_username}</span> : null}
-                  </td>
-                  <td className="py-2 pr-3" style={{ color: "var(--ink-soft)" }}>{b.kategori || "-"}</td>
-                  <td className="py-2 pr-3">{fmt(b.contentThisMonth)}</td>
-                  <td className="py-2 pr-3">{fmt(b.totalViews)}</td>
-                  <td className="py-2 pr-3">{b.engagementRate}%</td>
-                  <td className="py-2 pr-3">{b.netFollowerGrowth >= 0 ? `+${fmt(b.netFollowerGrowth)}` : fmt(b.netFollowerGrowth)}</td>
-                  <td className="py-2 pr-3"><StatusBadge status={b.status} /></td>
-                </tr>
-              ))}
-              {rankedBranches.length === 0 && (
-                <tr><td colSpan={7} className="py-6 text-center" style={{ color: "var(--ink-soft)" }}>Belum ada cabang untuk kategori ini.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {/* KPI portofolio + Ranking Cabang dgn toggle platform TikTok/Instagram. */}
+      <PortfolioSummary
+        tiktok={{ portfolio, ranked: rankedBranches }}
+        instagram={{ portfolio: igPortfolioData.portfolio, ranked: rankedBranchesIg }}
+        categories={categories}
+        catFilter={catFilter}
+        selectedMonth={selectedMonth}
+        monthLabel={selectedMonth ? labelBulan(selectedMonth) : ""}
+      />
 
       {/* Detail 1 cabang */}
       {detail && selectedBranch && (
