@@ -35,11 +35,21 @@ export default async function SettingsPage() {
     supabase.from("profiles").select("*").order("created_at"),
     supabase.from("user_branch_access").select("user_id, tiktok_account_id"),
     supabase.from("content_plan_categories").select("*").order("value"),
-    supabase.from("tiktok_account_goals").select("tiktok_account_id, platform, target_total_views, target_engagement_rate, target_net_followers"),
+    supabase.from("tiktok_account_goals").select("tiktok_account_id, platform, target_month, target_total_views, target_engagement_rate, target_net_followers"),
   ]);
-  // Peta target: `${accountId}|${platform}` -> row (untuk prefill form GoalManager).
+  // Peta target: `${accountId}|${platform}|${month}` -> row (prefill GoalManager).
   const goalMap = {};
-  for (const g of goals || []) goalMap[`${g.tiktok_account_id}|${g.platform}`] = g;
+  for (const g of goals || []) goalMap[`${g.tiktok_account_id}|${g.platform}|${g.target_month}`] = g;
+  // Pilihan bulan: 12 bulan ke belakang s/d 1 bulan ke depan (terbaru dulu) +
+  // bulan yang sudah punya target (kalau di luar rentang) — supaya tetap bisa diedit.
+  const now = new Date();
+  const monthSet = new Set();
+  for (let i = -1; i <= 12; i += 1) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    monthSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  for (const g of goals || []) if (g.target_month) monthSet.add(g.target_month);
+  const monthOptions = [...monthSet].sort().reverse();
 
   const accessByUser = new Map();
   for (const a of access || []) {
@@ -105,9 +115,9 @@ export default async function SettingsPage() {
       <section className="card-3d p-4 sm:p-6">
         <h2 className="mb-1 text-base font-semibold text-ink">🎯 Target per Cabang & Platform</h2>
         <p className="mb-4 text-sm" style={{ color: "var(--ink-soft)" }}>
-          Atur target <b>per bulan</b> (Views, Engagement Rate, Net Follower) per cabang untuk tiap platform. Progress pencapaiannya dihitung per bulan dan tampil di <b>Ringkasan Platform</b> di Dashboard (ikut filter bulan; tanpa filter = bulan berjalan). Kosongkan kolom yang tidak ingin ditarget.
+          Pilih <b>Bulan</b>, <b>Outlet</b>, dan <b>Platform</b>, lalu isi target (Views, Engagement Rate, Net Follower) dan klik Simpan. Setiap kombinasi bulan/outlet/platform punya targetnya sendiri. Progress-nya tampil di <b>Ringkasan Platform</b> di Dashboard (ikut filter bulan; tanpa filter = bulan berjalan). Kosongkan kolom yang tidak ingin ditarget.
         </p>
-        <GoalManager branches={activeBranches} goalMap={goalMap} />
+        <GoalManager branches={activeBranches} goalMap={goalMap} monthOptions={monthOptions} />
       </section>
 
       {/* Kategori Rencana Konten */}

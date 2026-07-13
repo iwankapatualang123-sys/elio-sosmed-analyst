@@ -156,12 +156,11 @@ export default async function DashboardPage({ searchParams }) {
   const rankedBranchesIg = catFilter ? igPortfolioData.branches.filter((b) => b.kategori === catFilter) : igPortfolioData.branches;
   const detail = await loadBranchDetail(supabase, selectedId, { month: selectedMonth });
   const selectedBranch = branches.find((b) => b.id === selectedId);
-  // Target per platform (dikelola di Pengaturan). Progress tampil di Ringkasan Platform.
+  // Target per (platform, bulan) — dikelola di Pengaturan. Pemilihan baris sesuai
+  // bulan progres (progMonth) dilakukan di bawah, setelah progMonth ditentukan.
   const { data: goalsRaw } = selectedId
     ? await supabase.from("tiktok_account_goals").select("*").eq("tiktok_account_id", selectedId)
     : { data: [] };
-  const goalTiktok = (goalsRaw || []).find((g) => g.platform === "tiktok") || null;
-  const goalInstagram = (goalsRaw || []).find((g) => g.platform === "instagram") || null;
   const { data: annotationsRaw } = selectedId
     ? await supabase.from("branch_annotations").select("*").eq("tiktok_account_id", selectedId).order("note_date", { ascending: false }).limit(50)
     : { data: [] };
@@ -240,6 +239,9 @@ export default async function DashboardPage({ searchParams }) {
   // berjalan bila "Semua bulan". Nilai TikTok & IG di-scope ke bulan itu.
   const progMonth = selectedMonth || nowMonth;
   const progMonthLabel = labelBulan(progMonth);
+  // Target platform untuk BULAN progres (null bila belum diset utk bulan itu).
+  const goalTiktok = (goalsRaw || []).find((g) => g.platform === "tiktok" && g.target_month === progMonth) || null;
+  const goalInstagram = (goalsRaw || []).find((g) => g.platform === "instagram" && g.target_month === progMonth) || null;
   const ttProg = selectedMonth
     ? { views: detail.summary.totalViews, er: detail.summary.engagementRateOverall, net: detail.growth.netGrowth }
     : { views: detail.thisMonth.summary.totalViews, er: detail.thisMonth.summary.engagementRateOverall, net: detail.thisMonth.growth.netGrowth };
