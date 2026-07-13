@@ -9,6 +9,7 @@ import Button from "@/components/Button";
 import InviteUserForm from "@/components/InviteUserForm";
 import ResetPasswordButton from "@/components/ResetPasswordButton";
 import BranchRow from "@/components/BranchRow";
+import GoalManager from "@/components/GoalManager";
 import { addBranch, setUserRole, toggleUserActive, saveUserBranches, addCategory, deleteCategory } from "./actions";
 
 const CATEGORY_TYPE_LABEL = { pic: "PIC", goals: "Goals Content", pillar: "Pillar", type: "Type of Content" };
@@ -29,12 +30,16 @@ export default async function SettingsPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const [{ data: branches }, { data: users }, { data: access }, { data: categoriesRaw }] = await Promise.all([
+  const [{ data: branches }, { data: users }, { data: access }, { data: categoriesRaw }, { data: goals }] = await Promise.all([
     supabase.from("tiktok_accounts").select("*").order("nama_cabang"),
     supabase.from("profiles").select("*").order("created_at"),
     supabase.from("user_branch_access").select("user_id, tiktok_account_id"),
     supabase.from("content_plan_categories").select("*").order("value"),
+    supabase.from("tiktok_account_goals").select("tiktok_account_id, platform, target_total_views, target_engagement_rate, target_net_followers"),
   ]);
+  // Peta target: `${accountId}|${platform}` -> row (untuk prefill form GoalManager).
+  const goalMap = {};
+  for (const g of goals || []) goalMap[`${g.tiktok_account_id}|${g.platform}`] = g;
 
   const accessByUser = new Map();
   for (const a of access || []) {
@@ -94,6 +99,15 @@ export default async function SettingsPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* Target per Cabang & Platform */}
+      <section className="card-3d p-4 sm:p-6">
+        <h2 className="mb-1 text-base font-semibold text-ink">🎯 Target per Cabang & Platform</h2>
+        <p className="mb-4 text-sm" style={{ color: "var(--ink-soft)" }}>
+          Atur target Views, Engagement Rate, dan Net Follower per cabang untuk tiap platform. Progress pencapaiannya tampil di <b>Ringkasan Platform</b> di Dashboard. Kosongkan kolom yang tidak ingin ditarget.
+        </p>
+        <GoalManager branches={activeBranches} goalMap={goalMap} />
       </section>
 
       {/* Kategori Rencana Konten */}

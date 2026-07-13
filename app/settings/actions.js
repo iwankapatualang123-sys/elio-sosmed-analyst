@@ -105,6 +105,41 @@ export async function addCategory(formData) {
   revalidatePath("/content-plan");
 }
 
+// Angka longgar -> int / num / null (target boleh dikosongkan).
+function goalInt(v) {
+  const s = String(v ?? "").replace(/[^\d]/g, "");
+  return s === "" ? null : parseInt(s, 10);
+}
+function goalNum(v) {
+  const s = String(v ?? "").replace(/[^\d.,]/g, "").replace(",", ".");
+  if (s === "") return null;
+  const n = parseFloat(s);
+  return Number.isNaN(n) ? null : n;
+}
+
+// Fungsi: setAccountGoal — set target 1 cabang untuk 1 PLATFORM (tiktok/instagram).
+// Upsert per (cabang, platform). Target kosong = tidak dipasang (null).
+export async function setAccountGoal(formData) {
+  const supabase = await requireAdmin();
+  const { data: { user } } = await supabase.auth.getUser();
+  const accountId = String(formData.get("accountId") || "");
+  const platform = String(formData.get("platform") || "");
+  if (!accountId || !["tiktok", "instagram"].includes(platform)) return;
+  const { error } = await supabase.from("tiktok_account_goals").upsert({
+    tiktok_account_id: accountId,
+    platform,
+    target_total_views: goalInt(formData.get("target_total_views")),
+    target_engagement_rate: goalNum(formData.get("target_engagement_rate")),
+    target_net_followers: goalInt(formData.get("target_net_followers")),
+    updated_by: user?.id || null,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "tiktok_account_id,platform" });
+  if (error) throw new Error(`Gagal menyimpan target: ${error.message}`);
+  await logActivity(supabase, { action: "set_target_cabang", entity: accountId, detail: { platform } });
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+}
+
 // Fungsi: deleteCategory — hapus satu nilai kategori (baris rencana yang sudah
 // terlanjur memakai nilai ini TIDAK berubah — hanya tidak lagi jadi pilihan baru).
 export async function deleteCategory(formData) {

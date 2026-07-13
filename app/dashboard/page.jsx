@@ -18,7 +18,7 @@ import { groupByPlatform, followerTrend, latestSnapshot, daysSince } from "@/lib
 import { sumDaily, dailySeries, contentInPeriod, contentSummary, topContents, cumulativeFollowerSeries, contentTypeBreakdown, hashtagStats as igHashtagStats } from "@/lib/instagram/metrics";
 import PlatformTabs from "@/components/PlatformTabs";
 import PortfolioSummary from "@/components/PortfolioSummary";
-import { setGoals, addAnnotation, deleteAnnotation } from "./actions";
+import { addAnnotation, deleteAnnotation } from "./actions";
 
 const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 function labelBulan(ym) {
@@ -108,6 +108,23 @@ function SnapshotFollowerCard({ rows = [], todayStr }) {
   );
 }
 
+// Blok "Pencapaian Target" untuk 1 platform (dipakai di tab Ringkasan Platform).
+// Target diatur di Pengaturan; progress SELALU sepanjang masa (target = tujuan
+// berjalan, bukan per bulan). Tampil hanya bila minimal 1 target dipasang.
+function GoalProgress({ goal, views, er, net }) {
+  if (!goal || (goal.target_total_views == null && goal.target_engagement_rate == null && goal.target_net_followers == null)) return null;
+  return (
+    <div className="mt-3 border-t pt-3" style={{ borderColor: "rgba(0,60,68,.1)" }}>
+      <p className="mb-2 text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>🎯 Pencapaian Target (sepanjang masa)</p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {goal.target_total_views != null && <ProgressBar label="Total Views" current={views} target={goal.target_total_views} />}
+        {goal.target_engagement_rate != null && <ProgressBar label="Engagement Rate" current={er} target={goal.target_engagement_rate} suffix="%" />}
+        {goal.target_net_followers != null && <ProgressBar label="Net Follower" current={net} target={goal.target_net_followers} />}
+      </div>
+    </div>
+  );
+}
+
 export default async function DashboardPage({ searchParams }) {
   const profile = await getCurrentProfile();
   if (!profile?.role) {
@@ -139,9 +156,12 @@ export default async function DashboardPage({ searchParams }) {
   const rankedBranchesIg = catFilter ? igPortfolioData.branches.filter((b) => b.kategori === catFilter) : igPortfolioData.branches;
   const detail = await loadBranchDetail(supabase, selectedId, { month: selectedMonth });
   const selectedBranch = branches.find((b) => b.id === selectedId);
-  const { data: goal } = selectedId
-    ? await supabase.from("tiktok_account_goals").select("*").eq("tiktok_account_id", selectedId).maybeSingle()
-    : { data: null };
+  // Target per platform (dikelola di Pengaturan). Progress tampil di Ringkasan Platform.
+  const { data: goalsRaw } = selectedId
+    ? await supabase.from("tiktok_account_goals").select("*").eq("tiktok_account_id", selectedId)
+    : { data: [] };
+  const goalTiktok = (goalsRaw || []).find((g) => g.platform === "tiktok") || null;
+  const goalInstagram = (goalsRaw || []).find((g) => g.platform === "instagram") || null;
   const { data: annotationsRaw } = selectedId
     ? await supabase.from("branch_annotations").select("*").eq("tiktok_account_id", selectedId).order("note_date", { ascending: false }).limit(50)
     : { data: [] };
@@ -215,6 +235,9 @@ export default async function DashboardPage({ searchParams }) {
   const igTopFollows = topContents(igPeriodContents.filter((c) => (c.follows || 0) > 0), { by: "follows", limit: 5 });
   const igHashtags = igHashtagStats(igPeriodContents, { limit: 12 });
   const igFollowerAnchor = followerTrend(snapsByPlatform.get("instagram") || []); // total follower (snapshot manual)
+  // Total IG SEPANJANG MASA (untuk pencapaian target IG — tak ikut filter bulan).
+  const igAllSum = sumDaily(igDaily, null);
+  const igAllSummary = contentSummary(contentInPeriod(igContent, null));
   // Garis follower IG utk grafik pertumbuhan: TOTAL per tanggal dari delta harian
   // + jangkar snapshot manual, lalu discope ke bulan terpilih (spt garis TikTok).
   const igFollowerSeriesAll = cumulativeFollowerSeries(igDaily, igFollowerAnchor.latest);
@@ -440,6 +463,12 @@ export default async function DashboardPage({ searchParams }) {
                     </table>
                   </div>
                 )}
+                <GoalProgress
+                  goal={goalTiktok}
+                  views={detail.allTime.summary.totalViews}
+                  er={detail.allTime.summary.engagementRateOverall}
+                  net={detail.allTime.growth.netGrowth}
+                />
               </div>
 
               {/* Tab Instagram — data upload Business Suite; fallback ke snapshot
@@ -527,6 +556,12 @@ export default async function DashboardPage({ searchParams }) {
                   </table>
                 </div>
               )}
+              <GoalProgress
+                goal={goalInstagram}
+                views={igAllSum.views || 0}
+                er={igAllSummary.er || 0}
+                net={igAllSum.new_followers || 0}
+              />
               </>
               )}
               </div>
@@ -679,42 +714,8 @@ export default async function DashboardPage({ searchParams }) {
             </section>
           )}
 
-          {/* Target & Progress (blueprint 21A) — SENGAJA selalu sepanjang masa, tidak
-              ikut filter bulan di atas (target itu tujuan berjalan, bukan target per bulan). */}
-          <section className="card-3d p-4 sm:p-5">
-            <h3 className="mb-3 text-sm font-semibold text-ink">🎯 Target & Progress</h3>
-            {selectedMonth && (
-              <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>Progress dihitung sepanjang masa (tidak mengikuti filter bulan di atas).</p>
-            )}
-            <div className="grid gap-4 sm:grid-cols-3">
-              <ProgressBar label="Total Views" current={detail.allTime.summary.totalViews} target={goal?.target_total_views} />
-              <ProgressBar label="Engagement Rate" current={detail.allTime.summary.engagementRateOverall} target={goal?.target_engagement_rate} suffix="%" />
-              <ProgressBar label="Net Follower" current={detail.allTime.growth.netGrowth} target={goal?.target_net_followers} />
-            </div>
-            {editable && (
-              <form action={setGoals} className="mt-4 border-t pt-3" style={{ borderColor: "rgba(0,60,68,.1)" }}>
-                <input type="hidden" name="accountId" value={selectedId} />
-                <p className="mb-2 text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>Ubah target</p>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <label className="flex flex-col gap-1 text-xs font-medium text-ink">
-                    Target Total Views
-                    <input name="target_total_views" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="mis. 50000" defaultValue={goal?.target_total_views ?? ""} />
-                  </label>
-                  <label className="flex flex-col gap-1 text-xs font-medium text-ink">
-                    Target Engagement Rate (%)
-                    <input name="target_engagement_rate" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="mis. 6" defaultValue={goal?.target_engagement_rate ?? ""} />
-                  </label>
-                  <label className="flex flex-col gap-1 text-xs font-medium text-ink">
-                    Target Net Follower
-                    <input name="target_net_followers" className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="mis. 10" defaultValue={goal?.target_net_followers ?? ""} />
-                  </label>
-                </div>
-                <div className="mt-3 flex justify-end">
-                  <button type="submit" className="btn btn-primary !min-h-0 !px-4 !py-1.5 text-sm">Simpan target</button>
-                </div>
-              </form>
-            )}
-          </section>
+          {/* Target & Progress dipindah: pengaturan target ada di halaman Pengaturan
+              (per cabang & platform), progress-nya tampil di tab Ringkasan Platform. */}
 
           {/* Anotasi / catatan tanggal (blueprint 21A) */}
           <section className="card-3d p-4 sm:p-5">
