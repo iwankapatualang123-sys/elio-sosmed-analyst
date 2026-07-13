@@ -108,14 +108,14 @@ function SnapshotFollowerCard({ rows = [], todayStr }) {
   );
 }
 
-// Blok "Pencapaian Target" untuk 1 platform (dipakai di tab Ringkasan Platform).
-// Target diatur di Pengaturan; progress SELALU sepanjang masa (target = tujuan
-// berjalan, bukan per bulan). Tampil hanya bila minimal 1 target dipasang.
-function GoalProgress({ goal, views, er, net }) {
+// Blok "Pencapaian Target BULANAN" untuk 1 platform (di tab Ringkasan Platform).
+// Target diatur di Pengaturan (angka per bulan). Progress = capaian bulan yang
+// ditinjau (monthLabel) vs target. Tampil hanya bila minimal 1 target dipasang.
+function GoalProgress({ goal, views, er, net, monthLabel }) {
   if (!goal || (goal.target_total_views == null && goal.target_engagement_rate == null && goal.target_net_followers == null)) return null;
   return (
     <div className="mt-3 border-t pt-3" style={{ borderColor: "rgba(0,60,68,.1)" }}>
-      <p className="mb-2 text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>🎯 Pencapaian Target (sepanjang masa)</p>
+      <p className="mb-2 text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>🎯 Pencapaian Target — {monthLabel}</p>
       <div className="grid gap-3 sm:grid-cols-3">
         {goal.target_total_views != null && <ProgressBar label="Total Views" current={views} target={goal.target_total_views} />}
         {goal.target_engagement_rate != null && <ProgressBar label="Engagement Rate" current={er} target={goal.target_engagement_rate} suffix="%" />}
@@ -236,8 +236,15 @@ export default async function DashboardPage({ searchParams }) {
   const igHashtags = igHashtagStats(igPeriodContents, { limit: 12 });
   const igFollowerAnchor = followerTrend(snapsByPlatform.get("instagram") || []); // total follower (snapshot manual)
   // Total IG SEPANJANG MASA (untuk pencapaian target IG — tak ikut filter bulan).
-  const igAllSum = sumDaily(igDaily, null);
-  const igAllSummary = contentSummary(contentInPeriod(igContent, null));
+  // Pencapaian target BULANAN: bulan yang ditinjau = filter bulan, atau bulan
+  // berjalan bila "Semua bulan". Nilai TikTok & IG di-scope ke bulan itu.
+  const progMonth = selectedMonth || nowMonth;
+  const progMonthLabel = labelBulan(progMonth);
+  const ttProg = selectedMonth
+    ? { views: detail.summary.totalViews, er: detail.summary.engagementRateOverall, net: detail.growth.netGrowth }
+    : { views: detail.thisMonth.summary.totalViews, er: detail.thisMonth.summary.engagementRateOverall, net: detail.thisMonth.growth.netGrowth };
+  const igProgSum = sumDaily(igDaily, progMonth);
+  const igProgSummary = contentSummary(contentInPeriod(igContent, progMonth));
   // Garis follower IG utk grafik pertumbuhan: TOTAL per tanggal dari delta harian
   // + jangkar snapshot manual, lalu discope ke bulan terpilih (spt garis TikTok).
   const igFollowerSeriesAll = cumulativeFollowerSeries(igDaily, igFollowerAnchor.latest);
@@ -465,9 +472,10 @@ export default async function DashboardPage({ searchParams }) {
                 )}
                 <GoalProgress
                   goal={goalTiktok}
-                  views={detail.allTime.summary.totalViews}
-                  er={detail.allTime.summary.engagementRateOverall}
-                  net={detail.allTime.growth.netGrowth}
+                  views={ttProg.views}
+                  er={ttProg.er}
+                  net={ttProg.net}
+                  monthLabel={progMonthLabel}
                 />
               </div>
 
@@ -558,9 +566,10 @@ export default async function DashboardPage({ searchParams }) {
               )}
               <GoalProgress
                 goal={goalInstagram}
-                views={igAllSum.views || 0}
-                er={igAllSummary.er || 0}
-                net={igAllSum.new_followers || 0}
+                views={igProgSum.views || 0}
+                er={igProgSummary.er || 0}
+                net={igProgSum.new_followers || 0}
+                monthLabel={progMonthLabel}
               />
               </>
               )}

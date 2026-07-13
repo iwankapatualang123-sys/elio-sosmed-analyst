@@ -105,7 +105,7 @@ export default async function SettingsPage() {
       <section className="card-3d p-4 sm:p-6">
         <h2 className="mb-1 text-base font-semibold text-ink">🎯 Target per Cabang & Platform</h2>
         <p className="mb-4 text-sm" style={{ color: "var(--ink-soft)" }}>
-          Atur target Views, Engagement Rate, dan Net Follower per cabang untuk tiap platform. Progress pencapaiannya tampil di <b>Ringkasan Platform</b> di Dashboard. Kosongkan kolom yang tidak ingin ditarget.
+          Atur target <b>per bulan</b> (Views, Engagement Rate, Net Follower) per cabang untuk tiap platform. Progress pencapaiannya dihitung per bulan dan tampil di <b>Ringkasan Platform</b> di Dashboard (ikut filter bulan; tanpa filter = bulan berjalan). Kosongkan kolom yang tidak ingin ditarget.
         </p>
         <GoalManager branches={activeBranches} goalMap={goalMap} />
       </section>
