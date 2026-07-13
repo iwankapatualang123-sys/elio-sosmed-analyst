@@ -346,15 +346,17 @@ export default async function DashboardPage({ searchParams }) {
               )}
             </div>
             <PlatformTabs tabs={["TikTok", "Instagram"]}>
-              {/* Tab TikTok — KPI ringkas gaya sama dgn IG; rincian lengkap (grafik,
-                  heatmap, top video, insight) tetap di bagian-bagian bawah halaman. */}
+              {/* Tab TikTok — format sama dgn tab Instagram: 5 kotak KPI (diakhiri
+                  ER), ringkasan, lalu Top 5 Video. Rincian lengkap (grafik, heatmap,
+                  gender, insight) tetap di bagian "Detail TikTok" di bawah. */}
               <div>
-                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
                   {[
                     ["Views", fmt(detail.summary.totalViews)],
-                    ["Engagement rate", `${detail.summary.engagementRateOverall}%`],
                     ["Konten", fmt(detail.summary.totalVideos)],
                     ["Follower Δ", `${detail.growth.netGrowth >= 0 ? "+" : ""}${fmt(detail.growth.netGrowth)}`],
+                    ["Rata-rata views/konten", fmt(detail.summary.avgViewsPerPost)],
+                    ["ER akun", `${detail.summary.engagementRateOverall}%`],
                   ].map(([label, val]) => (
                     <div key={label} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
                       <div className="text-lg font-extrabold sm:text-xl" style={{ color: "var(--teal-900)" }}>{val}</div>
@@ -363,8 +365,49 @@ export default async function DashboardPage({ searchParams }) {
                   ))}
                 </div>
                 <p className="mt-1.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>
-                  Ringkasan dari data report TikTok Studio. Grafik, heatmap, top video, dan insight lengkap ada di bagian bawah halaman ini.
+                  Dari data report TikTok Studio{selectedMonth ? ` — ${labelBulan(selectedMonth)}` : " (sepanjang masa)"}. Grafik, heatmap, gender, & insight lengkap ada di bagian <b>Detail TikTok</b> di bawah.
                 </p>
+                {detail.summary.totalVideos > 0 && (
+                  <p className="mt-2 text-sm" style={{ color: "var(--ink-soft)" }}>
+                    <b className="text-ink">{fmt(detail.summary.totalVideos)}</b> konten · ER akun{" "}
+                    <b className="text-ink">{detail.summary.engagementRateOverall}%</b> · Follower{" "}
+                    <b style={{ color: detail.growth.netGrowth > 0 ? "#166534" : detail.growth.netGrowth < 0 ? "#b91c1c" : "inherit" }}>
+                      {detail.growth.netGrowth >= 0 ? "+" : ""}{fmt(detail.growth.netGrowth)}
+                    </b>
+                  </p>
+                )}
+                {detail.topVideos.length > 0 && (
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr style={{ color: "var(--ink-soft)" }}>
+                          <th className="py-1.5 pr-2 font-medium">#</th>
+                          <th className="py-1.5 pr-3 font-medium">Top Video</th>
+                          <th className="py-1.5 pr-3 font-medium">Views</th>
+                          <th className="py-1.5 pr-3 font-medium">ER</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detail.topVideos.map((v, i) => (
+                          <tr key={v.video_id || i} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                            <td className="py-1.5 pr-2 text-[12px]" style={{ color: "var(--ink-soft)" }}>{i + 1}</td>
+                            <td className="max-w-xs py-1.5 pr-3">
+                              {v.video_link ? (
+                                <a href={v.video_link} target="_blank" rel="noopener noreferrer" className="line-clamp-1 font-medium text-ink hover:underline" title={v.video_title || ""}>
+                                  {v.video_title || "(tanpa judul)"}
+                                </a>
+                              ) : (
+                                <span className="line-clamp-1 font-medium text-ink">{v.video_title || "(tanpa judul)"}</span>
+                              )}
+                            </td>
+                            <td className="whitespace-nowrap py-1.5 pr-3 font-semibold text-ink">{fmt(v.total_views)}</td>
+                            <td className="whitespace-nowrap py-1.5 pr-3">{v.engagement_rate}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
               {/* Tab Instagram — dari data upload Business Suite. */}
@@ -376,13 +419,14 @@ export default async function DashboardPage({ searchParams }) {
                 </p>
               ) : (
               <>
-              {/* KPI akun dari metrik harian */}
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+              {/* KPI akun dari metrik harian + ER akun (5 kotak, sejajar tab TikTok) */}
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
                 {[
                   ["Tayangan", igSum.views],
                   ["Jangkauan", igSum.reach],
                   ["Kunjungan profil", igSum.profile_visits],
                   ["Follower baru", igSum.new_followers == null ? null : `+${fmt(igSum.new_followers)}`],
+                  ["ER akun", igCSummary.er == null ? null : `${igCSummary.er}%`],
                 ].map(([label, val]) => (
                   <div key={label} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
                     <div className="text-lg font-extrabold sm:text-xl" style={{ color: "var(--teal-900)" }}>
