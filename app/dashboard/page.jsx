@@ -14,7 +14,7 @@ import OnboardingTips from "@/components/OnboardingTips";
 import ProgressBar from "@/components/ProgressBar";
 import { forecastNext } from "@/lib/tiktok/forecast";
 import { matchPlanStatusMulti, summarizePlans } from "@/lib/tiktok/content-plan";
-import { SNAPSHOT_PLATFORMS, groupByPlatform, followerTrend, latestSnapshot, daysSince } from "@/lib/social/snapshots";
+import { groupByPlatform, followerTrend, latestSnapshot, daysSince } from "@/lib/social/snapshots";
 import { sumDaily, dailySeries, contentInPeriod, contentSummary, topContents, cumulativeFollowerSeries, contentTypeBreakdown, hashtagStats as igHashtagStats } from "@/lib/instagram/metrics";
 import PlatformTabs from "@/components/PlatformTabs";
 import PortfolioSummary from "@/components/PortfolioSummary";
@@ -72,6 +72,41 @@ const PLAN_BADGE = {
   Cancelled: { bg: "rgba(180,83,9,.1)", fg: "#b45309" },
   Replaced: { bg: "rgba(161,98,7,.1)", fg: "#a16207" },
 };
+
+// Kartu follower dari snapshot manual (IG/Threads yang belum punya data upload).
+// Dipakai di tab Ringkasan Platform. rows = deret snapshot 1 platform.
+function SnapshotFollowerCard({ rows = [], todayStr }) {
+  const { latest, delta } = followerTrend(rows);
+  const last = latestSnapshot(rows);
+  const age = daysSince(last?.snapshot_date, todayStr);
+  const stale = age != null && age > 7;
+  return (
+    <div className="rounded-xl p-4" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>Follower (input manual)</span>
+        <span className="text-[11px] font-medium" style={{ color: stale ? "#b45309" : "var(--ink-soft)" }} title={stale ? "Sudah lewat seminggu — perbarui di halaman Upload" : "Tanggal snapshot terakhir"}>
+          {stale ? `⚠ terakhir ${age} hari lalu` : last?.snapshot_date}
+        </span>
+      </div>
+      <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span className="text-2xl font-extrabold" style={{ color: "var(--teal-900)" }}>{latest ? fmt(latest.followers) : "—"}</span>
+        <span className="text-xs" style={{ color: "var(--ink-soft)" }}>followers</span>
+        {delta != null && (
+          <span className="text-xs font-semibold" style={{ color: delta > 0 ? "#166534" : delta < 0 ? "#b91c1c" : "var(--ink-soft)" }}>
+            {delta > 0 ? `▲ +${fmt(delta)}` : delta < 0 ? `▼ ${fmt(delta)}` : "＝ 0"} vs sebelumnya
+          </span>
+        )}
+      </div>
+      {(last?.reach_30d != null || last?.profile_visits != null) && (
+        <p className="mt-1 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+          {last?.reach_30d != null && <>Reach 30 hari: <b className="text-ink">{fmt(last.reach_30d)}</b></>}
+          {last?.reach_30d != null && last?.profile_visits != null && " · "}
+          {last?.profile_visits != null && <>Kunjungan profil: <b className="text-ink">{fmt(last.profile_visits)}</b></>}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export default async function DashboardPage({ searchParams }) {
   const profile = await getCurrentProfile();
@@ -181,8 +216,6 @@ export default async function DashboardPage({ searchParams }) {
   const igTopFollows = topContents(igPeriodContents.filter((c) => (c.follows || 0) > 0), { by: "follows", limit: 5 });
   const igHashtags = igHashtagStats(igPeriodContents, { limit: 12 });
   const igFollowerAnchor = followerTrend(snapsByPlatform.get("instagram") || []); // total follower (snapshot manual)
-  // Bila IG sudah punya data upload, kartu snapshot manual cukup utk platform lain.
-  const snapsForCards = hasIgData ? new Map([...snapsByPlatform].filter(([k]) => k !== "instagram")) : snapsByPlatform;
   // Garis follower IG utk grafik pertumbuhan: TOTAL per tanggal dari delta harian
   // + jangkar snapshot manual, lalu discope ke bulan terpilih (spt garis TikTok).
   const igFollowerSeriesAll = cumulativeFollowerSeries(igDaily, igFollowerAnchor.latest);
@@ -345,7 +378,7 @@ export default async function DashboardPage({ searchParams }) {
                 </Link>
               )}
             </div>
-            <PlatformTabs tabs={["TikTok", "Instagram"]}>
+            <PlatformTabs tabs={["TikTok", "Instagram", "Threads"]}>
               {/* Tab TikTok — format sama dgn tab Instagram: 5 kotak KPI (diakhiri
                   ER), ringkasan, lalu Top 5 Video. Rincian lengkap (grafik, heatmap,
                   gender, insight) tetap di bagian "Detail TikTok" di bawah. */}
@@ -410,13 +443,24 @@ export default async function DashboardPage({ searchParams }) {
                 )}
               </div>
 
-              {/* Tab Instagram — dari data upload Business Suite. */}
+              {/* Tab Instagram — data upload Business Suite; fallback ke snapshot
+                  manual (followers) kalau belum pernah upload. */}
               <div>
               {!hasIgData ? (
-                <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
-                  Belum ada data Instagram untuk cabang ini. Upload export Meta Business Suite lewat halaman{" "}
-                  <Link href="/upload" style={{ color: "var(--teal-900)", fontWeight: 600 }}>Upload</Link>.
-                </p>
+                (snapsByPlatform.get("instagram") || []).length > 0 ? (
+                  <>
+                    <SnapshotFollowerCard rows={snapsByPlatform.get("instagram")} todayStr={todayStr} />
+                    <p className="mt-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+                      Baru dari input manual mingguan. Untuk detail lengkap (tayangan, Reels, ER), upload export Meta Business Suite di halaman{" "}
+                      <Link href="/upload" style={{ color: "var(--teal-900)", fontWeight: 600 }}>Upload</Link>.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                    Belum ada data Instagram untuk cabang ini. Upload export Meta Business Suite (atau catat followers manual) lewat halaman{" "}
+                    <Link href="/upload" style={{ color: "var(--teal-900)", fontWeight: 600 }}>Upload</Link>.
+                  </p>
+                )
               ) : (
               <>
               {/* KPI akun dari metrik harian + ER akun (5 kotak, sejajar tab TikTok) */}
@@ -487,62 +531,25 @@ export default async function DashboardPage({ searchParams }) {
               </>
               )}
               </div>
-            </PlatformTabs>
-          </section>
 
-          {/* Perkembangan platform snapshot manual (Threads; IG hanya bila belum
-              ada data upload). Follower terakhir + delta; pengingat bila >7 hari. */}
-          <section className="card-3d p-4 sm:p-5">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <h3 className="text-sm font-semibold text-ink">📸 {hasIgData ? "Threads (input manual)" : "Instagram & Threads (input manual)"}</h3>
-              {editable && (
-                <Link href="/upload" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
-                  Perbarui data →
-                </Link>
-              )}
-            </div>
-            {snapsForCards.size === 0 ? (
-              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
-                Belum ada data. Catat followers Instagram/Threads cabang ini <b>seminggu sekali</b> lewat halaman{" "}
-                <Link href="/upload" style={{ color: "var(--teal-900)", fontWeight: 600 }}>Upload</Link> untuk melihat perkembangannya di sini.
-              </p>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {SNAPSHOT_PLATFORMS.filter((p) => snapsForCards.has(p.key)).map((p) => {
-                  const rows = snapsForCards.get(p.key);
-                  const { latest, delta } = followerTrend(rows);
-                  const last = latestSnapshot(rows);
-                  const age = daysSince(last?.snapshot_date, todayStr);
-                  const stale = age != null && age > 7;
-                  return (
-                    <div key={p.key} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>{p.icon} {p.label}</span>
-                        <span className="text-[11px] font-medium" style={{ color: stale ? "#b45309" : "var(--ink-soft)" }} title={stale ? "Sudah lewat seminggu — perbarui angkanya di halaman Upload" : "Tanggal snapshot terakhir"}>
-                          {stale ? `⚠ terakhir ${age} hari lalu` : last?.snapshot_date}
-                        </span>
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                        <span className="text-2xl font-extrabold" style={{ color: "var(--teal-900)" }}>{latest ? fmt(latest.followers) : "—"}</span>
-                        <span className="text-xs" style={{ color: "var(--ink-soft)" }}>followers</span>
-                        {delta != null && (
-                          <span className="text-xs font-semibold" style={{ color: delta > 0 ? "#166534" : delta < 0 ? "#b91c1c" : "var(--ink-soft)" }}>
-                            {delta > 0 ? `▲ +${fmt(delta)}` : delta < 0 ? `▼ ${fmt(delta)}` : "＝ 0"} vs sebelumnya
-                          </span>
-                        )}
-                      </div>
-                      {(last?.reach_30d != null || last?.profile_visits != null) && (
-                        <p className="mt-1 text-[11px]" style={{ color: "var(--ink-soft)" }}>
-                          {last?.reach_30d != null && <>Reach 30 hari: <b className="text-ink">{fmt(last.reach_30d)}</b></>}
-                          {last?.reach_30d != null && last?.profile_visits != null && " · "}
-                          {last?.profile_visits != null && <>Kunjungan profil: <b className="text-ink">{fmt(last.profile_visits)}</b></>}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
+              {/* Tab Threads — input manual (Threads tidak punya export report). */}
+              <div>
+                {(snapsByPlatform.get("threads") || []).length > 0 ? (
+                  <>
+                    <SnapshotFollowerCard rows={snapsByPlatform.get("threads")} todayStr={todayStr} />
+                    <p className="mt-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+                      Threads belum menyediakan export data, jadi hanya followers yang dicatat manual. Perbarui <b>seminggu sekali</b> di halaman{" "}
+                      <Link href="/upload" style={{ color: "var(--teal-900)", fontWeight: 600 }}>Upload</Link>.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                    Belum ada data Threads. Catat followers Threads cabang ini <b>seminggu sekali</b> lewat halaman{" "}
+                    <Link href="/upload" style={{ color: "var(--teal-900)", fontWeight: 600 }}>Upload</Link> untuk melihat perkembangannya di sini.
+                  </p>
+                )}
               </div>
-            )}
+            </PlatformTabs>
           </section>
 
           {/* Target & Progress (blueprint 21A) — SENGAJA selalu sepanjang masa, tidak
