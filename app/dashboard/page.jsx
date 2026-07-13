@@ -643,9 +643,10 @@ export default async function DashboardPage({ searchParams }) {
             </div>
           </section>
 
-          {/* Analisis Pertumbuhan — dipindah tepat di bawah grafik pertumbuhan.
-              Muncul OTOMATIS saat kenaikan follower bulan ditinjau < bulan sebelumnya. */}
-          {detail.growthDiagnosis && detail.comparison && (() => {
+          {/* Analisis Pertumbuhan — tepat di bawah grafik pertumbuhan. Muncul
+              OTOMATIS saat kenaikan follower melambat (bulan dipilih vs sebelumnya,
+              atau 2 bulan terakhir saat "Semua bulan"). */}
+          {detail.growthDiagnosis && (() => {
             const dg = detail.growthDiagnosis;
             const s = ALERT_STYLE[dg.level] || ALERT_STYLE.info;
             const chip = {
@@ -657,7 +658,7 @@ export default async function DashboardPage({ searchParams }) {
             return (
               <section className="card-3d p-4 sm:p-5">
                 <h3 className="mb-1 text-sm font-semibold text-ink">
-                  🔍 Analisis Pertumbuhan — {labelBulan(selectedMonth)} vs {labelBulan(detail.comparison.prevMonth)}
+                  🔍 Analisis Pertumbuhan — {labelBulan(dg.curMonth)} vs {labelBulan(dg.prevMonth)}
                 </h3>
                 <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
                   Kenaikan follower melambat: <b className="text-ink">{dg.growth.prev >= 0 ? "+" : ""}{fmt(dg.growth.prev)}</b> →{" "}
