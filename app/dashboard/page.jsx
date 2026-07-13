@@ -265,7 +265,24 @@ export default async function DashboardPage({ searchParams }) {
     }
     return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([x, y]) => ({ x, y }));
   };
-  const ttGrowthMonthly = monthlySum(detail.history.map((h) => ({ x: h.date, y: Number(h.diff_from_previous_day) || 0 })));
+  // TikTok: pertumbuhan bulanan = follower AKHIR − AWAL bulan (selisih ujung),
+  // SAMA dgn Analisis Pertumbuhan & metrik lain — bukan jumlah diff harian
+  // (yang ikut menghitung hari-pertama-data sehingga angkanya beda).
+  const ttGrowthMonthly = (() => {
+    const byMonth = new Map();
+    for (const h of detail.history) {
+      const k = String(h.date).slice(0, 7);
+      if (!/^\d{4}-\d{2}$/.test(k)) continue;
+      if (!byMonth.has(k)) byMonth.set(k, []);
+      byMonth.get(k).push(h);
+    }
+    return [...byMonth.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([k, rows]) => {
+      const s = [...rows].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      return { x: k, y: (Number(s[s.length - 1].followers) || 0) - (Number(s[0].followers) || 0) };
+    });
+  })();
+  // Instagram: hanya punya data PERTAMBAHAN harian (tak ada jumlah total), jadi
+  // pertumbuhan bulanan = jumlah pertambahan harian bulan itu.
   const igGrowthMonthly = monthlySum(
     igDaily.filter((r) => r.metric === "new_followers").map((r) => ({ x: r.date, y: r.value || 0 }))
   );
