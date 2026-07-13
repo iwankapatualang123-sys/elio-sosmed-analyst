@@ -15,7 +15,7 @@ import ProgressBar from "@/components/ProgressBar";
 import { forecastNext } from "@/lib/tiktok/forecast";
 import { matchPlanStatusMulti, summarizePlans } from "@/lib/tiktok/content-plan";
 import { groupByPlatform, followerTrend, latestSnapshot, daysSince } from "@/lib/social/snapshots";
-import { sumDaily, dailySeries, contentInPeriod, contentSummary, topContents, cumulativeFollowerSeries, contentTypeBreakdown, hashtagStats as igHashtagStats } from "@/lib/instagram/metrics";
+import { sumDaily, dailySeries, contentInPeriod, contentSummary, topContents, contentTypeBreakdown, hashtagStats as igHashtagStats } from "@/lib/instagram/metrics";
 import PlatformTabs from "@/components/PlatformTabs";
 import PortfolioSummary from "@/components/PortfolioSummary";
 import { addAnnotation, deleteAnnotation } from "./actions";
@@ -247,12 +247,6 @@ export default async function DashboardPage({ searchParams }) {
     : { views: detail.thisMonth.summary.totalViews, er: detail.thisMonth.summary.engagementRateOverall, net: detail.thisMonth.growth.netGrowth };
   const igProgSum = sumDaily(igDaily, progMonth);
   const igProgSummary = contentSummary(contentInPeriod(igContent, progMonth));
-  // Garis follower IG utk grafik pertumbuhan: TOTAL per tanggal dari delta harian
-  // + jangkar snapshot manual, lalu discope ke bulan terpilih (spt garis TikTok).
-  const igFollowerSeriesAll = cumulativeFollowerSeries(igDaily, igFollowerAnchor.latest);
-  const igFollowerSeries = selectedMonth
-    ? igFollowerSeriesAll.filter((p) => p.x.slice(0, 7) === selectedMonth)
-    : igFollowerSeriesAll;
   // Garis grafik pakai PERTAMBAHAN follower per hari (bukan total) — skala kedua
   // platform jadi sebanding; total awal→akhir tetap tampil di ringkasan atas grafik.
   const igGrowthSeries = igDaily
@@ -624,12 +618,16 @@ export default async function DashboardPage({ searchParams }) {
                   {detail.growth.netGrowth >= 0 ? "+" : ""}{fmt(detail.growth.netGrowth)}
                 </b>{" "}follower · kini {fmt(detail.growth.endFollowers)}
               </span>
-              {igFollowerSeries.length >= 2 && (() => {
-                const igNet = igFollowerSeries[igFollowerSeries.length - 1].y - igFollowerSeries[0].y;
+              {igGrowthSeries.length >= 1 && (() => {
+                // Net IG = JUMLAH pertambahan harian (sama dgn total titik di grafik),
+                // bukan selisih deret kumulatif. "kini" hanya bila ada snapshot manual
+                // (jumlah follower IG asli tak diketahui dari data pertambahan saja).
+                const igNet = igGrowthSeries.reduce((s, p) => s + (p.y || 0), 0);
+                const igNow = igFollowerAnchor.latest?.followers ?? null;
                 return (
                   <span>
                     <b style={{ color: "#c13584" }}>Instagram</b>{" "}
-                    <b style={{ color: igNet > 0 ? "#166534" : igNet < 0 ? "#b91c1c" : "inherit" }}>{igNet >= 0 ? "+" : ""}{fmt(igNet)}</b>{" "}follower · kini {fmt(igFollowerSeries[igFollowerSeries.length - 1].y)}
+                    <b style={{ color: igNet > 0 ? "#166534" : igNet < 0 ? "#b91c1c" : "inherit" }}>{igNet >= 0 ? "+" : ""}{fmt(igNet)}</b>{" "}follower{igNow != null ? ` · kini ${fmt(igNow)}` : ""}
                   </span>
                 );
               })()}
