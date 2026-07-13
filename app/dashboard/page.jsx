@@ -606,48 +606,78 @@ export default async function DashboardPage({ searchParams }) {
 
           </section>
 
-          {/* Analisis Pertumbuhan — tepat di bawah grafik pertumbuhan. Muncul
-              OTOMATIS saat kenaikan follower melambat (bulan dipilih vs sebelumnya,
-              atau 2 bulan terakhir saat "Semua bulan"). */}
-          {detail.growthDiagnosis && (() => {
-            const dg = detail.growthDiagnosis;
-            const s = ALERT_STYLE[dg.level] || ALERT_STYLE.info;
-            const chip = {
-              turun: { bg: "#fee2e2", fg: "#991b1b" },
-              ada: { bg: "#fef3c7", fg: "#92400e" },
-              stabil: { bg: "#dcfce7", fg: "#166534" },
-              tidak: { bg: "rgba(0,102,116,.08)", fg: "var(--teal-900)" },
-            };
-            return (
-              <section className="card-3d p-4 sm:p-5">
-                <h3 className="mb-1 text-sm font-semibold text-ink">
-                  🔍 Analisis Pertumbuhan — {labelBulan(dg.curMonth)} vs {labelBulan(dg.prevMonth)}
-                </h3>
-                <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
-                  Kenaikan follower melambat: <b className="text-ink">{dg.growth.prev >= 0 ? "+" : ""}{fmt(dg.growth.prev)}</b> →{" "}
-                  <b className="text-ink">{dg.growth.cur >= 0 ? "+" : ""}{fmt(dg.growth.cur)}</b>. Follower itu <i>akibat</i> — di bawah ini pemeriksaan <i>sebab</i>-nya.
-                </p>
-                <div className="mb-3 flex items-start gap-2 rounded-xl p-3 text-sm" style={{ background: s.bg, border: `1px solid ${s.border}` }}>
-                  <span>{s.icon}</span>
-                  <span className="text-ink"><b style={{ color: s.color }}>Kesimpulan:</b> {dg.summary}</span>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-3">
-                  {dg.findings.map((f) => {
-                    const c = chip[f.status] || chip.tidak;
-                    return (
-                      <div key={f.key} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
-                        <div className="mb-1 flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-ink">{f.label}</span>
-                          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: c.bg, color: c.fg }}>{f.status}</span>
+          {/* Analisis Pertumbuhan — SATU kartu di bawah grafik: (a) diagnosis sebab
+              perlambatan (muncul otomatis saat follower melambat) + (b) Insight per
+              aspek (Konten/ER/Follower/Retensi) yang selalu tampil. Digabung supaya
+              tidak jadi dua blok terpisah. */}
+          {(detail.growthDiagnosis || (detail.insights || []).length > 0) && (
+            <section className="card-3d p-4 sm:p-5">
+              <h3 className="mb-3 text-sm font-semibold text-ink">
+                🔍 Analisis Pertumbuhan{detail.growthDiagnosis ? ` — ${labelBulan(detail.growthDiagnosis.curMonth)} vs ${labelBulan(detail.growthDiagnosis.prevMonth)}` : ""}
+              </h3>
+
+              {/* (a) Diagnosis perlambatan follower — hanya saat melambat */}
+              {detail.growthDiagnosis && (() => {
+                const dg = detail.growthDiagnosis;
+                const s = ALERT_STYLE[dg.level] || ALERT_STYLE.info;
+                const chip = {
+                  turun: { bg: "#fee2e2", fg: "#991b1b" },
+                  ada: { bg: "#fef3c7", fg: "#92400e" },
+                  stabil: { bg: "#dcfce7", fg: "#166534" },
+                  tidak: { bg: "rgba(0,102,116,.08)", fg: "var(--teal-900)" },
+                };
+                return (
+                  <div className="mb-4 border-b pb-4" style={{ borderColor: "rgba(0,60,68,.1)" }}>
+                    <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
+                      Kenaikan follower melambat: <b className="text-ink">{dg.growth.prev >= 0 ? "+" : ""}{fmt(dg.growth.prev)}</b> →{" "}
+                      <b className="text-ink">{dg.growth.cur >= 0 ? "+" : ""}{fmt(dg.growth.cur)}</b>. Follower itu <i>akibat</i> — di bawah ini pemeriksaan <i>sebab</i>-nya.
+                    </p>
+                    <div className="mb-3 flex items-start gap-2 rounded-xl p-3 text-sm" style={{ background: s.bg, border: `1px solid ${s.border}` }}>
+                      <span>{s.icon}</span>
+                      <span className="text-ink"><b style={{ color: s.color }}>Kesimpulan:</b> {dg.summary}</span>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {dg.findings.map((f) => {
+                        const c = chip[f.status] || chip.tidak;
+                        return (
+                          <div key={f.key} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+                            <div className="mb-1 flex items-center justify-between gap-2">
+                              <span className="text-xs font-semibold text-ink">{f.label}</span>
+                              <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: c.bg, color: c.fg }}>{f.status}</span>
+                            </div>
+                            <p className="text-[12px]" style={{ color: "var(--ink-soft)" }}>{f.detail}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* (b) Insight per aspek (Kesimpulan + Saran) — selalu tampil */}
+              {(detail.insights || []).length > 0 && (
+                <>
+                  {detail.growthDiagnosis && (
+                    <p className="mb-2 text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>Insight per aspek</p>
+                  )}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {detail.insights.map((ins, i) => (
+                      <div key={i} className="rounded-xl p-4" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+                        <div className="mb-1 flex items-center gap-2">
+                          <span className="text-sm font-semibold text-ink">{ins.aspek}</span>
+                          <span className="ml-auto rounded-full px-2 py-0.5 text-xs font-semibold" style={INSIGHT_STYLE[ins.status] || INSIGHT_STYLE.info}>
+                            {ins.status}
+                          </span>
                         </div>
-                        <p className="text-[12px]" style={{ color: "var(--ink-soft)" }}>{f.detail}</p>
+                        <p className="text-sm text-ink">{ins.kesimpulan}</p>
+                        <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>💡 {ins.saran}</p>
                       </div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })()}
+                    ))}
+                  </div>
+                </>
+              )}
+            </section>
+          )}
 
           {/* Target & Progress (blueprint 21A) — SENGAJA selalu sepanjang masa, tidak
               ikut filter bulan di atas (target itu tujuan berjalan, bukan target per bulan). */}
@@ -739,22 +769,6 @@ export default async function DashboardPage({ searchParams }) {
               </div>
             </section>
           )}
-
-          {/* Insight otomatis (Kesimpulan + Saran per aspek) */}
-          <section className="grid gap-4 sm:grid-cols-2">
-            {(detail.insights || []).map((ins, i) => (
-              <div key={i} className="card-3d p-4">
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="text-sm font-semibold text-ink">{ins.aspek}</span>
-                  <span className="ml-auto rounded-full px-2 py-0.5 text-xs font-semibold" style={INSIGHT_STYLE[ins.status] || INSIGHT_STYLE.info}>
-                    {ins.status}
-                  </span>
-                </div>
-                <p className="text-sm text-ink">{ins.kesimpulan}</p>
-                <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>💡 {ins.saran}</p>
-              </div>
-            ))}
-          </section>
 
           <InsightAI accountId={selectedId} namaCabang={selectedBranch.nama_cabang} month={selectedMonth} />
 
