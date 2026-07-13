@@ -212,7 +212,6 @@ export default async function DashboardPage({ searchParams }) {
   const igReachSeries = dailySeries(igDaily, "reach", igMonth);
   const igVisitsSeries = dailySeries(igDaily, "profile_visits", igMonth);
   const igTypeBreakdown = contentTypeBreakdown(igPeriodContents);
-  const igTopAll = topContents(igPeriodContents, { limit: 5 });
   const igTopFollows = topContents(igPeriodContents.filter((c) => (c.follows || 0) > 0), { by: "follows", limit: 5 });
   const igHashtags = igHashtagStats(igPeriodContents, { limit: 12 });
   const igFollowerAnchor = followerTrend(snapsByPlatform.get("instagram") || []); // total follower (snapshot manual)
@@ -867,31 +866,8 @@ export default async function DashboardPage({ searchParams }) {
             )}
           </section>
 
-          <section className="card-3d p-4 sm:p-6">
-            <h3 className="mb-3 text-sm font-semibold text-ink">Top 5 Video (by views){selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr style={{ color: "var(--ink-soft)" }}>
-                    <th className="py-2 pr-3 font-medium">#</th>
-                    <th className="py-2 pr-3 font-medium">Judul</th>
-                    <th className="py-2 pr-3 font-medium">Views</th>
-                    <th className="py-2 pr-3 font-medium">Eng. rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {detail.topVideos.map((v, i) => (
-                    <tr key={v.video_id || i} className="border-t" style={{ borderColor: "rgba(0,60,68,.1)" }}>
-                      <td className="py-2 pr-3">{i + 1}</td>
-                      <td className="py-2 pr-3 text-ink"><span className="line-clamp-1 max-w-md">{v.video_title || "(tanpa judul)"}</span></td>
-                      <td className="py-2 pr-3">{fmt(v.total_views)}</td>
-                      <td className="py-2 pr-3">{v.engagement_rate}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+          {/* Top 5 Video TikTok dipindah ke Ringkasan Platform (tab TikTok) —
+              tidak diduplikasi di sini. */}
 
           {/* ————— Detail Instagram (dari upload Business Suite) ————— */}
           {hasIgData && (
@@ -976,21 +952,16 @@ export default async function DashboardPage({ searchParams }) {
                 </div>
               </section>
 
-              {/* Top konten IG + pendatang follower */}
-              <section className="grid gap-4 lg:grid-cols-2">
-                <div className="card-3d p-4 sm:p-6">
-                  <h3 className="mb-3 text-sm font-semibold text-ink">Top 5 Konten (by tayangan)</h3>
-                  <IgContentTable rows={igTopAll} valueKey="views" valueLabel="Tayangan" fmt={fmt} />
-                </div>
-                <div className="card-3d p-4 sm:p-6">
-                  <h3 className="mb-1 text-sm font-semibold text-ink">Pendatang Follower Terbanyak</h3>
-                  <p className="mb-3 text-[11px]" style={{ color: "var(--ink-soft)" }}>Konten yang paling banyak menghasilkan follower baru — jenis yang layak diperbanyak.</p>
-                  {igTopFollows.length === 0 ? (
-                    <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada konten yang tercatat mendatangkan follower.</p>
-                  ) : (
-                    <IgContentTable rows={igTopFollows} valueKey="follows" valueLabel="+Follower" fmt={fmt} accent="#166534" />
-                  )}
-                </div>
+              {/* Top konten IG (by tayangan) sudah di Ringkasan Platform; di sini
+                  hanya "Pendatang Follower Terbanyak" (metrik follower, bukan views). */}
+              <section className="card-3d p-4 sm:p-6">
+                <h3 className="mb-1 text-sm font-semibold text-ink">Pendatang Follower Terbanyak</h3>
+                <p className="mb-3 text-[11px]" style={{ color: "var(--ink-soft)" }}>Konten yang paling banyak menghasilkan follower baru — jenis yang layak diperbanyak.</p>
+                {igTopFollows.length === 0 ? (
+                  <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada konten yang tercatat mendatangkan follower.</p>
+                ) : (
+                  <IgContentTable rows={igTopFollows} valueKey="follows" valueLabel="+Follower" fmt={fmt} accent="#166534" />
+                )}
               </section>
             </>
           )}
