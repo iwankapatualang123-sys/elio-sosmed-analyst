@@ -9,7 +9,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadBranchDetail } from "@/lib/tiktok/analytics";
 import { weekOfMonth } from "@/lib/tiktok/weekly";
-import { sumDaily, contentInPeriod, contentSummary, topContents } from "@/lib/instagram/metrics";
+import { sumDaily, dailySeries, contentInPeriod, contentSummary, topContents } from "@/lib/instagram/metrics";
 import { LineChart, Donut } from "@/components/Charts";
 import PrintButton from "@/components/PrintButton";
 import Button from "@/components/Button";
@@ -89,6 +89,20 @@ export default async function ReportPage({ params, searchParams }) {
   const igContents = contentInPeriod(igContentAll, month);
   const igCSum = contentSummary(igContents);
   const igTop = topContents(igContents, { limit: 3 });
+  // Perbandingan IG vs bulan sebelumnya (hanya saat 1 bulan dipilih).
+  const igPrevMonth = month ? (() => {
+    const [y, mm] = month.split("-").map(Number);
+    const d = new Date(y, mm - 2, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  })() : null;
+  const igPrevSum = igPrevMonth ? sumDaily(igDaily, igPrevMonth) : null;
+  const igPrevCSum = igPrevMonth ? contentSummary(contentInPeriod(igContentAll, igPrevMonth)) : null;
+  // Bench {previous, deltaPct} untuk komponen Delta (▲▼%). null bila tak ada pembanding.
+  const igBench = (cur, prev) => (prev == null ? null : { previous: prev, deltaPct: prev ? Math.round(((cur - prev) / prev) * 1000) / 10 : 0 });
+  // Tren follower IG: pertambahan KUMULATIF dalam periode (garis naik). Dihitung
+  // tanpa variabel mutable (kumulatif = jumlah nilai s/d indeks itu).
+  const igDailyNew = dailySeries(igDaily, "new_followers", month);
+  const igFollowerTrend = igDailyNew.map((p, i) => ({ x: p.date, y: igDailyNew.slice(0, i + 1).reduce((s, q) => s + q.value, 0) }));
 
   const s = detail.summary;
   const g = detail.growth;
@@ -303,18 +317,29 @@ export default async function ReportPage({ params, searchParams }) {
             <section className="print-avoid mb-5">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 {[
-                  ["Tayangan", igSum.views],
-                  ["Jangkauan", igSum.reach],
-                  ["Kunjungan profil", igSum.profile_visits],
-                  ["Follower baru", igSum.new_followers == null ? null : `${igSum.new_followers >= 0 ? "+" : ""}${fmt(igSum.new_followers)}`],
-                  ["ER akun", igCSum.er == null ? null : `${igCSum.er}%`],
-                ].map(([label, val]) => (
+                  ["Tayangan", igSum.views, igBench(igSum.views || 0, igPrevSum ? igPrevSum.views || 0 : null)],
+                  ["Jangkauan", igSum.reach, igBench(igSum.reach || 0, igPrevSum ? igPrevSum.reach || 0 : null)],
+                  ["Kunjungan profil", igSum.profile_visits, igBench(igSum.profile_visits || 0, igPrevSum ? igPrevSum.profile_visits || 0 : null)],
+                  ["Follower baru", igSum.new_followers == null ? null : `${igSum.new_followers >= 0 ? "+" : ""}${fmt(igSum.new_followers)}`, igBench(igSum.new_followers || 0, igPrevSum ? igPrevSum.new_followers || 0 : null)],
+                  ["ER akun", igCSum.er == null ? null : `${igCSum.er}%`, igBench(igCSum.er || 0, igPrevCSum ? igPrevCSum.er || 0 : null)],
+                ].map(([label, val, bench]) => (
                   <div key={label} className="rounded-2xl p-3 text-center" style={{ background: "linear-gradient(160deg,#fdf0f6,#f7e3ef)" }}>
                     <div className="text-lg font-extrabold text-ink">{val == null ? "—" : typeof val === "string" ? val : fmt(val)}</div>
-                    <div className="text-[11px]" style={{ color: "var(--ink-soft)" }}>{label}</div>
+                    <div className="mb-0.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>{label}</div>
+                    {igPrevMonth ? <Delta bench={bench} /> : null}
                   </div>
                 ))}
               </div>
+              {igPrevMonth && <p className="mt-1.5 text-[10px]" style={{ color: "var(--ink-soft)" }}>▲▼ = perbandingan vs {labelBulan(igPrevMonth)}. Instagram tidak menyediakan data demografi audiens (gender/umur); &quot;audiens&quot; diwakili Jangkauan &amp; Kunjungan Profil.</p>}
+
+              {/* Tren Follower Instagram — pertambahan kumulatif dlm periode */}
+              {igFollowerTrend.length >= 2 && (
+                <div className="mt-4">
+                  <h3 className="mb-1 text-xs font-bold uppercase tracking-wider" style={{ color: "#a12472" }}>Tren Follower Instagram</h3>
+                  <p className="mb-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>Pertambahan follower kumulatif {month ? labelBulan(month) : "sepanjang data"} — total {igSum.new_followers == null ? "—" : `${igSum.new_followers >= 0 ? "+" : ""}${fmt(igSum.new_followers)}`}.</p>
+                  <LineChart data={igFollowerTrend} color="#c13584" />
+                </div>
+              )}
               <p className="mt-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>
                 Sumber: Meta Business Suite{month ? ` — ${labelBulan(month)}` : ""}. Tayangan mencakup semua jenis konten termasuk Story. {fmt(igCSum.count)} konten pada periode ini{igCSum.follows ? `, ${igCSum.follows >= 0 ? "+" : ""}${fmt(igCSum.follows)} follower datang dari konten` : ""}.
               </p>
