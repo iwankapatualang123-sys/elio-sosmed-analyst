@@ -145,11 +145,11 @@ export default async function ReportPage({ params, searchParams }) {
           </div>
         </header>
 
-        {/* Ringkasan Eksekutif */}
-        <section className="print-avoid mb-5">
-          <h2 className="mb-1.5 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--teal-900)" }}>Ringkasan Eksekutif</h2>
-          <p className="rounded-xl p-3 text-sm leading-relaxed text-ink" style={{ background: "rgba(0,102,116,.05)" }}>{summaryText}</p>
-        </section>
+        {/* ===================== LAPORAN TIKTOK ===================== */}
+        <div className="print-avoid mb-3 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "rgba(0,102,116,.08)" }}>
+          <span className="text-base">🎵</span>
+          <h2 className="text-sm font-extrabold uppercase tracking-wider" style={{ color: "var(--teal-900)" }}>Laporan TikTok</h2>
+        </div>
 
         {/* KPI + perbandingan vs bulan lalu */}
         <section className="print-avoid mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -201,46 +201,6 @@ export default async function ReportPage({ params, searchParams }) {
             )}
           </div>
         </section>
-
-        {/* Ringkasan Instagram (dari upload Business Suite) — muncul bila ada data */}
-        {hasIg && (
-          <section className="print-avoid mb-5 mt-6 border-t pt-4" style={{ borderColor: "rgba(0,60,68,.12)" }}>
-            <h2 className="mb-2 text-xs font-bold uppercase tracking-wider" style={{ color: "#a12472" }}>📸 Ringkasan Instagram{month ? ` — ${labelBulan(month)}` : ""}</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {[
-                ["Tayangan", igSum.views],
-                ["Jangkauan", igSum.reach],
-                ["Kunjungan profil", igSum.profile_visits],
-                ["Follower baru", igSum.new_followers == null ? null : `${igSum.new_followers >= 0 ? "+" : ""}${fmt(igSum.new_followers)}`],
-                ["ER akun", igCSum.er == null ? null : `${igCSum.er}%`],
-              ].map(([label, val]) => (
-                <div key={label} className="rounded-2xl p-3 text-center" style={{ background: "linear-gradient(160deg,#fdf0f6,#f7e3ef)" }}>
-                  <div className="text-lg font-extrabold text-ink">{val == null ? "—" : typeof val === "string" ? val : fmt(val)}</div>
-                  <div className="text-[11px]" style={{ color: "var(--ink-soft)" }}>{label}</div>
-                </div>
-              ))}
-            </div>
-            <p className="mt-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>
-              Sumber: Meta Business Suite. Tayangan mencakup semua jenis konten termasuk Story. {fmt(igCSum.count)} konten pada periode ini{igCSum.follows ? `, ${igCSum.follows >= 0 ? "+" : ""}${fmt(igCSum.follows)} follower datang dari konten` : ""}.
-            </p>
-            {igTop.length > 0 && (
-              <div className="mt-2">
-                <p className="mb-1 text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>Konten teratas (by tayangan):</p>
-                <ol className="flex flex-col gap-0.5 text-sm text-ink">
-                  {igTop.map((c, i) => (
-                    <li key={c.post_id} className="flex items-baseline gap-2">
-                      <span style={{ color: "var(--ink-soft)" }}>{i + 1}.</span>
-                      {c.permalink
-                        ? <a href={c.permalink} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate hover:underline" style={{ color: "var(--teal-900)" }}>{(c.description || "(tanpa caption)").split("\n")[0]}</a>
-                        : <span className="min-w-0 flex-1 truncate">{(c.description || "(tanpa caption)").split("\n")[0]}</span>}
-                      <span className="whitespace-nowrap font-medium">{fmt(c.views)} views{c.er != null ? ` · ER ${c.er}%` : ""}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
-          </section>
-        )}
 
         {/* ===== HALAMAN 2 ===== */}
         <div className="print-break" />
@@ -332,9 +292,59 @@ export default async function ReportPage({ params, searchParams }) {
           </section>
         )}
 
-        {/* Rekomendasi */}
+        {/* ===================== LAPORAN INSTAGRAM ===================== */}
+        {hasIg && (
+          <>
+            <div className="print-avoid mb-3 mt-6 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "rgba(193,53,132,.09)" }}>
+              <span className="text-base">📸</span>
+              <h2 className="text-sm font-extrabold uppercase tracking-wider" style={{ color: "#a12472" }}>Laporan Instagram</h2>
+            </div>
+            <section className="print-avoid mb-5">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                {[
+                  ["Tayangan", igSum.views],
+                  ["Jangkauan", igSum.reach],
+                  ["Kunjungan profil", igSum.profile_visits],
+                  ["Follower baru", igSum.new_followers == null ? null : `${igSum.new_followers >= 0 ? "+" : ""}${fmt(igSum.new_followers)}`],
+                  ["ER akun", igCSum.er == null ? null : `${igCSum.er}%`],
+                ].map(([label, val]) => (
+                  <div key={label} className="rounded-2xl p-3 text-center" style={{ background: "linear-gradient(160deg,#fdf0f6,#f7e3ef)" }}>
+                    <div className="text-lg font-extrabold text-ink">{val == null ? "—" : typeof val === "string" ? val : fmt(val)}</div>
+                    <div className="text-[11px]" style={{ color: "var(--ink-soft)" }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+                Sumber: Meta Business Suite{month ? ` — ${labelBulan(month)}` : ""}. Tayangan mencakup semua jenis konten termasuk Story. {fmt(igCSum.count)} konten pada periode ini{igCSum.follows ? `, ${igCSum.follows >= 0 ? "+" : ""}${fmt(igCSum.follows)} follower datang dari konten` : ""}.
+              </p>
+              {igTop.length > 0 && (
+                <div className="mt-3">
+                  <p className="mb-1 text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>Konten teratas (by tayangan):</p>
+                  <ol className="flex flex-col gap-0.5 text-sm text-ink">
+                    {igTop.map((c, i) => (
+                      <li key={c.post_id} className="flex items-baseline gap-2">
+                        <span style={{ color: "var(--ink-soft)" }}>{i + 1}.</span>
+                        {c.permalink
+                          ? <a href={c.permalink} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate hover:underline" style={{ color: "var(--teal-900)" }}>{(c.description || "(tanpa caption)").split("\n")[0]}</a>
+                          : <span className="min-w-0 flex-1 truncate">{(c.description || "(tanpa caption)").split("\n")[0]}</span>}
+                        <span className="whitespace-nowrap font-medium">{fmt(c.views)} views{c.er != null ? ` · ER ${c.er}%` : ""}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </section>
+          </>
+        )}
+
+        {/* ===================== KESIMPULAN ===================== */}
+        <div className="print-avoid mb-3 mt-6 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "rgba(0,102,116,.08)" }}>
+          <span className="text-base">📝</span>
+          <h2 className="text-sm font-extrabold uppercase tracking-wider" style={{ color: "var(--teal-900)" }}>Kesimpulan</h2>
+        </div>
         <section className="print-avoid mb-5">
-          <h2 className="mb-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--teal-900)" }}>Rekomendasi</h2>
+          <p className="mb-3 rounded-xl p-3 text-sm leading-relaxed text-ink" style={{ background: "rgba(0,102,116,.05)" }}>{summaryText}</p>
+          <h3 className="mb-1.5 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--teal-900)" }}>Rekomendasi</h3>
           <ul className="flex flex-col gap-1.5">
             {(detail.insights || []).map((i, idx) => (
               <li key={idx} className="flex gap-2 text-sm text-ink">
