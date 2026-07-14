@@ -9,6 +9,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadBranchDetail } from "@/lib/tiktok/analytics";
 import { weekOfMonth } from "@/lib/tiktok/weekly";
+import { sumDaily, contentInPeriod, contentSummary, topContents } from "@/lib/instagram/metrics";
 import { LineChart, Donut } from "@/components/Charts";
 import PrintButton from "@/components/PrintButton";
 import Button from "@/components/Button";
@@ -70,7 +71,23 @@ export default async function ReportPage({ params, searchParams }) {
     loadBranchDetail(supabase, accountId, { month }),
   ]);
   if (!account || !detail) return <main className="relative z-10 p-8 text-white">Cabang tidak ditemukan atau tidak ada akses.</main>;
-  const { data: goal } = await supabase.from("tiktok_account_goals").select("*").eq("tiktok_account_id", accountId).maybeSingle();
+  // Target bulan laporan (per platform) — dipakai untuk pencapaian TikTok.
+  const goalMonth = month || new Date().toISOString().slice(0, 7);
+  const { data: goalsRows } = await supabase.from("tiktok_account_goals").select("*").eq("tiktok_account_id", accountId);
+  const goal = (goalsRows || []).find((x) => x.platform === "tiktok" && x.target_month === goalMonth) || null;
+
+  // Data Instagram (dari upload Business Suite) — ringkasan ditambahkan bila ada.
+  const [{ data: igDailyRows }, { data: igContentRows }] = await Promise.all([
+    supabase.from("instagram_daily_metrics").select("metric, date, value").eq("tiktok_account_id", accountId),
+    supabase.from("instagram_content").select("post_id, description, permalink, post_type, published_at, views, likes, comments, shares, saves, follows, is_collab").eq("tiktok_account_id", accountId),
+  ]);
+  const igDaily = igDailyRows || [];
+  const igContentAll = igContentRows || [];
+  const hasIg = igDaily.length > 0 || igContentAll.length > 0;
+  const igSum = sumDaily(igDaily, month);
+  const igContents = contentInPeriod(igContentAll, month);
+  const igCSum = contentSummary(igContents);
+  const igTop = topContents(igContents, { limit: 3 });
 
   const s = detail.summary;
   const g = detail.growth;
@@ -83,7 +100,13 @@ export default async function ReportPage({ params, searchParams }) {
   byViews.slice(0, 3).forEach((v, idx) => topRank.set(v.video_id, idx + 1));
   const kontenList = [...(s.videos || [])].sort((a, b) => String(a.post_date).localeCompare(String(b.post_date)));
   const dibuat = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-  const summaryText = ringkasanEksekutif({ account, periode, s, g, top: byViews[0], comparison: cmp });
+  let summaryText = ringkasanEksekutif({ account, periode, s, g, top: byViews[0], comparison: cmp });
+  if (hasIg) {
+    const igParts = [`Di Instagram, tercatat ${fmt(igSum.views || 0)} tayangan`];
+    if (igCSum.count) igParts.push(`dari ${fmt(igCSum.count)} konten (ER ${igCSum.er == null ? "—" : `${igCSum.er}%`})`);
+    if (igSum.new_followers != null) igParts.push(`dengan ${igSum.new_followers >= 0 ? "+" : ""}${fmt(igSum.new_followers)} follower baru`);
+    summaryText += ` ${igParts.join(" ")}.`;
+  }
   const MEDALI = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
   const KPI = [
@@ -113,8 +136,8 @@ export default async function ReportPage({ params, searchParams }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icon-192.png" alt="Elio" width={50} height={50} style={{ width: 50, height: 50, borderRadius: 12, display: "block" }} />
           <div className="flex-1">
-            <h1 className="text-lg font-extrabold tracking-tight text-ink sm:text-xl">Laporan Performa TikTok</h1>
-            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>{account.nama_cabang} · @{account.tiktok_username}</p>
+            <h1 className="text-lg font-extrabold tracking-tight text-ink sm:text-xl">Laporan Performa {hasIg ? "Media Sosial" : "TikTok"}</h1>
+            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>{account.nama_cabang} · @{account.tiktok_username}{hasIg ? " · TikTok + Instagram" : ""}</p>
           </div>
           <div className="text-right text-xs" style={{ color: "var(--ink-soft)" }}>
             <div className="text-sm font-bold" style={{ color: "var(--teal-900)" }}>{month ? labelBulan(month) : "Sepanjang masa"}</div>
@@ -177,6 +200,46 @@ export default async function ReportPage({ params, searchParams }) {
             )}
           </div>
         </section>
+
+        {/* Ringkasan Instagram (dari upload Business Suite) — muncul bila ada data */}
+        {hasIg && (
+          <section className="print-avoid mb-5 mt-6 border-t pt-4" style={{ borderColor: "rgba(0,60,68,.12)" }}>
+            <h2 className="mb-2 text-xs font-bold uppercase tracking-wider" style={{ color: "#a12472" }}>📸 Ringkasan Instagram{month ? ` — ${labelBulan(month)}` : ""}</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {[
+                ["Tayangan", igSum.views],
+                ["Jangkauan", igSum.reach],
+                ["Kunjungan profil", igSum.profile_visits],
+                ["Follower baru", igSum.new_followers == null ? null : `${igSum.new_followers >= 0 ? "+" : ""}${fmt(igSum.new_followers)}`],
+                ["ER akun", igCSum.er == null ? null : `${igCSum.er}%`],
+              ].map(([label, val]) => (
+                <div key={label} className="rounded-2xl p-3 text-center" style={{ background: "linear-gradient(160deg,#fdf0f6,#f7e3ef)" }}>
+                  <div className="text-lg font-extrabold text-ink">{val == null ? "—" : typeof val === "string" ? val : fmt(val)}</div>
+                  <div className="text-[11px]" style={{ color: "var(--ink-soft)" }}>{label}</div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+              Sumber: Meta Business Suite. Tayangan mencakup semua jenis konten termasuk Story. {fmt(igCSum.count)} konten pada periode ini{igCSum.follows ? `, ${igCSum.follows >= 0 ? "+" : ""}${fmt(igCSum.follows)} follower datang dari konten` : ""}.
+            </p>
+            {igTop.length > 0 && (
+              <div className="mt-2">
+                <p className="mb-1 text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>Konten teratas (by tayangan):</p>
+                <ol className="flex flex-col gap-0.5 text-sm text-ink">
+                  {igTop.map((c, i) => (
+                    <li key={c.post_id} className="flex items-baseline gap-2">
+                      <span style={{ color: "var(--ink-soft)" }}>{i + 1}.</span>
+                      {c.permalink
+                        ? <a href={c.permalink} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate hover:underline" style={{ color: "var(--teal-900)" }}>{(c.description || "(tanpa caption)").split("\n")[0]}</a>
+                        : <span className="min-w-0 flex-1 truncate">{(c.description || "(tanpa caption)").split("\n")[0]}</span>}
+                      <span className="whitespace-nowrap font-medium">{fmt(c.views)} views{c.er != null ? ` · ER ${c.er}%` : ""}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ===== HALAMAN 2 ===== */}
         <div className="print-break" />
@@ -283,7 +346,7 @@ export default async function ReportPage({ params, searchParams }) {
 
         {/* Footer metodologi */}
         <footer className="mt-6 border-t pt-3 text-[10px] leading-relaxed" style={{ borderColor: "rgba(0,60,68,.15)", color: "var(--ink-soft)" }}>
-          Sumber data: TikTok Studio (Analytics). Periode data terakhir: {tglPanjang(detail.latestDataDate)}.
+          Sumber data: TikTok Studio (Analytics){hasIg ? " & Meta Business Suite (Instagram)" : ""}. Periode data terakhir: {tglPanjang(detail.latestDataDate)}.
           Laporan dibuat otomatis oleh <b>Elio Digihub</b> pada {dibuat}. Angka views bersifat akumulatif s/d tanggal tarik data.
         </footer>
       </article>
