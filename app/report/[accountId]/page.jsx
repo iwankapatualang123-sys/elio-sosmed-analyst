@@ -332,6 +332,18 @@ export default async function ReportPage({ params, searchParams }) {
               </div>
               {igPrevMonth && <p className="mt-1.5 text-[10px]" style={{ color: "var(--ink-soft)" }}>▲▼ = perbandingan vs {labelBulan(igPrevMonth)}. Instagram tidak menyediakan data demografi audiens (gender/umur); &quot;audiens&quot; diwakili Jangkauan &amp; Kunjungan Profil.</p>}
 
+              {/* Target & Pencapaian Instagram — bulanan; hanya saat 1 bulan dipilih. */}
+              {month && goalIg && (goalIg.target_total_views || goalIg.target_engagement_rate || goalIg.target_net_followers) && (
+                <div className="mt-4">
+                  <h3 className="mb-2 text-xs font-bold uppercase tracking-wider" style={{ color: "#a12472" }}>Target &amp; Pencapaian Instagram — {labelBulan(month)}</h3>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <ProgressBar label="Tayangan" current={igSum.views || 0} target={goalIg.target_total_views} />
+                    <ProgressBar label="Engagement Rate" current={igCSum.er || 0} target={goalIg.target_engagement_rate} suffix="%" />
+                    <ProgressBar label="Follower Baru" current={igSum.new_followers || 0} target={goalIg.target_net_followers} />
+                  </div>
+                </div>
+              )}
+
               {/* Tren Follower Instagram — pertambahan kumulatif dlm periode */}
               {igFollowerTrend.length >= 2 && (
                 <div className="mt-4">
@@ -344,17 +356,6 @@ export default async function ReportPage({ params, searchParams }) {
                 Sumber: Meta Business Suite{month ? ` — ${labelBulan(month)}` : ""}. Tayangan mencakup semua jenis konten termasuk Story. {fmt(igCSum.count)} konten pada periode ini{igCSum.follows ? `, ${igCSum.follows >= 0 ? "+" : ""}${fmt(igCSum.follows)} follower datang dari konten` : ""}.
               </p>
 
-              {/* Target & Pencapaian Instagram — bulanan; hanya saat 1 bulan dipilih. */}
-              {month && goalIg && (goalIg.target_total_views || goalIg.target_engagement_rate || goalIg.target_net_followers) && (
-                <div className="mt-4">
-                  <h3 className="mb-2 text-xs font-bold uppercase tracking-wider" style={{ color: "#a12472" }}>Target &amp; Pencapaian Instagram — {labelBulan(month)}</h3>
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <ProgressBar label="Tayangan" current={igSum.views || 0} target={goalIg.target_total_views} />
-                    <ProgressBar label="Engagement Rate" current={igCSum.er || 0} target={goalIg.target_engagement_rate} suffix="%" />
-                    <ProgressBar label="Follower Baru" current={igSum.new_followers || 0} target={goalIg.target_net_followers} />
-                  </div>
-                </div>
-              )}
               {igTop.length > 0 && (
                 <div className="mt-3">
                   <p className="mb-1 text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>Konten teratas (by tayangan):</p>
