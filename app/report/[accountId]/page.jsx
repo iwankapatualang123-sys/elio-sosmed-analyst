@@ -163,10 +163,11 @@ export default async function ReportPage({ params, searchParams }) {
         </section>
         {cmp && <p className="mb-5 -mt-3 text-[10px]" style={{ color: "var(--ink-soft)" }}>▲▼ = perbandingan vs {labelBulan(cmp.prevMonth)}.</p>}
 
-        {/* Target & Pencapaian */}
-        {goal && (goal.target_total_views || goal.target_engagement_rate || goal.target_net_followers) && (
+        {/* Target & Pencapaian TikTok — target bersifat BULANAN, jadi hanya tampil
+            saat 1 bulan dipilih (angka pencapaian = data TikTok bulan itu). */}
+        {month && goal && (goal.target_total_views || goal.target_engagement_rate || goal.target_net_followers) && (
           <section className="print-avoid mb-5">
-            <h2 className="mb-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--teal-900)" }}>Target &amp; Pencapaian</h2>
+            <h2 className="mb-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--teal-900)" }}>Target &amp; Pencapaian TikTok — {labelBulan(month)}</h2>
             <div className="grid gap-3 sm:grid-cols-3">
               <ProgressBar label="Total Views" current={s.totalViews} target={goal.target_total_views} />
               <ProgressBar label="Engagement Rate" current={s.engagementRateOverall} target={goal.target_engagement_rate} suffix="%" />
