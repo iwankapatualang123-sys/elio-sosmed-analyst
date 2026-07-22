@@ -53,12 +53,23 @@ Edit `.env` (minimal yang WAJIB diganti dari default):
 
 - `POSTGRES_PASSWORD` — password Postgres (kuat & unik).
 - `JWT_SECRET` — string acak ≥ 40 karakter.
-- `ANON_KEY` & `SERVICE_ROLE_KEY` — generate dari `JWT_SECRET` pakai alat resmi
-  Supabase: <https://supabase.com/docs/guides/self-hosting/docker#generate-api-keys>
+- `ANON_KEY` & `SERVICE_ROLE_KEY` — generate dari `JWT_SECRET`.
 - `SITE_URL=https://app.domain-anda.com`
 - `API_EXTERNAL_URL=https://db.domain-anda.com`
 - `SUPABASE_PUBLIC_URL=https://db.domain-anda.com`
 - Ganti password default lain (`DASHBOARD_PASSWORD`, dll).
+
+**Cara cepat generate semua kunci + password** (dijalankan di mesin mana pun
+yang punya Node — repo ini menyediakan skrip tanpa dependensi):
+
+```bash
+node scripts/gen-supabase-keys.mjs
+```
+
+Skrip itu mencetak blok siap-tempel untuk `supabase/docker/.env` (JWT_SECRET,
+ANON_KEY, SERVICE_ROLE_KEY, POSTGRES_PASSWORD, DASHBOARD_PASSWORD) **dan** blok
+untuk `.env.local` aplikasi (ANON_KEY + SERVICE_ROLE_KEY yang sama). Isi sendiri
+bagian domain (`SITE_URL` dll). Simpan hasilnya baik-baik — jangan di-commit.
 
 Jalankan:
 
