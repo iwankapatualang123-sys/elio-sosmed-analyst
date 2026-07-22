@@ -7,7 +7,6 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Button from "@/components/Button";
 import PasswordInput from "@/components/PasswordInput";
 
@@ -15,27 +14,6 @@ import PasswordInput from "@/components/PasswordInput";
 const REASON_MESSAGES = {
   nonaktif: "Akun Anda telah dinonaktifkan oleh admin. Hubungi admin untuk info lebih lanjut.",
 };
-
-// Fungsi: describeAuthError — ubah error Supabase Auth jadi pesan spesifik Bahasa
-// Indonesia. "Invalid login credentials" sengaja tidak dipecah jadi "email salah"
-// vs "password salah" (Supabase memang menyamakan keduanya agar email tidak bisa
-// ditebak/di-enumerasi oleh pihak luar).
-function describeAuthError(err) {
-  const msg = (err?.message || "").toLowerCase();
-  if (msg.includes("invalid login credentials")) {
-    return "Email atau password salah. Periksa kembali, atau minta admin reset password Anda (menu Pengaturan).";
-  }
-  if (msg.includes("email not confirmed")) {
-    return "Email belum dikonfirmasi. Hubungi admin.";
-  }
-  if (err?.status === 429 || msg.includes("rate limit") || msg.includes("security purposes")) {
-    return "Terlalu banyak percobaan login dalam waktu singkat. Coba lagi sebentar lagi.";
-  }
-  if (msg.includes("user not found")) {
-    return "Akun dengan email ini tidak ditemukan.";
-  }
-  return err?.message || "Gagal masuk. Coba lagi.";
-}
 
 function LoginForm() {
   const router = useRouter();
@@ -47,32 +25,25 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(reason ? (REASON_MESSAGES[reason] || "") : "");
 
-  // Fungsi: handleSubmit — login, cek akun masih aktif, lalu arahkan ke /dashboard.
+  // Fungsi: handleSubmit — login via /api/auth/login (cek password + status aktif
+  // di server) lalu arahkan ke /dashboard.
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const supabase = createSupabaseBrowserClient();
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) {
-        setError(describeAuthError(signInError));
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Email atau password salah.");
         setLoading(false);
         return;
       }
-
-      // Login Supabase berhasil bukan berarti akun boleh dipakai — cek status aktif
-      // (bisa dinonaktifkan admin) sebelum masuk, supaya pesannya jelas di sini.
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase.from("profiles").select("is_active").eq("id", user.id).maybeSingle();
-      if (profile && profile.is_active === false) {
-        await supabase.auth.signOut();
-        setError(REASON_MESSAGES.nonaktif);
-        setLoading(false);
-        return;
-      }
-
       router.push("/dashboard");
       router.refresh();
     } catch {

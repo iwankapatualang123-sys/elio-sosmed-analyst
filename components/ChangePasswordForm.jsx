@@ -1,11 +1,10 @@
 // File: components/ChangePasswordForm.jsx
 // Form ganti password (client). Pakai sesi login aktif (tanpa perlu password lama
-// / email), via supabase.auth.updateUser. Untuk mengganti password sementara admin.
+// / email), via /api/auth/change-password. Untuk mengganti password sementara admin.
 
 "use client";
 
 import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Button from "@/components/Button";
 import PasswordInput from "@/components/PasswordInput";
 
@@ -21,10 +20,20 @@ export default function ChangePasswordForm() {
     if (pass.length < 8) return setMsg({ type: "err", text: "Password minimal 8 karakter." });
     if (pass !== confirm) return setMsg({ type: "err", text: "Konfirmasi password tidak cocok." });
     setLoading(true);
-    const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.auth.updateUser({ password: pass });
-    setLoading(false);
-    if (error) return setMsg({ type: "err", text: `Gagal: ${error.message}` });
+    let data = {};
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword: pass }),
+      });
+      data = await res.json().catch(() => ({}));
+      setLoading(false);
+      if (!res.ok) return setMsg({ type: "err", text: `Gagal: ${data.error || "coba lagi."}` });
+    } catch {
+      setLoading(false);
+      return setMsg({ type: "err", text: "Gagal terhubung ke server." });
+    }
     setPass("");
     setConfirm("");
     setMsg({ type: "ok", text: "Password berhasil diganti. Pakai password baru saat login berikutnya." });

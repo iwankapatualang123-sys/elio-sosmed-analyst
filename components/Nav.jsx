@@ -9,7 +9,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, UploadCloud, Database, CalendarDays, ClipboardList, FileText, Settings, UserRound, ScrollText, LogOut, ChevronDown } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import GlobalSearch from "@/components/GlobalSearch";
 import IdleLogout from "@/components/IdleLogout";
 
@@ -30,8 +29,11 @@ export default function Nav({ email, role }) {
   const isActive = (href) => pathname === href || pathname.startsWith(`${href}/`);
 
   async function handleLogout() {
-    const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signOut();
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // abaikan — tetap arahkan ke login
+    }
     router.push("/login");
     router.refresh();
   }

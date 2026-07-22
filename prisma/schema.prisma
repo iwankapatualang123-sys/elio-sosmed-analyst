@@ -292,6 +292,7 @@ model ContentPlanCategory {
   createdById  String?  @map("created_by") @db.Char(36)
   createdAt    DateTime @default(now()) @map("created_at")
 
+  @@unique([categoryType, value(length: 191)])
   @@map("content_plan_categories")
 }
 

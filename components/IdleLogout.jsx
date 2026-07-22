@@ -7,7 +7,6 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const IDLE_MS = 30 * 60 * 1000; // 30 menit
 
@@ -19,8 +18,11 @@ export default function IdleLogout() {
     const reset = () => {
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(async () => {
-        const supabase = createSupabaseBrowserClient();
-        await supabase.auth.signOut();
+        try {
+          await fetch("/api/auth/logout", { method: "POST" });
+        } catch {
+          // abaikan
+        }
         router.push("/login");
         router.refresh();
       }, IDLE_MS);

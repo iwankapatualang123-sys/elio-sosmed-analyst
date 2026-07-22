@@ -1,18 +1,20 @@
 // File: components/LogoutButton.jsx
-// Tombol keluar (client) — signOut lalu arahkan ke /login.
+// Tombol keluar (client) — hapus sesi via /api/auth/logout lalu ke /login.
 
 "use client";
 
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Button from "@/components/Button";
 
 export default function LogoutButton() {
   const router = useRouter();
   async function handleLogout() {
-    const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signOut();
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // abaikan — tetap arahkan ke login
+    }
     router.push("/login");
     router.refresh();
   }
