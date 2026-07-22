@@ -108,10 +108,10 @@ export default async function ReportIndexPage({ searchParams }) {
                 </p>
               </div>
             </div>
-            <div className="mt-auto flex flex-wrap items-center gap-2 border-t pt-3" style={{ borderColor: "var(--line)" }}>
-              <Link href={`/report/${b.id}${month ? `?${monthQS}` : ""}`}><Button variant="ghost"><FileText size={15} /> Lihat</Button></Link>
-              <a href={`/api/report/excel?branch=${b.id}${month ? `&${monthQS}` : ""}`}><Button variant="success"><Download size={15} /> Bulanan</Button></a>
-              <a href={`/api/report/weekly-excel?branch=${b.id}${month ? `&${monthQS}` : ""}`}><Button variant="success"><Download size={15} /> Mingguan</Button></a>
+            <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t pt-3" style={{ borderColor: "var(--line)" }}>
+              <Link href={`/report/${b.id}${month ? `?${monthQS}` : ""}`}><Button variant="ghost" className="btn-sm"><FileText size={13} /> Lihat</Button></Link>
+              <a href={`/api/report/excel?branch=${b.id}${month ? `&${monthQS}` : ""}`}><Button variant="success" className="btn-sm"><Download size={13} /> Bulanan</Button></a>
+              <a href={`/api/report/weekly-excel?branch=${b.id}${month ? `&${monthQS}` : ""}`}><Button variant="success" className="btn-sm"><Download size={13} /> Mingguan</Button></a>
             </div>
           </div>
         ))}
