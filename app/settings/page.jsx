@@ -19,7 +19,7 @@ export default async function SettingsPage() {
 
   if (profile?.role !== "admin") {
     return (
-      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 p-6">
+      <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-5xl p-6">
         <Nav email={profile?.email} role={profile?.role} />
         <section className="card-3d p-6">
           <h2 className="mb-2 text-base font-semibold text-ink">Akses ditolak</h2>
@@ -65,7 +65,7 @@ export default async function SettingsPage() {
   }
 
   return (
-    <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 p-4 sm:p-6">
+    <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-5xl p-4 sm:p-6">
       <Nav email={profile.email} role={profile.role} />
 
       {/* Backup */}

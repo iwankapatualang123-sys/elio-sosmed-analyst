@@ -114,34 +114,27 @@ body > * { position: relative; z-index: 1; }
 /* Aksen glow untuk elemen penting. */
 .glow { box-shadow: 0 0 0 1px var(--glow-soft), 0 0 22px -4px var(--glow-soft); }
 
-/* ── LAYOUT GRID 3-KOLOM (ringkas, tidak memanjang) ─────────────────────────
-   Dipakai di <main> tiap halaman. Default HP = 1 kolom; ≥1024px = 3 kolom yang
-   mengisi baris demi baris. Kartu kecil masuk kolom; elemen LEBAR (grafik, tabel,
-   header, Nav) diberi .span-all / .span-2 supaya tetap membentang. */
+/* ── LAYOUT GRID 3-KOLOM (aman & incremental) ───────────────────────────────
+   Dipakai di <main> tiap halaman. DEFAULT: setiap anak MEMBENTANG penuh (sama
+   seperti sebelum grid — jadi tak ada yang rusak). Hanya anak yang DITANDAI
+   `.col` (1/3) atau `.col-2` (2/3) yang masuk kolom — dipakai untuk kartu kecil
+   supaya ringkas & tidak memanjang. Di HP semuanya tetap 1 kolom. */
 .grid3 {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.15rem;
+  gap: 1.05rem;
   align-items: start;
 }
+.grid3 > * { grid-column: 1 / -1; } /* default: penuh */
 @media (min-width: 768px) {
   .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid3 > .col { grid-column: span 1; }
+  .grid3 > .col-2 { grid-column: 1 / -1; }
 }
 @media (min-width: 1024px) {
   .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-/* Elemen yang harus penuh selebar grid. */
-.grid3 > .span-all,
-.grid3 > header,       /* header Nav */
-.grid3 > nav {         /* bottom-nav HP (fixed, aman) */
-  grid-column: 1 / -1;
-}
-/* Elemen setengah-lebar di layar besar (mis. grafik sedang). */
-@media (min-width: 768px) {
-  .grid3 > .span-2 { grid-column: 1 / -1; }
-}
-@media (min-width: 1024px) {
-  .grid3 > .span-2 { grid-column: span 2; }
+  .grid3 > .col { grid-column: span 1; }
+  .grid3 > .col-2 { grid-column: span 2; }
 }
 
 /* ── TOMBOL mengambang (glossy + depth) ─────────────────────────────────────*/

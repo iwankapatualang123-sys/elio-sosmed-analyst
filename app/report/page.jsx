@@ -22,7 +22,7 @@ export default async function ReportIndexPage({ searchParams }) {
   const profile = await getCurrentProfile();
   if (!profile?.role) {
     return (
-      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 p-6">
+      <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-5xl p-6">
         <Nav email={profile?.email} role={profile?.role} />
         <section className="card-3d p-6"><p className="text-sm" style={{ color: "var(--ink-soft)" }}>Hubungi admin untuk mengaktifkan akses cabang.</p></section>
       </main>
@@ -57,7 +57,7 @@ export default async function ReportIndexPage({ searchParams }) {
   const months = [...monthSet].sort().reverse();
 
   return (
-    <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-5 p-4 sm:p-6">
+    <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-5xl p-4 sm:p-6">
       <Nav email={profile.email} role={profile.role} />
 
       <div className="flex flex-wrap items-end justify-between gap-3 px-1">
@@ -85,28 +85,30 @@ export default async function ReportIndexPage({ searchParams }) {
         </div>
       </section>
 
-      {/* Daftar cabang */}
-      <section className="flex flex-col gap-3">
+      {/* Daftar cabang — grid kartu profesional (3 kolom di layar besar) */}
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {branches.length === 0 && (
-          <div className="card-3d p-6"><p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada cabang yang bisa diakses.</p></div>
+          <div className="card-3d p-6 sm:col-span-2 lg:col-span-3"><p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada cabang yang bisa diakses.</p></div>
         )}
         {branches.map((b) => (
-          <div key={b.id} className="card-3d flex flex-wrap items-center gap-3 p-4 sm:p-5">
-            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white" style={{ background: b.is_active ? "linear-gradient(180deg,#7fe0d0,#0a8291)" : "linear-gradient(180deg,#b7c7c5,#7c908d)" }}>
-              {b.nama_cabang.charAt(0).toUpperCase()}
+          <div key={b.id} className="card-3d flex flex-col gap-3 p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white" style={{ background: b.is_active ? "linear-gradient(180deg,#7fe0d0,#0a8291)" : "linear-gradient(180deg,#b7c7c5,#7c908d)" }}>
+                {b.nama_cabang.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
+                  <span className="truncate">{b.nama_cabang}</span>
+                  {!b.is_active && (
+                    <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(240,180,90,.2)", color: "#8a5a12" }}>Diarsipkan</span>
+                  )}
+                </h2>
+                <p className="truncate text-xs" style={{ color: "var(--ink-soft)" }}>
+                  @{b.tiktok_username}{b.kategori ? ` · ${b.kategori}` : ""}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
-                {b.nama_cabang}
-                {!b.is_active && (
-                  <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(240,180,90,.2)", color: "#8a5a12" }}>Diarsipkan</span>
-                )}
-              </h2>
-              <p className="text-xs" style={{ color: "var(--ink-soft)" }}>
-                @{b.tiktok_username}{b.kategori ? ` · ${b.kategori}` : ""}
-              </p>
-            </div>
-            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <div className="mt-auto flex flex-wrap items-center gap-2 border-t pt-3" style={{ borderColor: "var(--line)" }}>
               <Link href={`/report/${b.id}${month ? `?${monthQS}` : ""}`}><Button variant="ghost"><FileText size={15} /> Lihat</Button></Link>
               <a href={`/api/report/excel?branch=${b.id}${month ? `&${monthQS}` : ""}`}><Button variant="success"><Download size={15} /> Bulanan</Button></a>
               <a href={`/api/report/weekly-excel?branch=${b.id}${month ? `&${monthQS}` : ""}`}><Button variant="success"><Download size={15} /> Mingguan</Button></a>

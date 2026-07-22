@@ -49,7 +49,7 @@ export default async function UploadPage() {
   }
 
   return (
-    <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 p-6">
+    <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-3xl p-6">
       <Nav email={profile?.email} role={profile?.role} />
 
       {!hasRole ? (

@@ -14,7 +14,7 @@ export default async function CalendarPage({ searchParams }) {
   const profile = await getCurrentProfile();
   if (!profile?.role) {
     return (
-      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 p-6">
+      <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-5xl p-6">
         <Nav email={profile?.email} role={profile?.role} />
         <section className="card-3d p-6"><p className="text-sm" style={{ color: "var(--ink-soft)" }}>Hubungi admin untuk mengaktifkan akses.</p></section>
       </main>
@@ -50,7 +50,7 @@ export default async function CalendarPage({ searchParams }) {
   }
 
   return (
-    <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-5 p-4 sm:p-6">
+    <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-5xl p-4 sm:p-6">
       <Nav email={profile.email} role={profile.role} />
       <div className="px-1">
         <h1 className="text-2xl font-extrabold tracking-tight text-ink drop-shadow-sm sm:text-3xl">Kalender Konten</h1>

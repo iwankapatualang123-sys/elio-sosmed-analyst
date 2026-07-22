@@ -129,7 +129,7 @@ export default async function DashboardPage({ searchParams }) {
   const profile = await getCurrentProfile();
   if (!profile?.role) {
     return (
-      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-6">
+      <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-6xl p-6">
         <Nav email={profile?.email} role={profile?.role} />
         <section className="card-3d p-6">
           <h2 className="mb-2 text-base font-semibold text-ink">Akun belum diaktifkan</h2>
@@ -161,7 +161,7 @@ export default async function DashboardPage({ searchParams }) {
   // tampilkan empty-state, jangan render detail yang mengasumsikan data selalu ada.
   if (!selectedId || !detail) {
     return (
-      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-6">
+      <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-6xl p-6">
         <Nav email={profile.email} role={profile.role} />
         <section className="card-3d p-6">
           <h2 className="mb-2 text-base font-semibold text-ink">Belum ada data cabang</h2>
@@ -306,7 +306,7 @@ export default async function DashboardPage({ searchParams }) {
   );
 
   return (
-    <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
+    <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-6xl p-4 sm:p-6">
       <Nav email={profile.email} role={profile.role} />
 
       {/* Hero judul */}

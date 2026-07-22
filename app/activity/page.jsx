@@ -23,7 +23,7 @@ export default async function ActivityPage() {
   const profile = await getCurrentProfile();
   if (profile?.role !== "admin") {
     return (
-      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-6">
+      <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-6xl p-6">
         <Nav email={profile?.email} role={profile?.role} />
         <section className="card-3d p-6">
           <h2 className="mb-2 text-base font-semibold text-ink">Akses ditolak</h2>
@@ -46,7 +46,7 @@ export default async function ActivityPage() {
   }));
 
   return (
-    <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-5 p-4 sm:p-6">
+    <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-6xl p-4 sm:p-6">
       <Nav email={profile.email} role={profile.role} />
       <div className="px-1">
         <h1 className="text-2xl font-extrabold tracking-tight text-ink drop-shadow-sm sm:text-3xl">Log Aktivitas</h1>

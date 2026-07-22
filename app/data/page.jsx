@@ -44,7 +44,7 @@ export default async function DataPage({ searchParams }) {
   const profile = await getCurrentProfile();
   if (!profile?.role) {
     return (
-      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-6">
+      <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-6xl p-6">
         <Nav email={profile?.email} role={profile?.role} />
         <section className="card-3d p-6">
           <h2 className="mb-2 text-base font-semibold text-ink">Akun belum diaktifkan</h2>
@@ -168,7 +168,7 @@ export default async function DataPage({ searchParams }) {
   const weeklyWeeks = weekly ? weekly.weeks : [];
 
   return (
-    <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-5 p-4 sm:p-6">
+    <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-6xl p-4 sm:p-6">
       <Nav email={profile.email} role={profile.role} />
 
       <div className="px-1">
