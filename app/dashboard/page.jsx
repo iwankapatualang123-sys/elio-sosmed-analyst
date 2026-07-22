@@ -156,6 +156,24 @@ export default async function DashboardPage({ searchParams }) {
   const rankedBranchesIg = catFilter ? igPortfolioData.branches.filter((b) => b.kategori === catFilter) : igPortfolioData.branches;
   const detail = await loadBranchDetail(supabase, selectedId, { month: selectedMonth });
   const selectedBranch = branches.find((b) => b.id === selectedId);
+
+  // Belum ada cabang (mis. database baru) atau cabang terpilih tak punya data/akses:
+  // tampilkan empty-state, jangan render detail yang mengasumsikan data selalu ada.
+  if (!selectedId || !detail) {
+    return (
+      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 p-6">
+        <Nav email={profile.email} role={profile.role} />
+        <section className="card-3d p-6">
+          <h2 className="mb-2 text-base font-semibold text-ink">Belum ada data cabang</h2>
+          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+            {profile.role === "admin"
+              ? "Tambahkan cabang dulu di menu Pengaturan, lalu unggah datanya di menu Upload."
+              : "Belum ada cabang yang bisa Anda akses. Hubungi admin untuk diberi akses cabang."}
+          </p>
+        </section>
+      </main>
+    );
+  }
   // Target per (platform, bulan) — dikelola di Pengaturan. Pemilihan baris sesuai
   // bulan progres (progMonth) dilakukan di bawah, setelah progMonth ditentukan.
   const { data: goalsRaw } = selectedId
