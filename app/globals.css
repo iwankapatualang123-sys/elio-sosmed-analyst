@@ -23,17 +23,18 @@
   --glow-soft: rgba(70, 230, 208, 0.5);
   --halo: rgba(120, 240, 220, 0.22);
 
-  --surface: rgba(255, 255, 255, 0.72);
-  --radius-card: 26px;
+  --surface: rgba(255, 255, 255, 0.55);
+  --radius-card: 24px;
 
-  /* Kaca: nilai dipakai ulang oleh beberapa komponen */
-  --glass-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.86) 0%, rgba(235, 250, 243, 0.7) 100%);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.55);
-  --glass-blur: blur(18px) saturate(155%);
+  /* Kaca (lebih transparan & berkilau) — nilai dipakai ulang beberapa komponen */
+  --glass-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.55) 0%, rgba(244, 255, 250, 0.4) 100%);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+  --glass-blur: blur(24px) saturate(165%);
   --glass-shadow:
-    0 26px 60px -20px rgba(0, 32, 40, 0.6),
-    0 10px 24px -14px rgba(0, 32, 40, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    0 22px 54px -22px rgba(0, 40, 48, 0.42),
+    0 8px 20px -14px rgba(0, 40, 48, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 0 44px rgba(255, 255, 255, 0.14);
 }
 
 /* Token utility Tailwind + font */
@@ -56,16 +57,16 @@ body {
   min-height: 100vh;
   color: var(--ink);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  /* Latar SOFT: teal-mint lembut & terang, aurora halus (bukan gelap pekat). */
   background:
-    radial-gradient(1200px 820px at 12% -12%, rgba(70, 230, 208, 0.20), transparent 60%),
-    radial-gradient(1050px 760px at 108% 6%, rgba(12, 140, 156, 0.42), transparent 56%),
-    radial-gradient(1000px 1000px at 50% 128%, rgba(79, 158, 122, 0.30), transparent 60%),
-    radial-gradient(760px 620px at 82% 88%, rgba(70, 230, 208, 0.12), transparent 55%),
-    linear-gradient(158deg, #041c21 0%, #063a42 46%, #075159 100%);
+    radial-gradient(1200px 820px at 12% -12%, rgba(190, 246, 232, 0.55), transparent 62%),
+    radial-gradient(1050px 760px at 108% 4%, rgba(126, 206, 208, 0.5), transparent 58%),
+    radial-gradient(1000px 1000px at 50% 128%, rgba(160, 220, 190, 0.5), transparent 62%),
+    linear-gradient(158deg, #2f7f86 0%, #5aa9a3 46%, #a9e0d3 100%);
   background-attachment: fixed;
 }
 
-/* Orbit cahaya + bintang halus + garis grid tipis → detail kedalaman spatial. */
+/* Orbit cahaya lembut yang mengambang pelan → kedalaman halus, tidak ramai. */
 body::before {
   content: "";
   position: fixed;
@@ -73,29 +74,24 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(circle at 20% 24%, var(--halo) 0, transparent 22vmax),
-    radial-gradient(circle at 84% 30%, rgba(90, 200, 210, 0.16) 0, transparent 18vmax),
-    radial-gradient(circle at 68% 82%, rgba(127, 191, 143, 0.16) 0, transparent 20vmax);
-  filter: blur(8px);
-  animation: nebulaDrift 26s ease-in-out infinite alternate;
+    radial-gradient(circle at 20% 22%, rgba(255, 255, 255, 0.35) 0, transparent 24vmax),
+    radial-gradient(circle at 84% 30%, rgba(150, 235, 220, 0.3) 0, transparent 20vmax),
+    radial-gradient(circle at 68% 84%, rgba(180, 225, 200, 0.28) 0, transparent 22vmax);
+  filter: blur(10px);
+  animation: nebulaDrift 30s ease-in-out infinite alternate;
 }
-/* Lapis bintang + grid (statis, ringan). */
+/* Grid tipis nyaris tak terlihat → tekstur "spatial" tanpa mengganggu. */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.5;
+  opacity: 0.6;
   background-image:
-    radial-gradient(circle at 8% 14%, rgba(255, 255, 255, 0.5) 0 1px, transparent 2px),
-    radial-gradient(circle at 24% 62%, rgba(255, 255, 255, 0.35) 0 1px, transparent 2px),
-    radial-gradient(circle at 46% 22%, rgba(255, 255, 255, 0.4) 0 1px, transparent 2px),
-    radial-gradient(circle at 62% 74%, rgba(255, 255, 255, 0.3) 0 1px, transparent 2px),
-    radial-gradient(circle at 88% 52%, rgba(255, 255, 255, 0.4) 0 1px, transparent 2px),
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: auto, auto, auto, auto, auto, 46px 46px, 46px 46px;
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 52px 52px, 52px 52px;
 }
 @keyframes nebulaDrift {
   0%   { transform: translate3d(0, 0, 0) scale(1); }
@@ -110,26 +106,29 @@ body > * { position: relative; z-index: 1; }
    & mengambang dengan bayangan berlapis. */
 .card-3d {
   position: relative;
-  background: var(--glass-bg);
+  /* Sheen kilau di atas + kaca transparan di bawahnya. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 42%),
+    var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
   border-radius: var(--radius-card);
   border: var(--glass-border);
   box-shadow: var(--glass-shadow);
 }
-/* Garis cahaya tipis di tepi (rim light) — ciri permukaan spatial. */
+/* Garis cahaya tepi (rim light) yang lebih terang → kesan kaca berkilau. */
 .card-3d::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.9), rgba(70, 230, 208, 0.25) 40%, transparent 70%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 1), rgba(120, 240, 220, 0.45) 38%, transparent 72%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 /* Helper kaca generik (mis. panel kecil, dropdown) bila diperlukan. */
