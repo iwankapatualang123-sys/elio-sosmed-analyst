@@ -26,7 +26,7 @@ const STATUS_STYLE = {
 
 export default async function PortfolioReportPage({ searchParams }) {
   const profile = await getCurrentProfile();
-  if (!profile?.role) return <main className="relative z-10 p-8 text-white">Silakan login.</main>;
+  if (!profile?.role) return <main className="relative z-10 p-8 text-ink">Silakan login.</main>;
 
   const sp = (await searchParams) || {};
   const month = /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : null;

@@ -62,8 +62,8 @@ export default async function ReportIndexPage({ searchParams }) {
 
       <div className="flex flex-wrap items-end justify-between gap-3 px-1">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">Laporan</h1>
-          <p className="mt-0.5 text-sm" style={{ color: "rgba(255,255,255,.75)" }}>
+          <h1 className="text-2xl font-extrabold tracking-tight text-ink drop-shadow-sm sm:text-3xl">Laporan</h1>
+          <p className="mt-0.5 text-sm" style={{ color: "var(--ink-soft)" }}>
             {month ? `Semua laporan di bawah discope ke ${labelBulan(month)}.` : "Pilih cabang untuk lihat/download laporannya (PDF & Excel) — atau unduh laporan gabungan semua cabang."}
           </p>
         </div>

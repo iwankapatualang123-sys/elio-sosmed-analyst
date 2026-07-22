@@ -53,8 +53,8 @@ export default async function CalendarPage({ searchParams }) {
     <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-5 p-4 sm:p-6">
       <Nav email={profile.email} role={profile.role} />
       <div className="px-1">
-        <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">Kalender Konten</h1>
-        <p className="mt-0.5 text-sm" style={{ color: "rgba(255,255,255,.75)" }}>Kapan video di-post & performanya per tanggal</p>
+        <h1 className="text-2xl font-extrabold tracking-tight text-ink drop-shadow-sm sm:text-3xl">Kalender Konten</h1>
+        <p className="mt-0.5 text-sm" style={{ color: "var(--ink-soft)" }}>Kapan video di-post & performanya per tanggal</p>
       </div>
 
       <DataFilters branches={branches || []} months={months} selectedBranch={selectedId} selectedMonth={selectedMonth} basePath="/calendar" />

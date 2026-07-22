@@ -27,9 +27,9 @@
   --radius-card: 24px;
 
   /* Kaca (lebih transparan & berkilau) — nilai dipakai ulang beberapa komponen */
-  --glass-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.55) 0%, rgba(244, 255, 250, 0.4) 100%);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.6);
-  --glass-blur: blur(24px) saturate(165%);
+  --glass-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.62) 0%, rgba(240, 253, 249, 0.46) 100%);
+  --glass-border: 1px solid rgba(20, 90, 100, 0.12);
+  --glass-blur: blur(22px) saturate(160%);
   --glass-shadow:
     0 22px 54px -22px rgba(0, 40, 48, 0.42),
     0 8px 20px -14px rgba(0, 40, 48, 0.3),
@@ -57,16 +57,17 @@ body {
   min-height: 100vh;
   color: var(--ink);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
-  /* Latar SOFT: teal-mint lembut & terang, aurora halus (bukan gelap pekat). */
+  /* Latar PUTIH dengan semburan aurora tipis di sudut-sudut (airy, bersih). */
   background:
-    radial-gradient(1200px 820px at 12% -12%, rgba(190, 246, 232, 0.55), transparent 62%),
-    radial-gradient(1050px 760px at 108% 4%, rgba(126, 206, 208, 0.5), transparent 58%),
-    radial-gradient(1000px 1000px at 50% 128%, rgba(160, 220, 190, 0.5), transparent 62%),
-    linear-gradient(158deg, #2f7f86 0%, #5aa9a3 46%, #a9e0d3 100%);
+    radial-gradient(900px 620px at 6% -8%, rgba(70, 220, 205, 0.16), transparent 60%),
+    radial-gradient(840px 580px at 104% 2%, rgba(90, 180, 220, 0.13), transparent 58%),
+    radial-gradient(900px 720px at 62% 122%, rgba(120, 205, 165, 0.14), transparent 60%),
+    radial-gradient(700px 520px at 88% 82%, rgba(150, 235, 220, 0.1), transparent 55%),
+    #ffffff;
   background-attachment: fixed;
 }
 
-/* Orbit cahaya lembut yang mengambang pelan → kedalaman halus, tidak ramai. */
+/* Semburan aurora tipis yang mengambang sangat pelan → hidup tapi tetap bersih. */
 body::before {
   content: "";
   position: fixed;
@@ -74,24 +75,11 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(circle at 20% 22%, rgba(255, 255, 255, 0.35) 0, transparent 24vmax),
-    radial-gradient(circle at 84% 30%, rgba(150, 235, 220, 0.3) 0, transparent 20vmax),
-    radial-gradient(circle at 68% 84%, rgba(180, 225, 200, 0.28) 0, transparent 22vmax);
-  filter: blur(10px);
-  animation: nebulaDrift 30s ease-in-out infinite alternate;
-}
-/* Grid tipis nyaris tak terlihat → tekstur "spatial" tanpa mengganggu. */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.6;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 52px 52px, 52px 52px;
+    radial-gradient(circle at 18% 20%, rgba(70, 220, 205, 0.14) 0, transparent 26vmax),
+    radial-gradient(circle at 86% 26%, rgba(120, 190, 230, 0.12) 0, transparent 22vmax),
+    radial-gradient(circle at 70% 86%, rgba(140, 215, 175, 0.12) 0, transparent 24vmax);
+  filter: blur(14px);
+  animation: nebulaDrift 34s ease-in-out infinite alternate;
 }
 @keyframes nebulaDrift {
   0%   { transform: translate3d(0, 0, 0) scale(1); }
@@ -141,6 +129,36 @@ body > * { position: relative; z-index: 1; }
 }
 /* Aksen glow untuk elemen penting. */
 .glow { box-shadow: 0 0 0 1px var(--glow-soft), 0 0 22px -4px var(--glow-soft); }
+
+/* ── LAYOUT GRID 3-KOLOM (ringkas, tidak memanjang) ─────────────────────────
+   Dipakai di <main> tiap halaman. Default HP = 1 kolom; ≥1024px = 3 kolom yang
+   mengisi baris demi baris. Kartu kecil masuk kolom; elemen LEBAR (grafik, tabel,
+   header, Nav) diberi .span-all / .span-2 supaya tetap membentang. */
+.grid3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.15rem;
+  align-items: start;
+}
+@media (min-width: 768px) {
+  .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* Elemen yang harus penuh selebar grid. */
+.grid3 > .span-all,
+.grid3 > header,       /* header Nav */
+.grid3 > nav {         /* bottom-nav HP (fixed, aman) */
+  grid-column: 1 / -1;
+}
+/* Elemen setengah-lebar di layar besar (mis. grafik sedang). */
+@media (min-width: 768px) {
+  .grid3 > .span-2 { grid-column: 1 / -1; }
+}
+@media (min-width: 1024px) {
+  .grid3 > .span-2 { grid-column: span 2; }
+}
 
 /* ── TOMBOL mengambang (glossy + depth) ─────────────────────────────────────*/
 .btn {

@@ -172,8 +172,8 @@ export default async function DataPage({ searchParams }) {
       <Nav email={profile.email} role={profile.role} />
 
       <div className="px-1">
-        <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">Data Cabang</h1>
-        <p className="mt-0.5 text-sm" style={{ color: "rgba(255,255,255,.75)" }}>
+        <h1 className="text-2xl font-extrabold tracking-tight text-ink drop-shadow-sm sm:text-3xl">Data Cabang</h1>
+        <p className="mt-0.5 text-sm" style={{ color: "var(--ink-soft)" }}>
           Data mentah yang sudah diupload, per aspek · periode konten: {periode}
         </p>
       </div>

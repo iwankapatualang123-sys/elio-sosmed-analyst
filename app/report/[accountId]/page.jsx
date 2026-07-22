@@ -60,7 +60,7 @@ function ringkasanEksekutif({ account, periode, s, g, top, comparison }) {
 export default async function ReportPage({ params, searchParams }) {
   const { accountId } = await params;
   const profile = await getCurrentProfile();
-  if (!profile?.role) return <main className="relative z-10 p-8 text-white">Silakan login.</main>;
+  if (!profile?.role) return <main className="relative z-10 p-8 text-ink">Silakan login.</main>;
 
   const sp = (await searchParams) || {};
   const month = /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : null;
@@ -70,7 +70,7 @@ export default async function ReportPage({ params, searchParams }) {
     supabase.from("tiktok_accounts").select("nama_cabang, tiktok_username").eq("id", accountId).maybeSingle(),
     loadBranchDetail(supabase, accountId, { month }),
   ]);
-  if (!account || !detail) return <main className="relative z-10 p-8 text-white">Cabang tidak ditemukan atau tidak ada akses.</main>;
+  if (!account || !detail) return <main className="relative z-10 p-8 text-ink">Cabang tidak ditemukan atau tidak ada akses.</main>;
   // Target bulan laporan (per platform) — dipakai untuk pencapaian TikTok.
   const goalMonth = month || new Date().toISOString().slice(0, 7);
   const { data: goalsRows } = await supabase.from("tiktok_account_goals").select("*").eq("tiktok_account_id", accountId);

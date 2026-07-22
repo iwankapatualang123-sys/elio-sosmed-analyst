@@ -61,8 +61,8 @@ export default async function SearchPage({ searchParams }) {
       <Nav email={profile.email} role={profile.role} />
 
       <div className="px-1">
-        <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">Pencarian</h1>
-        <p className="mt-0.5 text-sm" style={{ color: "rgba(255,255,255,.75)" }}>
+        <h1 className="text-2xl font-extrabold tracking-tight text-ink drop-shadow-sm sm:text-3xl">Pencarian</h1>
+        <p className="mt-0.5 text-sm" style={{ color: "var(--ink-soft)" }}>
           {query ? `Hasil untuk "${query}" — ${branches.length} cabang, ${videos.length} video` : "Ketik kata kunci di kotak pencarian header."}
         </p>
       </div>
