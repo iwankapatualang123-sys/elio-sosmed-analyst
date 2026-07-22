@@ -15,8 +15,11 @@
   --green-400: #7fbf8f;
   --mint-100: #dbefd4;
   --sage-300: #93bcad;
-  --ink: #0e3238;       /* teks gelap di atas kaca terang */
+  --ink: #0e3238;       /* teks gelap di atas kaca terang (isi kartu) */
   --ink-soft: #4b6b6f;
+  /* Teks di atas latar NEBULA gelap (judul/subjudul halaman, di luar kartu). */
+  --on-bg: #effffb;
+  --on-bg-soft: rgba(220, 248, 242, 0.76);
 
   /* Aksen "spatial": cahaya cyan-mint untuk glow & garis energi */
   --glow: #46e6d0;
@@ -25,15 +28,17 @@
 
   --surface: #ffffff;
   --radius-card: 16px;
-  --line: rgba(15, 50, 56, 0.09); /* garis/pembatas halus (profesional) */
+  --line: rgba(15, 50, 56, 0.10); /* garis/pembatas halus di dalam kartu kaca terang */
 
-  /* Kartu profesional: putih crisp, border halus, shadow lembut berlapis. */
-  --glass-bg: #ffffff;
-  --glass-border: 1px solid var(--line);
-  --glass-blur: saturate(100%);
+  /* Kartu KACA (glassmorphism): permukaan terang transparan yang berkilau,
+     backdrop-blur kuat agar nebula di belakang terlihat samar & mewah. */
+  --glass-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.66), rgba(238, 253, 249, 0.48));
+  --glass-border: 1px solid rgba(255, 255, 255, 0.55);
+  --glass-blur: blur(22px) saturate(165%);
   --glass-shadow:
-    0 1px 2px rgba(16, 42, 48, 0.05),
-    0 10px 26px -14px rgba(16, 42, 48, 0.16);
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 2px 6px rgba(3, 22, 26, 0.22),
+    0 22px 48px -22px rgba(3, 22, 26, 0.55);
 }
 
 /* Token utility Tailwind + font */
@@ -56,16 +61,17 @@ body {
   min-height: 100vh;
   color: var(--ink);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
-  /* Latar profesional: nyaris putih (cool) dengan semburan aurora sangat tipis. */
+  /* Latar NEBULA teal gelap immersif — gradasi diagonal dari nyaris-hitam teal
+     ke teal dalam, jadi panggung untuk kartu kaca terang yang mengambang. */
   background:
-    radial-gradient(900px 620px at 4% -10%, rgba(70, 205, 195, 0.09), transparent 58%),
-    radial-gradient(840px 560px at 106% 0%, rgba(90, 165, 215, 0.07), transparent 56%),
-    radial-gradient(900px 720px at 70% 124%, rgba(120, 200, 165, 0.07), transparent 60%),
-    #f7f9fa;
+    radial-gradient(1000px 680px at 2% -12%, rgba(70, 230, 208, 0.16), transparent 58%),
+    radial-gradient(900px 620px at 108% 4%, rgba(80, 150, 220, 0.14), transparent 55%),
+    radial-gradient(1000px 780px at 74% 128%, rgba(90, 220, 170, 0.14), transparent 60%),
+    linear-gradient(158deg, #041c21 0%, #063a42 46%, #075159 100%);
   background-attachment: fixed;
 }
 
-/* Semburan aurora tipis yang mengambang sangat pelan → hidup tapi tetap bersih. */
+/* Orbit aurora yang mengambang pelan → kesan ruang berkedalaman (spatial). */
 body::before {
   content: "";
   position: fixed;
@@ -73,15 +79,15 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(circle at 18% 20%, rgba(70, 220, 205, 0.14) 0, transparent 26vmax),
-    radial-gradient(circle at 86% 26%, rgba(120, 190, 230, 0.12) 0, transparent 22vmax),
-    radial-gradient(circle at 70% 86%, rgba(140, 215, 175, 0.12) 0, transparent 24vmax);
-  filter: blur(14px);
+    radial-gradient(circle at 16% 18%, rgba(70, 230, 208, 0.30) 0, transparent 26vmax),
+    radial-gradient(circle at 88% 24%, rgba(110, 175, 235, 0.24) 0, transparent 24vmax),
+    radial-gradient(circle at 70% 88%, rgba(120, 235, 180, 0.24) 0, transparent 26vmax);
+  filter: blur(18px);
   animation: nebulaDrift 34s ease-in-out infinite alternate;
 }
 @keyframes nebulaDrift {
   0%   { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(2vmax, -2vmax, 0) scale(1.06); }
+  100% { transform: translate3d(2.4vmax, -2.4vmax, 0) scale(1.07); }
 }
 
 /* Konten harus di atas lapisan latar. */
@@ -93,14 +99,33 @@ body > * { position: relative; z-index: 1; }
 .card-3d {
   position: relative;
   background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   border-radius: var(--radius-card);
   border: var(--glass-border);
   box-shadow: var(--glass-shadow);
   transition: box-shadow 0.16s ease, transform 0.16s ease;
 }
-/* Hover halus (khas dashboard profesional). Non-interaktif tetap kalem. */
+/* Kilau tepi kaca: garis cahaya tipis di sisi atas-kiri → efek "berkilau". */
+.card-3d::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 42%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+/* Hover: angkat sedikit + glow teal → terasa mengambang di ruang. */
 .card-3d:hover {
-  box-shadow: 0 1px 2px rgba(16, 42, 48, 0.06), 0 16px 36px -16px rgba(16, 42, 48, 0.22);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 2px 8px rgba(3, 22, 26, 0.26),
+    0 30px 60px -24px rgba(3, 22, 26, 0.6),
+    0 0 28px -6px var(--halo);
 }
 
 /* Helper kaca generik (mis. panel kecil, dropdown) bila diperlukan. */
@@ -190,11 +215,13 @@ body > * { position: relative; z-index: 1; }
 
 .btn-ghost {
   color: var(--teal-900);
-  background: #ffffff;
-  border: 1px solid var(--line);
-  box-shadow: 0 1px 2px rgba(16, 42, 48, 0.05);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(240, 253, 249, 0.7));
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  backdrop-filter: blur(10px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 1px 2px rgba(3, 22, 26, 0.18), 0 6px 16px -10px rgba(3, 22, 26, 0.4);
 }
-.btn-ghost:hover:not(:disabled) { background: #f4f8f8; }
+.btn-ghost:hover:not(:disabled) { background: linear-gradient(180deg, #ffffff, rgba(240, 253, 249, 0.9)); }
 
 .btn-danger {
   color: #fff;

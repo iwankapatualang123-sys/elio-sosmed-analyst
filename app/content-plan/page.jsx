@@ -105,8 +105,8 @@ export default async function ContentPlanPage({ searchParams }) {
       <Nav email={profile.email} role={profile.role} />
 
       <div className="px-1">
-        <h1 className="text-2xl font-extrabold tracking-tight text-ink drop-shadow-sm sm:text-3xl">Rencana Konten</h1>
-        <p className="mt-0.5 text-sm" style={{ color: "var(--ink-soft)" }}>
+        <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">Rencana Konten</h1>
+        <p className="mt-0.5 text-sm" style={{ color: "var(--on-bg-soft)" }}>
           Kalender produksi konten per cabang — tempel link tayang & status jadi <b>Verified</b> saat cocok dengan data report TikTok.
         </p>
       </div>

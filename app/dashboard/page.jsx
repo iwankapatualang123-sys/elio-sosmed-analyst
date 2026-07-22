@@ -312,10 +312,10 @@ export default async function DashboardPage({ searchParams }) {
       {/* Hero judul */}
       <div className="flex flex-wrap items-end justify-between gap-3 px-1">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-ink drop-shadow-sm sm:text-3xl">
+          <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">
             Dashboard Analitik
           </h1>
-          <p className="mt-0.5 text-sm" style={{ color: "var(--ink-soft)" }}>
+          <p className="mt-0.5 text-sm" style={{ color: "var(--on-bg-soft)" }}>
             {selectedMonth ? `Meninjau ${labelBulan(selectedMonth)} — untuk evaluasi kinerja tim` : "Ringkasan performa TikTok lintas cabang (sepanjang masa)"}
           </p>
         </div>
@@ -344,14 +344,14 @@ export default async function DashboardPage({ searchParams }) {
       {detail && selectedBranch && (
         <>
           <div className="mt-2 flex flex-wrap items-center gap-3">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-ink drop-shadow">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-white drop-shadow">
               <span style={{ width: 6, height: 22, borderRadius: 3, background: "linear-gradient(180deg,#7fe0d0,#0a8291)", display: "inline-block" }} />
               Detail: {selectedBranch.nama_cabang}
             </h2>
             <Link
               href={selectedMonth ? `/report/${selectedId}?month=${selectedMonth}` : `/report/${selectedId}`}
-              className="rounded-full px-3 py-1 text-xs font-semibold"
-              style={{ background: "rgba(0,102,116,.12)", color: "var(--teal-900)" }}
+              className="rounded-full px-3 py-1 text-xs font-semibold backdrop-blur"
+              style={{ background: "rgba(255,255,255,.16)", color: "var(--on-bg)", border: "1px solid rgba(255,255,255,.28)" }}
             >
               📄 Laporan
             </Link>
@@ -361,10 +361,10 @@ export default async function DashboardPage({ searchParams }) {
                   <Link
                     key={b.id}
                     href={dashboardHref({ branch: b.id, cat: catFilter, month: selectedMonth })}
-                    className="rounded-full px-3 py-1 text-xs font-medium"
+                    className="rounded-full px-3 py-1 text-xs font-medium backdrop-blur"
                     style={b.id === selectedId
-                      ? { background: "var(--teal-700)", color: "#fff" }
-                      : { background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}
+                      ? { background: "linear-gradient(180deg,#0a8291,#00545e)", color: "#fff", border: "1px solid rgba(127,224,208,.5)" }
+                      : { background: "rgba(255,255,255,.12)", color: "var(--on-bg-soft)", border: "1px solid rgba(255,255,255,.22)" }}
                   >
                     {b.nama_cabang}
                   </Link>
@@ -844,7 +844,7 @@ export default async function DashboardPage({ searchParams }) {
           {/* ————— Detail per platform ————— */}
           <div className="mt-1 flex items-center gap-2 px-1">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-sm" style={{ background: "rgba(0,102,116,.12)" }}>🎵</span>
-            <h2 className="text-lg font-bold text-ink drop-shadow-sm">Detail TikTok</h2>
+            <h2 className="text-lg font-bold text-white drop-shadow-sm">Detail TikTok</h2>
           </div>
 
           <section className="grid gap-4 lg:grid-cols-2">
@@ -947,7 +947,7 @@ export default async function DashboardPage({ searchParams }) {
             <>
               <div className="mt-3 flex items-center gap-2 px-1">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-sm" style={{ background: "rgba(193,53,132,.14)" }}>📸</span>
-                <h2 className="text-lg font-bold text-ink drop-shadow-sm">Detail Instagram</h2>
+                <h2 className="text-lg font-bold text-white drop-shadow-sm">Detail Instagram</h2>
                 <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
                   {igMonth ? labelBulan(igMonth) : "Sepanjang data"}
                 </span>
