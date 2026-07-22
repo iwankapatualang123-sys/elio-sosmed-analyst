@@ -61,17 +61,18 @@ body {
   min-height: 100vh;
   color: var(--ink);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
-  /* Latar NEBULA teal gelap immersif — gradasi diagonal dari nyaris-hitam teal
-     ke teal dalam, jadi panggung untuk kartu kaca terang yang mengambang. */
+  /* Latar ABU-ABU gelap (charcoal) immersif — gradasi diagonal netral, jadi
+     panggung untuk kartu kaca terang yang mengambang. Semburan cahaya lembut
+     (sedikit teal untuk aksen brand) agar tidak flat. */
   background:
-    radial-gradient(1000px 680px at 2% -12%, rgba(70, 230, 208, 0.16), transparent 58%),
-    radial-gradient(900px 620px at 108% 4%, rgba(80, 150, 220, 0.14), transparent 55%),
-    radial-gradient(1000px 780px at 74% 128%, rgba(90, 220, 170, 0.14), transparent 60%),
-    linear-gradient(158deg, #041c21 0%, #063a42 46%, #075159 100%);
+    radial-gradient(1000px 680px at 2% -12%, rgba(120, 200, 190, 0.10), transparent 58%),
+    radial-gradient(900px 620px at 108% 4%, rgba(150, 165, 185, 0.09), transparent 55%),
+    radial-gradient(1000px 780px at 74% 128%, rgba(140, 160, 175, 0.09), transparent 60%),
+    linear-gradient(158deg, #1b1e22 0%, #262a2f 46%, #31363c 100%);
   background-attachment: fixed;
 }
 
-/* Orbit aurora yang mengambang pelan → kesan ruang berkedalaman (spatial). */
+/* Orbit cahaya lembut yang mengambang pelan → kesan ruang berkedalaman (spatial). */
 body::before {
   content: "";
   position: fixed;
@@ -79,9 +80,9 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(circle at 16% 18%, rgba(70, 230, 208, 0.30) 0, transparent 26vmax),
-    radial-gradient(circle at 88% 24%, rgba(110, 175, 235, 0.24) 0, transparent 24vmax),
-    radial-gradient(circle at 70% 88%, rgba(120, 235, 180, 0.24) 0, transparent 26vmax);
+    radial-gradient(circle at 16% 18%, rgba(140, 215, 205, 0.16) 0, transparent 26vmax),
+    radial-gradient(circle at 88% 24%, rgba(160, 175, 195, 0.14) 0, transparent 24vmax),
+    radial-gradient(circle at 70% 88%, rgba(150, 170, 180, 0.14) 0, transparent 26vmax);
   filter: blur(18px);
   animation: nebulaDrift 34s ease-in-out infinite alternate;
 }

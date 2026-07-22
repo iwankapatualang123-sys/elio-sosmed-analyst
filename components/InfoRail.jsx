@@ -36,8 +36,8 @@ export default function InfoRail() {
 
   return (
     <aside
-      className="info-rail fixed right-3 top-3 z-30 hidden w-60 flex-col gap-3 overflow-y-auto xl:flex"
-      style={{ height: "calc(100vh - 1.5rem)" }}
+      className="info-rail fixed right-3 top-6 z-30 hidden w-60 flex-col gap-3 overflow-y-auto xl:flex"
+      style={{ height: "calc(100vh - 3rem)" }}
       aria-label="Panel informasi"
     >
       {/* Ringkasan halaman aktif */}
