@@ -137,6 +137,15 @@ body > * { position: relative; z-index: 1; }
   .grid3 > .col-2 { grid-column: span 2; }
 }
 
+/* ── Offset konten agar tidak tertutup SIDEBAR (desktop) / TOPBAR (HP) ───────
+   Hanya berlaku di halaman ber-grid3 (punya sidebar). Halaman login tak kena. */
+@media (min-width: 768px) {
+  body:has(main.grid3) { padding-left: 15rem; } /* lebar sidebar 240px */
+}
+@media (max-width: 767px) {
+  body:has(main.grid3) { padding-top: 52px; }   /* tinggi topbar HP */
+}
+
 /* ── TOMBOL mengambang (glossy + depth) ─────────────────────────────────────*/
 .btn {
   display: inline-flex;
