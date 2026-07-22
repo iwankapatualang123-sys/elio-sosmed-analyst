@@ -23,18 +23,17 @@
   --glow-soft: rgba(70, 230, 208, 0.5);
   --halo: rgba(120, 240, 220, 0.22);
 
-  --surface: rgba(255, 255, 255, 0.55);
-  --radius-card: 24px;
+  --surface: #ffffff;
+  --radius-card: 16px;
+  --line: rgba(15, 50, 56, 0.09); /* garis/pembatas halus (profesional) */
 
-  /* Kaca (lebih transparan & berkilau) — nilai dipakai ulang beberapa komponen */
-  --glass-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.62) 0%, rgba(240, 253, 249, 0.46) 100%);
-  --glass-border: 1px solid rgba(20, 90, 100, 0.12);
-  --glass-blur: blur(22px) saturate(160%);
+  /* Kartu profesional: putih crisp, border halus, shadow lembut berlapis. */
+  --glass-bg: #ffffff;
+  --glass-border: 1px solid var(--line);
+  --glass-blur: saturate(100%);
   --glass-shadow:
-    0 22px 54px -22px rgba(0, 40, 48, 0.42),
-    0 8px 20px -14px rgba(0, 40, 48, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 0 44px rgba(255, 255, 255, 0.14);
+    0 1px 2px rgba(16, 42, 48, 0.05),
+    0 10px 26px -14px rgba(16, 42, 48, 0.16);
 }
 
 /* Token utility Tailwind + font */
@@ -57,13 +56,12 @@ body {
   min-height: 100vh;
   color: var(--ink);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
-  /* Latar PUTIH dengan semburan aurora tipis di sudut-sudut (airy, bersih). */
+  /* Latar profesional: nyaris putih (cool) dengan semburan aurora sangat tipis. */
   background:
-    radial-gradient(900px 620px at 6% -8%, rgba(70, 220, 205, 0.16), transparent 60%),
-    radial-gradient(840px 580px at 104% 2%, rgba(90, 180, 220, 0.13), transparent 58%),
-    radial-gradient(900px 720px at 62% 122%, rgba(120, 205, 165, 0.14), transparent 60%),
-    radial-gradient(700px 520px at 88% 82%, rgba(150, 235, 220, 0.1), transparent 55%),
-    #ffffff;
+    radial-gradient(900px 620px at 4% -10%, rgba(70, 205, 195, 0.09), transparent 58%),
+    radial-gradient(840px 560px at 106% 0%, rgba(90, 165, 215, 0.07), transparent 56%),
+    radial-gradient(900px 720px at 70% 124%, rgba(120, 200, 165, 0.07), transparent 60%),
+    #f7f9fa;
   background-attachment: fixed;
 }
 
@@ -94,29 +92,15 @@ body > * { position: relative; z-index: 1; }
    & mengambang dengan bayangan berlapis. */
 .card-3d {
   position: relative;
-  /* Sheen kilau di atas + kaca transparan di bawahnya. */
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 42%),
-    var(--glass-bg);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
+  background: var(--glass-bg);
   border-radius: var(--radius-card);
   border: var(--glass-border);
   box-shadow: var(--glass-shadow);
+  transition: box-shadow 0.16s ease, transform 0.16s ease;
 }
-/* Garis cahaya tepi (rim light) yang lebih terang → kesan kaca berkilau. */
-.card-3d::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 1), rgba(120, 240, 220, 0.45) 38%, transparent 72%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  opacity: 0.85;
+/* Hover halus (khas dashboard profesional). Non-interaktif tetap kalem. */
+.card-3d:hover {
+  box-shadow: 0 1px 2px rgba(16, 42, 48, 0.06), 0 16px 36px -16px rgba(16, 42, 48, 0.22);
 }
 
 /* Helper kaca generik (mis. panel kecil, dropdown) bila diperlukan. */
@@ -167,75 +151,66 @@ body > * { position: relative; z-index: 1; }
   justify-content: center;
   gap: 0.5rem;
   font-weight: 600;
-  border-radius: 14px;
-  padding: 0.7rem 1.3rem;
-  min-height: 44px;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  border-radius: 10px;
+  padding: 0.6rem 1.15rem;
+  min-height: 42px;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.08s ease, box-shadow 0.14s ease, filter 0.14s ease;
+  transition: transform 0.1s ease, box-shadow 0.14s ease, filter 0.14s ease, background 0.14s ease;
   border: none;
 }
-.btn:disabled { opacity: 0.55; cursor: not-allowed; }
-.btn:hover:not(:disabled) { filter: brightness(1.05); }
-.btn:active:not(:disabled) { transform: translateY(2px); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:hover:not(:disabled) { filter: brightness(1.04); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
 
 .btn-primary {
   color: #fff;
-  background: linear-gradient(180deg, #16a5b3 0%, var(--teal-700) 55%, var(--teal-900) 100%);
-  box-shadow:
-    0 4px 0 #00343b,
-    0 10px 22px -6px rgba(0, 90, 104, 0.6),
-    0 0 22px -6px var(--glow-soft),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  background: linear-gradient(180deg, #0a8291 0%, var(--teal-700) 100%);
+  box-shadow: 0 1px 2px rgba(0, 50, 58, 0.25), 0 6px 16px -8px rgba(0, 90, 104, 0.55);
 }
-.btn-primary:active:not(:disabled) {
-  box-shadow: 0 1px 0 #00343b, 0 4px 10px rgba(0, 59, 67, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-}
+.btn-primary:hover:not(:disabled) { box-shadow: 0 1px 2px rgba(0, 50, 58, 0.3), 0 10px 22px -8px rgba(0, 90, 104, 0.6); }
 
 .btn-success {
   color: #fff;
-  background: linear-gradient(180deg, #6fc99c 0%, var(--green-500) 58%, #367559 100%);
-  box-shadow: 0 4px 0 #2c5f48, 0 10px 22px -6px rgba(51, 107, 82, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  background: linear-gradient(180deg, #57ab84 0%, var(--green-500) 100%);
+  box-shadow: 0 1px 2px rgba(45, 95, 72, 0.25), 0 6px 16px -8px rgba(51, 107, 82, 0.5);
 }
-.btn-success:active:not(:disabled) { box-shadow: 0 1px 0 #2c5f48, 0 4px 10px rgba(51, 107, 82, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
 
 .btn-ghost {
   color: var(--teal-900);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(232, 246, 239, 0.78) 100%);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 3px 0 rgba(0, 60, 68, 0.14), 0 8px 16px -6px rgba(0, 60, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 2px rgba(16, 42, 48, 0.05);
 }
-.btn-ghost:active:not(:disabled) { box-shadow: 0 1px 0 rgba(0, 60, 68, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95); }
+.btn-ghost:hover:not(:disabled) { background: #f4f8f8; }
 
 .btn-danger {
   color: #fff;
-  background: linear-gradient(180deg, #ef5f5c 0%, #c62828 60%, #8e1a1a 100%);
-  box-shadow: 0 4px 0 #6b1414, 0 10px 22px -6px rgba(139, 26, 26, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  background: linear-gradient(180deg, #e5484d 0%, #c62828 100%);
+  box-shadow: 0 1px 2px rgba(139, 26, 26, 0.25), 0 6px 16px -8px rgba(139, 26, 26, 0.5);
 }
-.btn-danger:active:not(:disabled) { box-shadow: 0 1px 0 #6b1414, 0 4px 10px rgba(139, 26, 26, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
 
 /* ── INPUT kaca-inset ───────────────────────────────────────────────────────*/
 .input-3d {
   width: 100%;
-  border-radius: 12px;
-  padding: 0.7rem 0.95rem;
-  min-height: 44px;
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  min-height: 42px;
   color: var(--ink);
-  background: rgba(244, 250, 245, 0.72);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 2px 5px rgba(0, 40, 48, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  background: #fbfcfc;
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 2px rgba(16, 42, 48, 0.04);
   outline: none;
   transition: box-shadow 0.14s ease, border-color 0.14s ease;
 }
-.input-3d::placeholder { color: #83a49f; }
+.input-3d::placeholder { color: #9aabab; }
 .input-3d::-ms-reveal,
 .input-3d::-ms-clear { display: none; }
 .input-3d:focus {
-  border-color: var(--glow);
-  box-shadow: inset 0 2px 5px rgba(0, 40, 48, 0.12), 0 0 0 3px var(--halo), 0 0 18px -4px var(--glow-soft);
+  border-color: var(--teal-700);
+  box-shadow: 0 0 0 3px rgba(0, 102, 116, 0.14);
 }
 
 /* Safe-area insets (notch/PWA). */
