@@ -1,13 +1,14 @@
 // File: app/content-plan/actions.js
 // Server Actions untuk Rencana Konten (Content Plan). CRUD baris rencana per cabang.
-// RLS (can_access_account + owner/admin) yang menjaga otorisasi; di sini fokus validasi
-// ringan + revalidate. Status Uploaded/WIP dihitung saat baca (lib/tiktok/content-plan).
+// Otorisasi (akses cabang + owner/admin/manager) ditegakkan di kode via lib/access
+// (menggantikan RLS). Status Uploaded/WIP dihitung saat baca (lib/tiktok/content-plan).
 
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getCurrentProfile } from "@/lib/auth";
+import prisma from "@/lib/db";
+import { getCurrentProfile, canWrite } from "@/lib/auth";
+import { assertCanAccess, canAccessAccount, isAdmin } from "@/lib/access";
 import { logActivity } from "@/lib/audit";
 import { PLATFORM_KEYS } from "@/lib/tiktok/content-plan";
 
@@ -32,19 +33,70 @@ function toIntOrNull(v) {
   const n = parseInt(s, 10);
   return Number.isNaN(n) ? null : n;
 }
+// id (string) -> BigInt; invalid -> null.
+function bid(v) {
+  try {
+    return BigInt(String(v));
+  } catch {
+    return null;
+  }
+}
+// Kolom snake (dari planFields / plan-import) -> data Prisma (camelCase + Date).
+function planData(f) {
+  return {
+    planMonth: new Date(f.plan_month || `${new Date().toISOString().slice(0, 7)}-01`),
+    postDate: f.post_date ? new Date(f.post_date) : null,
+    platforms: f.platforms ?? ["tiktok"],
+    platformLinks: f.platform_links ?? {},
+    seq: f.seq ?? null,
+    pic: f.pic ?? null,
+    headline: f.headline ?? null,
+    topic: f.topic ?? null,
+    goalsContent: f.goals_content ?? null,
+    primaryPillar: f.primary_pillar ?? null,
+    secondaryPillar: f.secondary_pillar ?? null,
+    contentType: f.content_type ?? null,
+    referenceUrl: f.reference_url ?? null,
+    postedUrl: f.posted_url ?? null,
+    notes: f.notes ?? null,
+    accToPosting: !!f.acc_to_posting,
+    statusOverride: f.status_override ?? null,
+  };
+}
 
-// Kumpulkan field baris dari FormData jadi objek kolom tabel.
+// Ambil rencana untuk cek izin.
+async function getPlanMeta(id) {
+  const key = bid(id);
+  if (key == null) return null;
+  return prisma.contentPlan.findUnique({
+    where: { id: key },
+    select: { id: true, createdById: true, tiktokAccountId: true, platformLinks: true },
+  });
+}
+// Izin ubah: punya akses cabang DAN (admin/manager ATAU pemilik).
+async function assertCanEditPlan(profile, plan) {
+  if (!plan) throw new Error("Rencana tidak ditemukan.");
+  const ok = (await canAccessAccount(profile, plan.tiktokAccountId)) &&
+    (canWrite(profile) || plan.createdById === profile.id);
+  if (!ok) { const e = new Error("Tidak boleh mengubah rencana ini."); e.status = 403; throw e; }
+}
+// Izin hapus: punya akses cabang DAN (admin ATAU pemilik).
+async function assertCanDeletePlan(profile, plan) {
+  if (!plan) throw new Error("Rencana tidak ditemukan.");
+  const ok = (await canAccessAccount(profile, plan.tiktokAccountId)) &&
+    (isAdmin(profile) || plan.createdById === profile.id);
+  if (!ok) { const e = new Error("Tidak boleh menghapus rencana ini."); e.status = 403; throw e; }
+}
+
+// Kumpulkan field baris dari FormData jadi objek kolom (snake, lalu dipetakan planData).
 function planFields(formData) {
   const post_date = dateOrNull(formData.get("post_date"));
-  // plan_month diambil dari post_date; kalau kosong pakai field bulan eksplisit atau bulan ini.
   const explicitMonth = String(formData.get("plan_month") || "").trim(); // 'YYYY-MM'
   const plan_month =
     monthFirstDay(post_date) ||
     (/^\d{4}-\d{2}$/.test(explicitMonth) ? `${explicitMonth}-01` : null) ||
     `${new Date().toISOString().slice(0, 7)}-01`;
 
-  // Platform target (checkbox "platforms"): minimal 1, nilai di luar daftar dibuang.
-  // Link tayang IG/Threads dikumpulkan ke jsonb platform_links (TikTok tetap posted_url).
   const platforms = formData.getAll("platforms").map(String).filter((p) => PLATFORM_KEYS.includes(p));
   const platform_links = {};
   for (const p of PLATFORM_KEYS) {
@@ -80,135 +132,147 @@ export async function createPlan(formData) {
   if (!profile?.role) throw new Error("Belum login.");
   const accountId = String(formData.get("accountId") || "");
   if (!accountId) throw new Error("Cabang wajib dipilih.");
+  await assertCanAccess(profile, accountId);
 
   const fields = planFields(formData);
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("content_plans").insert({
-    tiktok_account_id: accountId,
-    ...fields,
-    created_by: profile.id,
-    created_by_email: profile.email,
-  });
-  if (error) throw new Error(`Gagal menyimpan rencana: ${error.message}`);
-  await logActivity(supabase, { action: "tambah_rencana_konten", entity: accountId, detail: { headline: fields.headline } });
+  try {
+    await prisma.contentPlan.create({
+      data: {
+        tiktokAccountId: accountId,
+        ...planData(fields),
+        createdById: profile.id,
+        createdByEmail: profile.email,
+      },
+    });
+  } catch (err) {
+    throw new Error(`Gagal menyimpan rencana: ${err?.message || err}`);
+  }
+  await logActivity({ action: "tambah_rencana_konten", entity: accountId, detail: { headline: fields.headline } });
   revalidatePath("/content-plan");
 }
 
-// Perbarui baris rencana (RLS: pemilik atau admin/manager).
+// Perbarui baris rencana (pemilik atau admin/manager, dan punya akses cabang).
 export async function updatePlan(formData) {
   const profile = await getCurrentProfile();
   if (!profile?.role) throw new Error("Belum login.");
   const id = String(formData.get("id") || "");
   if (!id) throw new Error("ID rencana tidak ada.");
+  const plan = await getPlanMeta(id);
+  await assertCanEditPlan(profile, plan);
 
   const fields = planFields(formData);
-  const patch = { ...fields, updated_at: new Date().toISOString() };
-  // Pindah cabang: kalau accountId dikirim, ikut ubah tiktok_account_id. RLS
-  // (cplan_update WITH CHECK) memastikan user memang boleh menaruh di cabang tujuan.
+  const patch = planData(fields);
+  // Pindah cabang: kalau accountId dikirim, pastikan boleh menaruh di cabang tujuan.
   const accountId = String(formData.get("accountId") || "").trim();
-  if (accountId) patch.tiktok_account_id = accountId;
-
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("content_plans").update(patch).eq("id", id);
-  if (error) throw new Error(`Gagal memperbarui rencana: ${error.message}`);
-  await logActivity(supabase, { action: "ubah_rencana_konten", entity: id, detail: accountId ? { moved_to: accountId } : undefined });
+  if (accountId) {
+    await assertCanAccess(profile, accountId);
+    patch.tiktokAccountId = accountId;
+  }
+  try {
+    await prisma.contentPlan.update({ where: { id: plan.id }, data: patch });
+  } catch (err) {
+    throw new Error(`Gagal memperbarui rencana: ${err?.message || err}`);
+  }
+  await logActivity({ action: "ubah_rencana_konten", entity: id, detail: accountId ? { moved_to: accountId } : undefined });
   revalidatePath("/content-plan");
 }
 
-// Hapus baris rencana (RLS: pemilik atau admin).
+// Hapus baris rencana (pemilik atau admin).
 export async function deletePlan(formData) {
   const profile = await getCurrentProfile();
   if (!profile?.role) throw new Error("Belum login.");
   const id = String(formData.get("id") || "");
   if (!id) return;
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("content_plans").delete().eq("id", id);
-  if (error) throw new Error(`Gagal menghapus rencana: ${error.message}`);
-  await logActivity(supabase, { action: "hapus_rencana_konten", entity: id });
+  const plan = await getPlanMeta(id);
+  if (!plan) return;
+  await assertCanDeletePlan(profile, plan);
+  await prisma.contentPlan.delete({ where: { id: plan.id } });
+  await logActivity({ action: "hapus_rencana_konten", entity: id });
   revalidatePath("/content-plan");
 }
 
 // GANTI RENCANA: tandai rencana lama 'Replaced' + tautkan ke penggantinya.
-// mode 'new'      -> buat rencana baru dari field form, lalu tautkan.
-// mode 'existing' -> tautkan ke rencana yang sudah ada (newId).
-// Rencana lama tetap ada (redup di UI, label "Digantikan oleh …").
 export async function replacePlan(formData) {
   const profile = await getCurrentProfile();
   if (!profile?.role) throw new Error("Belum login.");
   const oldId = String(formData.get("oldId") || "");
   if (!oldId) throw new Error("Rencana yang diganti tidak ada.");
+  const oldPlan = await getPlanMeta(oldId);
+  await assertCanEditPlan(profile, oldPlan);
   const mode = String(formData.get("mode") || "new");
-  const supabase = await createSupabaseServerClient();
 
   let newId = null;
   if (mode === "existing") {
-    newId = parseInt(String(formData.get("newId") || ""), 10);
+    newId = bid(formData.get("newId"));
     if (!newId) throw new Error("Pilih rencana pengganti dulu.");
     if (String(newId) === String(oldId)) throw new Error("Rencana pengganti tidak boleh sama dengan yang diganti.");
+    const target = await getPlanMeta(String(newId));
+    if (!target || !(await canAccessAccount(profile, target.tiktokAccountId))) {
+      throw new Error("Rencana pengganti tidak ditemukan atau di luar akses Anda.");
+    }
   } else {
-    // Buat rencana baru sebagai pengganti.
     const accountId = String(formData.get("accountId") || "");
     if (!accountId) throw new Error("Cabang wajib dipilih.");
+    await assertCanAccess(profile, accountId);
     const fields = planFields(formData);
     if (!fields.headline && !fields.post_date) throw new Error("Isi minimal Headline atau Tanggal untuk rencana pengganti.");
-    const { data, error } = await supabase
-      .from("content_plans")
-      .insert({ tiktok_account_id: accountId, ...fields, created_by: profile.id, created_by_email: profile.email })
-      .select("id")
-      .single();
-    if (error) throw new Error(`Gagal membuat rencana pengganti: ${error.message}`);
-    newId = data.id;
+    let created;
+    try {
+      created = await prisma.contentPlan.create({
+        data: { tiktokAccountId: accountId, ...planData(fields), createdById: profile.id, createdByEmail: profile.email },
+        select: { id: true },
+      });
+    } catch (err) {
+      throw new Error(`Gagal membuat rencana pengganti: ${err?.message || err}`);
+    }
+    newId = created.id;
   }
 
-  // Tautkan rencana lama -> pengganti + status Replaced.
-  const { error: e2 } = await supabase
-    .from("content_plans")
-    .update({ replaced_by_id: newId, status_override: "Replaced", updated_at: new Date().toISOString() })
-    .eq("id", oldId);
-  if (e2) throw new Error(`Gagal menandai rencana lama: ${e2.message}`);
-  await logActivity(supabase, { action: "ganti_rencana_konten", entity: oldId, detail: { mode, replaced_by: newId } });
+  try {
+    await prisma.contentPlan.update({
+      where: { id: oldPlan.id },
+      data: { replacedById: newId, statusOverride: "Replaced" },
+    });
+  } catch (err) {
+    throw new Error(`Gagal menandai rencana lama: ${err?.message || err}`);
+  }
+  await logActivity({ action: "ganti_rencana_konten", entity: oldId, detail: { mode, replaced_by: String(newId) } });
   revalidatePath("/content-plan");
-  return { newId };
+  return { newId: typeof newId === "bigint" ? Number(newId) : newId };
 }
 
-// BATALKAN penggantian: lepas tautan replaced_by_id + status_override -> rencana aktif
-// lagi. HANYA menyentuh 2 kolom itu (tidak lewat planFields, supaya field lain aman).
+// BATALKAN penggantian: lepas tautan replaced_by_id + status_override.
 export async function unreplacePlan(formData) {
   const profile = await getCurrentProfile();
   if (!profile?.role) throw new Error("Belum login.");
   const id = String(formData.get("id") || "");
   if (!id) throw new Error("ID rencana tidak ada.");
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase
-    .from("content_plans")
-    .update({ replaced_by_id: null, status_override: null, updated_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw new Error(`Gagal membatalkan penggantian: ${error.message}`);
-  await logActivity(supabase, { action: "batal_ganti_rencana_konten", entity: id });
+  const plan = await getPlanMeta(id);
+  await assertCanEditPlan(profile, plan);
+  await prisma.contentPlan.update({
+    where: { id: plan.id },
+    data: { replacedById: null, statusOverride: null },
+  });
+  await logActivity({ action: "batal_ganti_rencana_konten", entity: id });
   revalidatePath("/content-plan");
 }
 
-// Set cepat link konten tayang (posted_url) dari input inline di tabel. Setelah ini
-// status akan otomatis dihitung ulang (Verified bila cocok data report).
+// Set cepat link konten tayang (posted_url) dari input inline di tabel.
 export async function setPostedUrl(formData) {
   const profile = await getCurrentProfile();
   if (!profile?.role) throw new Error("Belum login.");
   const id = String(formData.get("id") || "");
   if (!id) return;
+  const plan = await getPlanMeta(id);
+  await assertCanEditPlan(profile, plan);
   const url = String(formData.get("posted_url") || "").trim() || null;
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase
-    .from("content_plans")
-    .update({ posted_url: url, updated_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw new Error(`Gagal menyimpan link: ${error.message}`);
-  await logActivity(supabase, { action: "set_link_tayang_rencana", entity: id });
+  await prisma.contentPlan.update({ where: { id: plan.id }, data: { postedUrl: url } });
+  await logActivity({ action: "set_link_tayang_rencana", entity: id });
   revalidatePath("/content-plan");
   revalidatePath("/dashboard");
 }
 
 // Set cepat link tayang platform NON-TikTok (Instagram/Threads) dari input inline.
-// Merge di server (baca jsonb lama dulu) supaya link platform lain tidak tertimpa.
 export async function setPlatformLink(formData) {
   const profile = await getCurrentProfile();
   if (!profile?.role) throw new Error("Belum login.");
@@ -218,32 +282,22 @@ export async function setPlatformLink(formData) {
   if (platform === "tiktok") return setPostedUrl(formData); // TikTok tetap lewat posted_url
   if (!PLATFORM_KEYS.includes(platform)) throw new Error("Platform tidak dikenal.");
 
+  const plan = await getPlanMeta(id);
+  await assertCanEditPlan(profile, plan);
   const url = String(formData.get("posted_url") || "").trim();
-  const supabase = await createSupabaseServerClient();
-  const { data: row, error: e1 } = await supabase.from("content_plans").select("platform_links").eq("id", id).single();
-  if (e1) throw new Error(`Gagal membaca rencana: ${e1.message}`);
-  const links = { ...(row?.platform_links || {}) };
+  const links = { ...(plan.platformLinks || {}) };
   if (url) links[platform] = url; else delete links[platform];
 
-  const { error } = await supabase
-    .from("content_plans")
-    .update({ platform_links: links, updated_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw new Error(`Gagal menyimpan link: ${error.message}`);
-  await logActivity(supabase, { action: "set_link_tayang_rencana", entity: id, detail: { platform } });
+  await prisma.contentPlan.update({ where: { id: plan.id }, data: { platformLinks: links } });
+  await logActivity({ action: "set_link_tayang_rencana", entity: id, detail: { platform } });
   revalidatePath("/content-plan");
   revalidatePath("/dashboard");
 }
 
 // ————————————————————————————————————————————————————————————————
 // IMPORT MASSAL dari Excel (.xlsx) dengan MAPPING per-Outlet -> cabang.
-// Alur 2 langkah: (1) analyzePlansExcel — parse & rangkum Outlet + contoh (TANPA
-// simpan) untuk pratinjau; (2) importPlansExcelMapped — terima peta Outlet->cabang,
-// rutekan tiap baris ke cabang yang benar, dedup per-cabang, lalu insert.
-// Parsing murni di lib/tiktok/plan-import.js (teruji terpisah).
 // ————————————————————————————————————————————————————————————————
 
-// Ambil File dari FormData atau lempar error yang jelas.
 function requireFile(formData) {
   const file = formData.get("file");
   if (!file || typeof file.arrayBuffer !== "function") throw new Error("File Excel tidak ditemukan.");
@@ -264,13 +318,12 @@ export async function analyzePlansExcel(formData) {
     sheetUsed: parsed.sheetUsed,
     totalRows: parsed.records.length,
     skippedEmpty: parsed.skippedEmpty,
-    outlets: summarizeOutlets(parsed.records), // [{value, count}]
+    outlets: summarizeOutlets(parsed.records),
     sample: parsed.records.slice(0, 8).map((r) => ({ post_date: r.post_date, plan_month: r.plan_month, headline: r.headline, outlet: r.outlet })),
   };
 }
 
-// LANGKAH 2: impor dengan peta Outlet->cabang. `mapping` = JSON { byOutlet: {outletValue: accountId} }.
-// Baris dengan Outlet yang tidak dipetakan (accountId kosong) dilewati (skippedUnmapped).
+// LANGKAH 2: impor dengan peta Outlet->cabang.
 export async function importPlansExcelMapped(formData) {
   const profile = await getCurrentProfile();
   if (!profile?.role) throw new Error("Belum login.");
@@ -287,8 +340,7 @@ export async function importPlansExcelMapped(formData) {
   const { parsePlanWorkbook } = await import("@/lib/tiktok/plan-import");
   const { records, skippedEmpty } = await parsePlanWorkbook(Buffer.from(await file.arrayBuffer()), { sheetName });
 
-  // Kelompokkan baris per cabang tujuan (berdasar Outlet). Lewati yang tak dipetakan.
-  const byAcc = new Map(); // accountId -> [rec...]
+  const byAcc = new Map();
   let skippedUnmapped = 0;
   for (const rec of records) {
     const acc = byOutlet[rec.outlet || ""];
@@ -300,14 +352,16 @@ export async function importPlansExcelMapped(formData) {
   if (accIds.length === 0) {
     return { inserted: 0, byBranch: [], skippedDup: 0, skippedEmpty, skippedUnmapped };
   }
+  // Cek akses tiap cabang tujuan (menggantikan RLS WITH CHECK).
+  for (const acc of accIds) await assertCanAccess(profile, acc);
 
   // Dedup per-cabang: ambil headline+tanggal yang sudah ada di cabang-cabang terlibat.
-  const supabase = await createSupabaseServerClient();
-  const { data: existing } = await supabase
-    .from("content_plans")
-    .select("tiktok_account_id, headline, post_date")
-    .in("tiktok_account_id", accIds);
-  const seen = new Set((existing || []).map((r) => `${r.tiktok_account_id}|${(r.headline || "").toLowerCase().trim()}|${(r.post_date || "").slice(0, 10)}`));
+  const existing = await prisma.contentPlan.findMany({
+    where: { tiktokAccountId: { in: accIds } },
+    select: { tiktokAccountId: true, headline: true, postDate: true },
+  });
+  const fmtDate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+  const seen = new Set(existing.map((r) => `${r.tiktokAccountId}|${(r.headline || "").toLowerCase().trim()}|${fmtDate(r.postDate)}`));
 
   let skippedDup = 0;
   const rows = [];
@@ -317,18 +371,25 @@ export async function importPlansExcelMapped(formData) {
       const key = `${acc}|${(rec.headline || "").toLowerCase().trim()}|${rec.post_date || ""}`;
       if (seen.has(key)) { skippedDup += 1; continue; }
       seen.add(key);
-      const { outlet, ...cols } = rec; // buang 'outlet' (bukan kolom DB)
-      rows.push({ tiktok_account_id: acc, ...cols, created_by: profile.id, created_by_email: profile.email });
+      rows.push({
+        tiktokAccountId: acc,
+        ...planData(rec),
+        createdById: profile.id,
+        createdByEmail: profile.email,
+      });
       perBranch.set(acc, (perBranch.get(acc) || 0) + 1);
     }
   }
 
   let inserted = 0;
   if (rows.length > 0) {
-    const { error } = await supabase.from("content_plans").insert(rows);
-    if (error) throw new Error(`Gagal menyimpan ${rows.length} baris: ${error.message}`);
-    inserted = rows.length;
-    await logActivity(supabase, { action: "import_rencana_konten", entity: accIds.join(","), detail: { inserted, skippedDup, skippedEmpty, skippedUnmapped, branches: accIds.length } });
+    try {
+      const res = await prisma.contentPlan.createMany({ data: rows });
+      inserted = res.count ?? rows.length;
+    } catch (err) {
+      throw new Error(`Gagal menyimpan ${rows.length} baris: ${err?.message || err}`);
+    }
+    await logActivity({ action: "import_rencana_konten", entity: accIds.join(","), detail: { inserted, skippedDup, skippedEmpty, skippedUnmapped, branches: accIds.length } });
     revalidatePath("/content-plan");
   }
 
@@ -348,11 +409,8 @@ export async function toggleAcc(formData) {
   const id = String(formData.get("id") || "");
   const next = String(formData.get("next") || "") === "true";
   if (!id) return;
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase
-    .from("content_plans")
-    .update({ acc_to_posting: next, updated_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw new Error(`Gagal mengubah ACC: ${error.message}`);
+  const plan = await getPlanMeta(id);
+  await assertCanEditPlan(profile, plan);
+  await prisma.contentPlan.update({ where: { id: plan.id }, data: { accToPosting: next } });
   revalidatePath("/content-plan");
 }
