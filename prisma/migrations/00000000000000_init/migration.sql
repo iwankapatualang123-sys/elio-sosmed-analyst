@@ -55,7 +55,7 @@ CREATE TABLE `tiktok_content` (
     `report_generated_date` DATE NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `tiktok_content_tiktok_account_id_idx`(`tiktok_account_id`),
+    UNIQUE INDEX `tiktok_content_tiktok_account_id_video_id_key`(`tiktok_account_id`, `video_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -241,6 +241,7 @@ CREATE TABLE `social_account_snapshots` (
     `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `social_account_snapshots_tiktok_account_id_idx`(`tiktok_account_id`),
+    UNIQUE INDEX `social_account_snapshots_tiktok_account_id_platform_snapshot_key`(`tiktok_account_id`, `platform`, `snapshot_date`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -257,6 +258,7 @@ CREATE TABLE `instagram_daily_metrics` (
     `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `instagram_daily_metrics_tiktok_account_id_idx`(`tiktok_account_id`),
+    UNIQUE INDEX `instagram_daily_metrics_tiktok_account_id_metric_date_key`(`tiktok_account_id`, `metric`, `date`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -291,6 +293,7 @@ CREATE TABLE `instagram_content` (
     `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `instagram_content_tiktok_account_id_idx`(`tiktok_account_id`),
+    UNIQUE INDEX `instagram_content_tiktok_account_id_post_id_key`(`tiktok_account_id`, `post_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

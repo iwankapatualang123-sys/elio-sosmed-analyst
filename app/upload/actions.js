@@ -6,8 +6,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import prisma from "@/lib/db";
 import { getCurrentProfile, canWrite } from "@/lib/auth";
+import { assertCanAccess } from "@/lib/access";
 import { logActivity } from "@/lib/audit";
 import { SNAPSHOT_PLATFORM_KEYS } from "@/lib/social/snapshots";
 
@@ -17,6 +18,13 @@ function intOrNull(v) {
   if (s === "") return null;
   const n = parseInt(s, 10);
   return Number.isNaN(n) ? null : n;
+}
+
+// Tanggal longgar -> Date (untuk kolom @db.Date / DateTime Prisma); kosong -> null.
+function toDate(v) {
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 // ————————————————————————————————————————————————————————————————
@@ -34,65 +42,71 @@ export async function uploadInstagramFiles(formData) {
   if (!canWrite(profile)) throw new Error("Role Anda hanya bisa melihat data (admin & manager yang boleh upload).");
   const accountId = String(formData.get("accountId") || "");
   if (!accountId) throw new Error("Cabang wajib dipilih.");
+  await assertCanAccess(profile, accountId);
   const files = formData.getAll("files").filter((f) => f && typeof f.arrayBuffer === "function");
   if (files.length === 0) throw new Error("Pilih minimal 1 file CSV.");
 
   const { parseInstagramFile } = await import("@/lib/instagram/parser");
-  const supabase = await createSupabaseServerClient();
   const results = [];
 
   for (const file of files) {
     try {
       const parsed = parseInstagramFile(Buffer.from(await file.arrayBuffer()));
       if (parsed.kind === "daily") {
-        const rows = parsed.rows.map((r) => ({
-          tiktok_account_id: accountId,
-          metric: parsed.metric,
-          date: r.date,
-          value: r.value,
-          created_by: profile.id,
-          created_by_email: profile.email,
-          updated_at: new Date().toISOString(),
-        }));
-        const { error } = await supabase
-          .from("instagram_daily_metrics")
-          .upsert(rows, { onConflict: "tiktok_account_id,metric,date" });
-        if (error) throw new Error(error.message);
-        results.push({ name: file.name, ok: true, kind: "daily", metric: parsed.metric, metricLabel: parsed.metricLabel, rows: rows.length, from: parsed.rows[0].date, to: parsed.rows[parsed.rows.length - 1].date });
+        for (const r of parsed.rows) {
+          const base = {
+            value: r.value,
+            createdById: profile.id,
+            createdByEmail: profile.email,
+          };
+          await prisma.instagramDailyMetric.upsert({
+            where: {
+              tiktokAccountId_metric_date: {
+                tiktokAccountId: accountId,
+                metric: parsed.metric,
+                date: toDate(r.date),
+              },
+            },
+            create: { tiktokAccountId: accountId, metric: parsed.metric, date: toDate(r.date), ...base },
+            update: base,
+          });
+        }
+        results.push({ name: file.name, ok: true, kind: "daily", metric: parsed.metric, metricLabel: parsed.metricLabel, rows: parsed.rows.length, from: parsed.rows[0].date, to: parsed.rows[parsed.rows.length - 1].date });
       } else {
-        const rows = parsed.rows.map((r) => ({
-          tiktok_account_id: accountId,
-          post_id: r.post_id,
-          ig_account_id: r.ig_account_id,
-          username: r.username,
-          account_name: r.account_name,
-          description: r.description,
-          duration_s: r.duration_s,
-          published_at: r.published_at,
-          permalink: r.permalink,
-          post_type: r.post_type,
-          views: r.views,
-          reach: r.reach,
-          likes: r.likes,
-          comments: r.comments,
-          shares: r.shares,
-          saves: r.saves,
-          profile_visits: r.profile_visits,
-          replies: r.replies,
-          navigation: r.navigation,
-          sticker_taps: r.sticker_taps,
-          follows: r.follows,
-          is_collab: r.is_collab,
-          created_by: profile.id,
-          created_by_email: profile.email,
-          updated_at: new Date().toISOString(),
-        }));
-        const { error } = await supabase
-          .from("instagram_content")
-          .upsert(rows, { onConflict: "tiktok_account_id,post_id" });
-        if (error) throw new Error(error.message);
-        const collab = rows.filter((r) => r.is_collab).length;
-        results.push({ name: file.name, ok: true, kind: "content", rows: rows.length, collab });
+        let collab = 0;
+        for (const r of parsed.rows) {
+          if (r.is_collab) collab += 1;
+          const base = {
+            igAccountId: r.ig_account_id,
+            username: r.username,
+            accountName: r.account_name,
+            description: r.description,
+            durationS: r.duration_s,
+            publishedAt: toDate(r.published_at),
+            permalink: r.permalink,
+            postType: r.post_type,
+            views: r.views,
+            reach: r.reach,
+            likes: r.likes,
+            comments: r.comments,
+            shares: r.shares,
+            saves: r.saves,
+            profileVisits: r.profile_visits,
+            replies: r.replies,
+            navigation: r.navigation,
+            stickerTaps: r.sticker_taps,
+            follows: r.follows,
+            isCollab: !!r.is_collab,
+            createdById: profile.id,
+            createdByEmail: profile.email,
+          };
+          await prisma.instagramContent.upsert({
+            where: { tiktokAccountId_postId: { tiktokAccountId: accountId, postId: r.post_id } },
+            create: { tiktokAccountId: accountId, postId: r.post_id, ...base },
+            update: base,
+          });
+        }
+        results.push({ name: file.name, ok: true, kind: "content", rows: parsed.rows.length, collab });
       }
     } catch (err) {
       results.push({ name: file.name, ok: false, error: err?.message || "Gagal memproses file." });
@@ -101,7 +115,7 @@ export async function uploadInstagramFiles(formData) {
 
   const okCount = results.filter((r) => r.ok).length;
   if (okCount > 0) {
-    await logActivity(supabase, {
+    await logActivity({
       action: "upload_data_instagram",
       entity: accountId,
       detail: { files: results.map((r) => ({ name: r.name, ok: r.ok, kind: r.kind, rows: r.rows })) },
@@ -119,6 +133,7 @@ export async function saveSocialSnapshot(formData) {
 
   const accountId = String(formData.get("accountId") || "");
   if (!accountId) throw new Error("Cabang wajib dipilih.");
+  await assertCanAccess(profile, accountId);
   const platform = String(formData.get("platform") || "");
   if (!SNAPSHOT_PLATFORM_KEYS.includes(platform)) throw new Error("Platform tidak dikenal.");
   const snapshot_date = String(formData.get("snapshot_date") || "").slice(0, 10);
@@ -129,24 +144,30 @@ export async function saveSocialSnapshot(formData) {
   const reach_30d = intOrNull(formData.get("reach_30d"));
   const profile_visits = intOrNull(formData.get("profile_visits"));
 
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("social_account_snapshots").upsert(
-    {
-      tiktok_account_id: accountId,
-      platform,
-      snapshot_date,
-      followers,
-      reach_30d,
-      profile_visits,
-      created_by: profile.id,
-      created_by_email: profile.email,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "tiktok_account_id,platform,snapshot_date" }
-  );
-  if (error) throw new Error(`Gagal menyimpan snapshot: ${error.message}`);
+  const base = {
+    followers,
+    reach30d: reach_30d,
+    profileVisits: profile_visits,
+    createdById: profile.id,
+    createdByEmail: profile.email,
+  };
+  try {
+    await prisma.socialAccountSnapshot.upsert({
+      where: {
+        tiktokAccountId_platform_snapshotDate: {
+          tiktokAccountId: accountId,
+          platform,
+          snapshotDate: toDate(snapshot_date),
+        },
+      },
+      create: { tiktokAccountId: accountId, platform, snapshotDate: toDate(snapshot_date), ...base },
+      update: base,
+    });
+  } catch (err) {
+    throw new Error(`Gagal menyimpan snapshot: ${err?.message || err}`);
+  }
 
-  await logActivity(supabase, {
+  await logActivity({
     action: "input_snapshot_sosmed",
     entity: accountId,
     detail: { platform, snapshot_date, followers },

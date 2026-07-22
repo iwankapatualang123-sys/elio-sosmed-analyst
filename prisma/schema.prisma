@@ -113,7 +113,7 @@ model TiktokContent {
 
   account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
 
-  @@index([tiktokAccountId])
+  @@unique([tiktokAccountId, videoId])
   @@map("tiktok_content")
 }
 
@@ -310,6 +310,7 @@ model SocialAccountSnapshot {
 
   account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
 
+  @@unique([tiktokAccountId, platform, snapshotDate])
   @@index([tiktokAccountId])
   @@map("social_account_snapshots")
 }
@@ -327,6 +328,7 @@ model InstagramDailyMetric {
 
   account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
 
+  @@unique([tiktokAccountId, metric, date])
   @@index([tiktokAccountId])
   @@map("instagram_daily_metrics")
 }
@@ -362,6 +364,7 @@ model InstagramContent {
 
   account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
 
+  @@unique([tiktokAccountId, postId])
   @@index([tiktokAccountId])
   @@map("instagram_content")
 }

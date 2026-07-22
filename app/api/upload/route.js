@@ -7,8 +7,10 @@
 // Supabase yang terikat sesi user.
 
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import prisma from "@/lib/db";
 import { getCurrentProfile, canWrite } from "@/lib/auth";
+import { canAccessAccount } from "@/lib/access";
+import { makeSyncDbClient } from "@/lib/tiktok/db-client";
 import { processUpload } from "@/lib/tiktok/upload.js";
 import { logActivity } from "@/lib/audit";
 
@@ -55,17 +57,19 @@ export async function POST(request) {
     return NextResponse.json({ error: "Tidak ada file yang diunggah." }, { status: 400 });
   }
 
-  const supabase = await createSupabaseServerClient();
-
-  // 3) Ambil data cabang (untuk deteksi salah-cabang); RLS memastikan user berhak.
-  const { data: account, error: accErr } = await supabase
-    .from("tiktok_accounts")
-    .select("id, nama_cabang, tiktok_username")
-    .eq("id", accountId)
-    .maybeSingle();
-  if (accErr || !account) {
+  // 3) Ambil data cabang (untuk deteksi salah-cabang); cek akses menggantikan RLS.
+  if (!(await canAccessAccount(profile, String(accountId)))) {
     return NextResponse.json({ error: "Cabang tidak ditemukan atau Anda tidak punya akses." }, { status: 403 });
   }
+  const accRow = await prisma.tiktokAccount.findUnique({
+    where: { id: String(accountId) },
+    select: { id: true, namaCabang: true, tiktokUsername: true },
+  });
+  if (!accRow) {
+    return NextResponse.json({ error: "Cabang tidak ditemukan atau Anda tidak punya akses." }, { status: 403 });
+  }
+  // Bentuk snake_case sesuai yang diharapkan pipeline upload (lib/tiktok/upload.js).
+  const account = { id: accRow.id, nama_cabang: accRow.namaCabang, tiktok_username: accRow.tiktokUsername };
 
   // 4) Ubah File -> { filename, buffer }
   const files = [];
@@ -76,8 +80,8 @@ export async function POST(request) {
 
   // 5) Jalankan pipeline (bongkar -> parse -> upsert)
   try {
-    const result = await processUpload(supabase, account, files, {});
-    await logActivity(supabase, {
+    const result = await processUpload(makeSyncDbClient(prisma), account, files, {});
+    await logActivity({
       action: "upload_data",
       entity: account.nama_cabang,
       detail: { totals: result.totals, files: files.length },
