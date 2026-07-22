@@ -34,8 +34,10 @@ yarn-error.log*
 .env*
 !.env.example
 
-# ekspor password saat migrasi (JANGAN commit — berisi hash bcrypt user)
+# ekspor data/password saat migrasi (JANGAN commit — berisi hash bcrypt user)
 auth_users.json
+supabase-export.json
+*-export.json
 
 # vercel
 .vercel
