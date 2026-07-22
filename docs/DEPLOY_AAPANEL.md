@@ -124,6 +124,15 @@ Pengaturan.)
 npx prisma studio   # buka via SSH tunnel; cek tabel tiktok_accounts, profiles, dll terisi
 ```
 
+**d. Admin pertama (kalau TIDAK migrasi password lama):** buat/atur password admin
+langsung supaya bisa login:
+
+```bash
+node scripts/set-password.mjs admin@elio.com 'PasswordKuatAnda' admin
+```
+
+Skrip yang sama dipakai untuk reset darurat bila admin terkunci.
+
 ---
 
 ## 5. Jalankan aplikasi (PM2)
