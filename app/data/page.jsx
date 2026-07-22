@@ -8,6 +8,7 @@ import { createReadClient } from "@/lib/db-compat";
 import Nav from "@/components/Nav";
 import DataFilters from "@/components/DataFilters";
 import DataTable from "@/components/DataTable";
+import ContentGrid from "@/components/ContentGrid";
 import { BarChartLabeled, DivergingBarChart, Heatmap } from "@/components/Charts";
 import { weeklyReport } from "@/lib/tiktok/weekly";
 import { bestPostingTimes } from "@/lib/tiktok/metrics";
@@ -254,7 +255,7 @@ export default async function DataPage({ searchParams }) {
           {splitContent ? (
             <>
               <Section title={`Konten ${labelBulan(selectedMonth)}`} count={fContent.length} subtitle="Video yang diposting pada bulan terpilih ini.">
-                <DataTable rows={fContent} maxHeight={480} emptyText="Belum ada konten bulan ini." columns={KONTEN_COLUMNS} defaultSort={{ key: "post_date", dir: "desc" }} />
+                <ContentGrid rows={fContent} emptyText="Belum ada konten bulan ini." />
               </Section>
 
               {contentOtherNotable.length > 0 && (
@@ -263,13 +264,13 @@ export default async function DataPage({ searchParams }) {
                   count={contentOtherNotable.length}
                   subtitle={`Video dari bulan LAIN dgn views di atas rata-rata seluruh konten akun (${fmtNum(Math.round(avgViewsAll))}) — masih menarik trafik meski lama, dipisah supaya tidak tercampur dgn konten bulan ini.`}
                 >
-                  <DataTable rows={contentOtherNotable} maxHeight={480} emptyText="Tidak ada." columns={KONTEN_COLUMNS} />
+                  <ContentGrid rows={contentOtherNotable} emptyText="Tidak ada." />
                 </Section>
               )}
             </>
           ) : (
             <Section title="Konten" count={content.length} subtitle="Semua video akun ini (tidak difilter bulan — filter Bulan hanya untuk data harian & tren mingguan).">
-              <DataTable rows={content} maxHeight={640} emptyText="Belum ada konten." columns={KONTEN_COLUMNS} defaultSort={{ key: "post_date", dir: "desc" }} />
+              <ContentGrid rows={content} emptyText="Belum ada konten." />
             </Section>
           )}
 
