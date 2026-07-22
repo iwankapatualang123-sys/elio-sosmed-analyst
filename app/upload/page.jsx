@@ -3,7 +3,7 @@
 // daftar cabang (RLS), lalu render widget upload interaktif.
 
 import { getCurrentProfile, canWrite } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import Nav from "@/components/Nav";
 import UploadClient from "@/components/UploadClient";
 import SocialSnapshotCard from "@/components/SocialSnapshotCard";
@@ -17,7 +17,7 @@ export default async function UploadPage() {
   let branches = [];
   let latestSnaps = [];
   if (hasRole) {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createReadClient(profile);
     const [{ data }, { data: snaps }] = await Promise.all([
       supabase
         .from("tiktok_accounts")

@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { getCurrentProfile } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import { loadPortfolio } from "@/lib/tiktok/analytics";
 import { BarChartLabeled } from "@/components/Charts";
 import PrintButton from "@/components/PrintButton";
@@ -31,7 +31,7 @@ export default async function PortfolioReportPage({ searchParams }) {
   const sp = (await searchParams) || {};
   const month = /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : null;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   const { branches, portfolio, months } = await loadPortfolio(supabase, { month });
 
   return (

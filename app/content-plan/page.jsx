@@ -5,7 +5,7 @@
 // tayang di tiktok_content. Server Component + RLS.
 
 import { getCurrentProfile } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import Nav from "@/components/Nav";
 import DataFilters from "@/components/DataFilters";
 import ContentPlanBoard from "@/components/ContentPlanBoard";
@@ -25,7 +25,7 @@ export default async function ContentPlanPage({ searchParams }) {
     );
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   // Ambil SEMUA cabang (termasuk yang diarsipkan/nonaktif) — rencana konten milik
   // cabang tetap harus bisa dibuka & dikelola walau cabangnya sedang diarsipkan
   // (arsip = disembunyikan dari halaman lain, bukan dihapus datanya).

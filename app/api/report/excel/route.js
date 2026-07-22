@@ -3,7 +3,7 @@
 // mentah (Konten, Follower, Viewers). Blueprint bagian 7. Runtime Node (exceljs).
 // Auth via sesi user (RLS). GET /api/report/excel?branch=<id>
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import { getCurrentProfile } from "@/lib/auth";
 import metrics from "@/lib/tiktok/metrics.js";
 import { generateInsights } from "@/lib/tiktok/insights";
@@ -20,7 +20,7 @@ export async function GET(request) {
   const month = /^\d{4}-\d{2}$/.test(url.searchParams.get("month")) ? url.searchParams.get("month") : null;
   if (!accountId) return new Response(JSON.stringify({ error: "branch wajib." }), { status: 400 });
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   const [{ data: account }, { data: contentAll }, { data: historyAll }, { data: viewersAll }] = await Promise.all([
     supabase.from("tiktok_accounts").select("nama_cabang, tiktok_username").eq("id", accountId).maybeSingle(),
     supabase.from("tiktok_content").select("*").eq("tiktok_account_id", accountId),

@@ -4,7 +4,7 @@
 // Runtime Node. Auth via sesi user (RLS).
 
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import { getCurrentProfile } from "@/lib/auth";
 import { loadBranchDetail } from "@/lib/tiktok/analytics";
 import { buildInsightPrompt } from "@/lib/tiktok/insights";
@@ -23,7 +23,7 @@ export async function POST(request) {
   const month = /^\d{4}-\d{2}$/.test(body.month) ? body.month : null;
   if (!accountId) return NextResponse.json({ error: "accountId wajib." }, { status: 400 });
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   const detail = await loadBranchDetail(supabase, accountId, { month });
   if (!detail) return NextResponse.json({ error: "Cabang tidak ditemukan/tidak ada akses." }, { status: 403 });
 

@@ -3,7 +3,7 @@
 // Server Actions (app/settings/actions.js). Blueprint bagian 21D & 20.
 
 import { getCurrentProfile } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import Nav from "@/components/Nav";
 import Button from "@/components/Button";
 import InviteUserForm from "@/components/InviteUserForm";
@@ -29,7 +29,7 @@ export default async function SettingsPage() {
     );
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   const [{ data: branches }, { data: users }, { data: access }, { data: categoriesRaw }, { data: goals }] = await Promise.all([
     supabase.from("tiktok_accounts").select("*").order("nama_cabang"),
     supabase.from("profiles").select("*").order("created_at"),

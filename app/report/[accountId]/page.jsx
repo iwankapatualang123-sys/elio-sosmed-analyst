@@ -6,7 +6,7 @@
 
 import Link from "next/link";
 import { getCurrentProfile } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import { loadBranchDetail } from "@/lib/tiktok/analytics";
 import { weekOfMonth } from "@/lib/tiktok/weekly";
 import { sumDaily, dailySeries, contentInPeriod, contentSummary, topContents } from "@/lib/instagram/metrics";
@@ -65,7 +65,7 @@ export default async function ReportPage({ params, searchParams }) {
   const sp = (await searchParams) || {};
   const month = /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : null;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   const [{ data: account }, detail] = await Promise.all([
     supabase.from("tiktok_accounts").select("nama_cabang, tiktok_username").eq("id", accountId).maybeSingle(),
     loadBranchDetail(supabase, accountId, { month }),

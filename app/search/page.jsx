@@ -4,7 +4,8 @@
 
 import Link from "next/link";
 import { getCurrentProfile } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import prisma from "@/lib/db";
+import { accessibleAccountIds } from "@/lib/access";
 import Nav from "@/components/Nav";
 
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
@@ -27,15 +28,32 @@ export default async function SearchPage({ searchParams }) {
   let branches = [];
   let videos = [];
   if (safe) {
-    const supabase = await createSupabaseServerClient();
+    // Scope akses (pengganti RLS): admin = semua; lainnya = cabang miliknya.
+    const ids = await accessibleAccountIds(profile); // null = admin
+    const accWhere = ids === null ? {} : { id: { in: ids.length ? ids : ["__none__"] } };
+    const contentWhere = ids === null ? {} : { tiktokAccountId: { in: ids.length ? ids : ["__none__"] } };
     const [b, v] = await Promise.all([
-      supabase.from("tiktok_accounts").select("id, nama_cabang, tiktok_username")
-        .or(`nama_cabang.ilike.%${safe}%,tiktok_username.ilike.%${safe}%`).limit(15),
-      supabase.from("tiktok_content").select("video_id, video_title, video_link, total_views, post_date, tiktok_accounts(nama_cabang)")
-        .ilike("video_title", `%${safe}%`).order("total_views", { ascending: false }).limit(40),
+      prisma.tiktokAccount.findMany({
+        where: { AND: [accWhere, { OR: [{ namaCabang: { contains: safe } }, { tiktokUsername: { contains: safe } }] }] },
+        select: { id: true, namaCabang: true, tiktokUsername: true },
+        take: 15,
+      }),
+      prisma.tiktokContent.findMany({
+        where: { AND: [contentWhere, { videoTitle: { contains: safe } }] },
+        select: { videoId: true, videoTitle: true, videoLink: true, totalViews: true, postDate: true, account: { select: { namaCabang: true } } },
+        orderBy: { totalViews: "desc" },
+        take: 40,
+      }),
     ]);
-    branches = b.data || [];
-    videos = v.data || [];
+    branches = b.map((x) => ({ id: x.id, nama_cabang: x.namaCabang, tiktok_username: x.tiktokUsername }));
+    videos = v.map((x) => ({
+      video_id: x.videoId,
+      video_title: x.videoTitle,
+      video_link: x.videoLink,
+      total_views: x.totalViews,
+      post_date: x.postDate ? new Date(x.postDate).toISOString().slice(0, 10) : null,
+      tiktok_accounts: { nama_cabang: x.account?.namaCabang },
+    }));
   }
 
   return (

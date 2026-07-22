@@ -6,7 +6,7 @@
 
 import Link from "next/link";
 import { getCurrentProfile } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import Nav from "@/components/Nav";
 import Button from "@/components/Button";
 import MonthFilter from "@/components/MonthFilter";
@@ -33,7 +33,7 @@ export default async function ReportIndexPage({ searchParams }) {
   const month = /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : null;
   const monthQS = month ? `month=${month}` : "";
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   const { data: branchesRaw } = await supabase
     .from("tiktok_accounts")
     .select("id, nama_cabang, tiktok_username, kategori, is_active")

@@ -3,7 +3,7 @@
 // cabang (KPI + ranking) dan detail 1 cabang (grafik). Blueprint bagian 4.
 
 import { getCurrentProfile, canWrite } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import { loadPortfolio, loadPortfolioInstagram, loadBranchDetail } from "@/lib/tiktok/analytics";
 import Link from "next/link";
 import Nav from "@/components/Nav";
@@ -141,7 +141,7 @@ export default async function DashboardPage({ searchParams }) {
     );
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   const sp = (await searchParams) || {};
   // Filter BULAN (blueprint 21A — evaluasi kinerja tim per bulan). Kosong/"all" =
   // sepanjang masa (perilaku asli). Target & Progress + Peringatan SENGAJA tetap

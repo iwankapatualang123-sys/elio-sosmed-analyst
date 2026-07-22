@@ -2,7 +2,7 @@
 // Export laporan Excel "Ringkasan Semua Cabang" (§9 & §25): KPI portofolio + tabel
 // ranking semua cabang. Runtime Node (exceljs). Auth via sesi (RLS: cabang yang boleh diakses).
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import { getCurrentProfile } from "@/lib/auth";
 import { loadPortfolio } from "@/lib/tiktok/analytics";
 import ExcelJS from "exceljs";
@@ -16,7 +16,7 @@ export async function GET(request) {
   const monthParam = new URL(request.url).searchParams.get("month");
   const month = /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : null;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   const { branches, portfolio } = await loadPortfolio(supabase, { month });
 
   const wb = new ExcelJS.Workbook();

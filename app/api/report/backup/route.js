@@ -2,7 +2,7 @@
 // Backup manual seluruh data ke satu file Excel (blueprint 21F — penting di paket
 // Free yang tanpa backup otomatis). Admin only. Runtime Node.
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import { getCurrentProfile } from "@/lib/auth";
 import ExcelJS from "exceljs";
 
@@ -24,7 +24,7 @@ export async function GET() {
   if (profile?.role !== "admin") {
     return new Response(JSON.stringify({ error: "Hanya admin." }), { status: 403 });
   }
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   const wb = new ExcelJS.Workbook();
   wb.creator = "Elio Sosmed Analyst";
 

@@ -3,7 +3,7 @@
 // (blueprint bagian 21B). Membaca activity_log (RLS: admin-only read).
 
 import { getCurrentProfile } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import Nav from "@/components/Nav";
 import DataTable from "@/components/DataTable";
 
@@ -33,7 +33,7 @@ export default async function ActivityPage() {
     );
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   const { data } = await supabase
     .from("activity_log").select("*").order("created_at", { ascending: false }).limit(1000);
 

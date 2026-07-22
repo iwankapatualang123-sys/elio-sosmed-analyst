@@ -3,7 +3,7 @@
 // per tanggal, per cabang. Server Component + RLS.
 
 import { getCurrentProfile } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createReadClient } from "@/lib/db-compat";
 import Nav from "@/components/Nav";
 import DataFilters from "@/components/DataFilters";
 import ContentCalendar from "@/components/ContentCalendar";
@@ -21,7 +21,7 @@ export default async function CalendarPage({ searchParams }) {
     );
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createReadClient(profile);
   const { data: branches } = await supabase
     .from("tiktok_accounts").select("id, nama_cabang, tiktok_username").eq("is_active", true).order("nama_cabang");
   const sp = (await searchParams) || {};
