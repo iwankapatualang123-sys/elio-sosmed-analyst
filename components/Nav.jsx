@@ -51,10 +51,12 @@ export default function Nav({ email, role }) {
     <header
       className="flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5 sm:px-5"
       style={{
-        background: "linear-gradient(115deg,#00434b 0%,#006674 55%,#0a8291 100%)",
+        background: "linear-gradient(115deg, rgba(4,40,46,.72) 0%, rgba(6,84,94,.6) 55%, rgba(14,150,160,.5) 100%)",
+        backdropFilter: "blur(16px) saturate(160%)",
+        WebkitBackdropFilter: "blur(16px) saturate(160%)",
         borderRadius: 22,
-        border: "1px solid rgba(255,255,255,.16)",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,.28), 0 16px 34px -12px rgba(0,36,42,.65), 0 4px 10px -6px rgba(0,36,42,.5)",
+        border: "1px solid rgba(120,240,220,.22)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,.22), 0 20px 40px -14px rgba(0,18,26,.7), 0 0 26px -10px rgba(70,230,208,.35)",
       }}
     >
       {/* Brand */}
@@ -143,9 +145,11 @@ export default function Nav({ email, role }) {
     <nav
       className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 md:hidden"
       style={{
-        background: "linear-gradient(180deg,#ffffff,#f2f9f4)",
-        borderTop: "1px solid rgba(0,60,68,.12)",
-        boxShadow: "0 -10px 24px -12px rgba(0,36,42,.35)",
+        background: "linear-gradient(180deg, rgba(255,255,255,.82), rgba(232,246,239,.7))",
+        backdropFilter: "blur(16px) saturate(160%)",
+        WebkitBackdropFilter: "blur(16px) saturate(160%)",
+        borderTop: "1px solid rgba(120,240,220,.28)",
+        boxShadow: "0 -12px 28px -12px rgba(0,18,26,.5), 0 0 22px -10px rgba(70,230,208,.4)",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
       aria-label="Navigasi bawah"

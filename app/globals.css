@@ -1,26 +1,42 @@
 /* File: app/globals.css
-   Tema visual "gradasi teal 3D" untuk Elio Sosmed Analyst (blueprint bagian 11 & 23).
-   Palet diambil dari referensi crowdfunding (teal gelap -> teal -> hijau muda),
-   font Poppins, kartu pill/oval dengan shadow berlapis + inner highlight, tombol 3D. */
+   Tema visual "Spatial UI" untuk Elio Sosmed Analyst.
+   Konsep: kedalaman berlapis (depth), permukaan KACA (glassmorphism, backdrop-blur),
+   latar nebula teal immersif + orbit cahaya, tombol/kartu mengambang dengan glow.
+   Brand tetap teal/hijau (F&B + sosial). Font Poppins.
+   Nama class dipertahankan (card-3d, btn-*, input-3d) supaya seluruh halaman ikut. */
 
 @import "tailwindcss";
 
 :root {
-  /* Palet (blueprint bagian 11) */
+  /* Palet brand */
   --teal-900: #00545e; /* aksen / hover / shadow */
   --teal-700: #006674; /* primary / header */
   --green-500: #4f9e7a;
   --green-400: #7fbf8f;
-  --mint-100: #dbefd4; /* background lembut */
-  --sage-300: #93bcad; /* elemen non-aktif */
-  --ink: #0f3a40; /* teks gelap di atas surface terang */
+  --mint-100: #dbefd4;
+  --sage-300: #93bcad;
+  --ink: #0e3238;       /* teks gelap di atas kaca terang */
   --ink-soft: #4b6b6f;
 
-  --surface: #ffffff;
-  --radius-card: 28px;
+  /* Aksen "spatial": cahaya cyan-mint untuk glow & garis energi */
+  --glow: #46e6d0;
+  --glow-soft: rgba(70, 230, 208, 0.5);
+  --halo: rgba(120, 240, 220, 0.22);
+
+  --surface: rgba(255, 255, 255, 0.72);
+  --radius-card: 26px;
+
+  /* Kaca: nilai dipakai ulang oleh beberapa komponen */
+  --glass-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.86) 0%, rgba(235, 250, 243, 0.7) 100%);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.55);
+  --glass-blur: blur(18px) saturate(155%);
+  --glass-shadow:
+    0 26px 60px -20px rgba(0, 32, 40, 0.6),
+    0 10px 24px -14px rgba(0, 32, 40, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
-/* Token warna untuk utility Tailwind (bg-primary, text-primary, dll) + font */
+/* Token utility Tailwind + font */
 @theme inline {
   --color-teal-900: var(--teal-900);
   --color-teal-700: var(--teal-700);
@@ -30,44 +46,104 @@
   --color-sage-300: var(--sage-300);
   --color-primary: var(--teal-700);
   --color-ink: var(--ink);
+  --color-glow: var(--glow);
   --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Latar bergradasi diagonal khas tema (teal gelap -> teal -> hijau muda). */
+/* ── Latar NEBULA teal immersif ─────────────────────────────────────────────
+   Beberapa lapis radial (aurora) di atas gradasi gelap → kesan ruang berkedalaman. */
 body {
   min-height: 100vh;
   color: var(--ink);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
-  background: linear-gradient(150deg, #00464f 0%, var(--teal-700) 42%, var(--green-500) 78%, var(--green-400) 100%);
+  background:
+    radial-gradient(1200px 820px at 12% -12%, rgba(70, 230, 208, 0.20), transparent 60%),
+    radial-gradient(1050px 760px at 108% 6%, rgba(12, 140, 156, 0.42), transparent 56%),
+    radial-gradient(1000px 1000px at 50% 128%, rgba(79, 158, 122, 0.30), transparent 60%),
+    radial-gradient(760px 620px at 82% 88%, rgba(70, 230, 208, 0.12), transparent 55%),
+    linear-gradient(158deg, #041c21 0%, #063a42 46%, #075159 100%);
   background-attachment: fixed;
 }
 
-/* Elemen dekoratif halus (lingkaran/dots) di latar — ringan, pakai gradient saja. */
+/* Orbit cahaya + bintang halus + garis grid tipis → detail kedalaman spatial. */
 body::before {
+  content: "";
+  position: fixed;
+  inset: -20vmax;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 20% 24%, var(--halo) 0, transparent 22vmax),
+    radial-gradient(circle at 84% 30%, rgba(90, 200, 210, 0.16) 0, transparent 18vmax),
+    radial-gradient(circle at 68% 82%, rgba(127, 191, 143, 0.16) 0, transparent 20vmax);
+  filter: blur(8px);
+  animation: nebulaDrift 26s ease-in-out infinite alternate;
+}
+/* Lapis bintang + grid (statis, ringan). */
+body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.10) 0 2px, transparent 3px),
-    radial-gradient(circle at 82% 30%, rgba(255, 255, 255, 0.08) 0 60px, transparent 61px),
-    radial-gradient(circle at 90% 85%, rgba(255, 255, 255, 0.06) 0 90px, transparent 91px);
-  background-repeat: no-repeat;
   z-index: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 8% 14%, rgba(255, 255, 255, 0.5) 0 1px, transparent 2px),
+    radial-gradient(circle at 24% 62%, rgba(255, 255, 255, 0.35) 0 1px, transparent 2px),
+    radial-gradient(circle at 46% 22%, rgba(255, 255, 255, 0.4) 0 1px, transparent 2px),
+    radial-gradient(circle at 62% 74%, rgba(255, 255, 255, 0.3) 0 1px, transparent 2px),
+    radial-gradient(circle at 88% 52%, rgba(255, 255, 255, 0.4) 0 1px, transparent 2px),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: auto, auto, auto, auto, auto, 46px 46px, 46px 46px;
+}
+@keyframes nebulaDrift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(2vmax, -2vmax, 0) scale(1.06); }
 }
 
-/* Kartu 3D: gradasi putih->mint, sudut membulat besar, shadow berlapis + inner highlight. */
+/* Konten harus di atas lapisan latar. */
+body > * { position: relative; z-index: 1; }
+
+/* ── KARTU KACA (glassmorphism) ─────────────────────────────────────────────
+   Cukup opak agar tabel/grafik di dalamnya tetap terbaca, tapi tepi bercahaya
+   & mengambang dengan bayangan berlapis. */
 .card-3d {
-  background: linear-gradient(160deg, #ffffff 0%, #f1fbf3 100%);
+  position: relative;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   border-radius: var(--radius-card);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 20px 44px -14px rgba(0, 60, 68, 0.5),
-    0 8px 16px -8px rgba(0, 60, 68, 0.35);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+/* Garis cahaya tipis di tepi (rim light) — ciri permukaan spatial. */
+.card-3d::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.9), rgba(70, 230, 208, 0.25) 40%, transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.7;
 }
 
-/* Tombol 3D: ketebalan (shadow bawah tebal), gradasi atas-terang/bawah-gelap, highlight tepi atas. */
+/* Helper kaca generik (mis. panel kecil, dropdown) bila diperlukan. */
+.glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+/* Aksen glow untuk elemen penting. */
+.glow { box-shadow: 0 0 0 1px var(--glow-soft), 0 0 22px -4px var(--glow-soft); }
+
+/* ── TOMBOL mengambang (glossy + depth) ─────────────────────────────────────*/
 .btn {
   display: inline-flex;
   align-items: center;
@@ -76,78 +152,87 @@ body::before {
   font-weight: 600;
   border-radius: 14px;
   padding: 0.7rem 1.3rem;
-  min-height: 44px; /* touch target PWA (blueprint bagian 11 & 20) */
+  min-height: 44px;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.06s ease, box-shadow 0.1s ease, filter 0.1s ease;
+  transition: transform 0.08s ease, box-shadow 0.14s ease, filter 0.14s ease;
   border: none;
 }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn:hover:not(:disabled) { filter: brightness(1.05); }
 .btn:active:not(:disabled) { transform: translateY(2px); }
 
 .btn-primary {
   color: #fff;
-  background: linear-gradient(180deg, #0a8291 0%, var(--teal-700) 58%, var(--teal-900) 100%);
-  box-shadow: 0 4px 0 #003b43, 0 8px 16px rgba(0, 59, 67, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  background: linear-gradient(180deg, #16a5b3 0%, var(--teal-700) 55%, var(--teal-900) 100%);
+  box-shadow:
+    0 4px 0 #00343b,
+    0 10px 22px -6px rgba(0, 90, 104, 0.6),
+    0 0 22px -6px var(--glow-soft),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
-.btn-primary:active:not(:disabled) { box-shadow: 0 1px 0 #003b43, 0 3px 8px rgba(0, 59, 67, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+.btn-primary:active:not(:disabled) {
+  box-shadow: 0 1px 0 #00343b, 0 4px 10px rgba(0, 59, 67, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
 
 .btn-success {
   color: #fff;
-  background: linear-gradient(180deg, #64b98f 0%, var(--green-500) 60%, #3d7f61 100%);
-  box-shadow: 0 4px 0 #336b52, 0 8px 16px rgba(51, 107, 82, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  background: linear-gradient(180deg, #6fc99c 0%, var(--green-500) 58%, #367559 100%);
+  box-shadow: 0 4px 0 #2c5f48, 0 10px 22px -6px rgba(51, 107, 82, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
-.btn-success:active:not(:disabled) { box-shadow: 0 1px 0 #336b52, 0 3px 8px rgba(51, 107, 82, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+.btn-success:active:not(:disabled) { box-shadow: 0 1px 0 #2c5f48, 0 4px 10px rgba(51, 107, 82, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
 
 .btn-ghost {
   color: var(--teal-900);
-  background: linear-gradient(180deg, #ffffff 0%, #eef6ef 100%);
-  box-shadow: 0 3px 0 rgba(0, 60, 68, 0.15), 0 6px 12px rgba(0, 60, 68, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(232, 246, 239, 0.78) 100%);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 3px 0 rgba(0, 60, 68, 0.14), 0 8px 16px -6px rgba(0, 60, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
-.btn-ghost:active:not(:disabled) { box-shadow: 0 1px 0 rgba(0, 60, 68, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+.btn-ghost:active:not(:disabled) { box-shadow: 0 1px 0 rgba(0, 60, 68, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95); }
 
 .btn-danger {
   color: #fff;
-  background: linear-gradient(180deg, #ef5350 0%, #c62828 60%, #8e1a1a 100%);
-  box-shadow: 0 4px 0 #6b1414, 0 8px 16px rgba(139, 26, 26, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  background: linear-gradient(180deg, #ef5f5c 0%, #c62828 60%, #8e1a1a 100%);
+  box-shadow: 0 4px 0 #6b1414, 0 10px 22px -6px rgba(139, 26, 26, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
-.btn-danger:active:not(:disabled) { box-shadow: 0 1px 0 #6b1414, 0 3px 8px rgba(139, 26, 26, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+.btn-danger:active:not(:disabled) { box-shadow: 0 1px 0 #6b1414, 0 4px 10px rgba(139, 26, 26, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
 
-/* Input dengan kesan inset/cekung (blueprint bagian 23). */
+/* ── INPUT kaca-inset ───────────────────────────────────────────────────────*/
 .input-3d {
   width: 100%;
   border-radius: 12px;
   padding: 0.7rem 0.95rem;
   min-height: 44px;
   color: var(--ink);
-  background: #f4faf5;
-  border: 1px solid rgba(0, 60, 68, 0.12);
-  box-shadow: inset 0 2px 4px rgba(0, 60, 68, 0.1);
+  background: rgba(244, 250, 245, 0.72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 2px 5px rgba(0, 40, 48, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
   outline: none;
-  transition: box-shadow 0.12s ease, border-color 0.12s ease;
+  transition: box-shadow 0.14s ease, border-color 0.14s ease;
 }
-.input-3d::placeholder { color: #8aa8a3; }
-/* Matikan ikon reveal/clear password bawaan Edge & IE — bentrok posisi dengan
-   tombol mata custom kita (components/PasswordInput.jsx) di kanan field. */
+.input-3d::placeholder { color: #83a49f; }
 .input-3d::-ms-reveal,
 .input-3d::-ms-clear { display: none; }
 .input-3d:focus {
-  border-color: var(--teal-700);
-  box-shadow: inset 0 2px 4px rgba(0, 60, 68, 0.1), 0 0 0 3px rgba(0, 102, 116, 0.18);
+  border-color: var(--glow);
+  box-shadow: inset 0 2px 5px rgba(0, 40, 48, 0.12), 0 0 0 3px var(--halo), 0 0 18px -4px var(--glow-soft);
 }
 
-/* Safe-area insets untuk device dengan notch/PWA standalone (blueprint bagian 11). */
+/* Safe-area insets (notch/PWA). */
 @supports (padding: env(safe-area-inset-top)) {
   body {
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 }
 
-/* Skeleton shimmer saat memuat data (blueprint 22). Dihormati reduce-motion di bawah. */
+/* Skeleton shimmer. */
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 16px;
 }
 .skeleton::after {
@@ -155,40 +240,42 @@ body::before {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
   animation: shimmer 1.4s infinite;
 }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 
-/* Mode cetak (untuk "Simpan sebagai PDF" laporan). Latar putih, sembunyikan tombol,
-   PAKSA warna/gradasi ikut tercetak, kontrol pindah halaman (target 2 halaman). */
+/* ── Mode cetak laporan (latar putih, tanpa efek kaca/blur) ──────────────────*/
 @media print {
   html, body { background: #ffffff !important; }
-  body::before { display: none !important; }
+  body::before, body::after { display: none !important; }
   .no-print { display: none !important; }
-  /* Paksa browser mencetak warna latar & gradasi (default-nya distrip). */
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  .card-3d { box-shadow: none !important; border: none !important; padding: 0 !important; }
-  /* Elemen yang tidak boleh terpotong antar halaman. */
+  .card-3d {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    background: #fff !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .card-3d::before { display: none !important; }
   .print-avoid { break-inside: avoid; page-break-inside: avoid; }
-  /* Paksa mulai halaman baru (halaman 2). */
   .print-break { break-before: page; page-break-before: always; }
-  /* Rapatkan sedikit supaya muat 2 halaman. */
   .print-tight table td, .print-tight table th { padding-top: 3px !important; padding-bottom: 3px !important; }
   @page { margin: 11mm; size: A4; }
 }
 
-/* Hormati preferensi "kurangi gerak" (blueprint bagian 22). */
+/* Hormati "kurangi gerak": matikan drift nebula & transisi. */
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
+  body::before { animation: none !important; }
 }
 
-/* Bottom-nav HP (Nav.jsx): beri ruang di bawah konten supaya tidak tertutup bar
-   navigasi tetap; ikut safe-area (notch iPhone). Hanya layar < md (768px). */
+/* Bottom-nav HP: ruang bawah + jangan tercetak. */
 @media (max-width: 767px) {
   main { padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important; }
 }
-/* Bottom-nav jangan ikut tercetak. */
 @media print {
   nav[aria-label="Navigasi bawah"] { display: none !important; }
 }
