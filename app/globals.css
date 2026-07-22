@@ -139,6 +139,41 @@ body > * { position: relative; z-index: 1; }
 /* Aksen glow untuk elemen penting. */
 .glow { box-shadow: 0 0 0 1px var(--glow-soft), 0 0 22px -4px var(--glow-soft); }
 
+/* ── LIST UNDUHAN (baris aksi estetik) — dipakai kartu laporan ───────────────*/
+.dl-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.4rem;
+  border-radius: 9px;
+  transition: background 0.13s ease;
+}
+.dl-row:hover { background: rgba(0, 102, 116, 0.06); }
+.dl-ico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 7px;
+}
+.dl-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.dl-sub {
+  margin-left: 0.3rem;
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.dl-arrow { flex-shrink: 0; color: var(--ink-soft); opacity: 0.7; }
+.dl-row:hover .dl-arrow { opacity: 1; color: var(--teal-700); }
+
 /* ── LAYOUT GRID 3-KOLOM (aman & incremental) ───────────────────────────────
    Dipakai di <main> tiap halaman. DEFAULT: setiap anak MEMBENTANG penuh (sama
    seperti sebelum grid — jadi tak ada yang rusak). Hanya anak yang DITANDAI
@@ -147,7 +182,7 @@ body > * { position: relative; z-index: 1; }
 .grid3 {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.05rem;
+  gap: 0.8rem;
   align-items: start;
 }
 .grid3 > * { grid-column: 1 / -1; } /* default: penuh */
@@ -162,10 +197,14 @@ body > * { position: relative; z-index: 1; }
   .grid3 > .col-2 { grid-column: span 2; }
 }
 
-/* ── Offset konten agar tidak tertutup SIDEBAR (desktop) / TOPBAR (HP) ───────
-   Hanya berlaku di halaman ber-grid3 (punya sidebar). Halaman login tak kena. */
+/* ── Offset konten agar tidak tertutup SIDEBAR kiri/kanan (desktop) / TOPBAR (HP)
+   Sidebar kiri MELAYANG: left-3 (0.75rem) + lebar 14rem → butuh ±15.25rem.
+   Sidebar kanan (info) hanya muncul di ≥1280px, jadi offset kanannya di sana. */
 @media (min-width: 768px) {
-  body:has(main.grid3) { padding-left: 15rem; } /* lebar sidebar 240px */
+  body:has(main.grid3) { padding-left: 15.25rem; }
+}
+@media (min-width: 1280px) {
+  body:has(aside.info-rail) { padding-right: 16.25rem; } /* right-3 + lebar 15rem */
 }
 @media (max-width: 767px) {
   body:has(main.grid3) { padding-top: 52px; }   /* tinggi topbar HP */
@@ -176,13 +215,13 @@ body > * { position: relative; z-index: 1; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: 0.38rem;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   letter-spacing: 0.01em;
-  border-radius: 9px;
-  padding: 0.42rem 0.85rem;
-  min-height: 36px;
+  border-radius: 8px;
+  padding: 0.36rem 0.72rem;
+  min-height: 32px;
   cursor: pointer;
   user-select: none;
   transition: transform 0.1s ease, box-shadow 0.14s ease, filter 0.14s ease, background 0.14s ease;
@@ -190,11 +229,11 @@ body > * { position: relative; z-index: 1; }
 }
 /* Tombol kecil (aksi dalam kartu/tabel) — ramping & rapi. */
 .btn-sm {
-  min-height: 30px;
-  padding: 0.28rem 0.62rem;
-  font-size: 0.78rem;
-  gap: 0.3rem;
-  border-radius: 8px;
+  min-height: 28px;
+  padding: 0.24rem 0.55rem;
+  font-size: 0.74rem;
+  gap: 0.28rem;
+  border-radius: 7px;
 }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn:hover:not(:disabled) { filter: brightness(1.04); }

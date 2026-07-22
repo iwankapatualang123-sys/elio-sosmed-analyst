@@ -30,14 +30,14 @@ export default function MonthFilter({ months = [] }) {
   if (months.length === 0) return null;
 
   return (
-    <label className="flex flex-col gap-1 text-xs font-medium" style={{ color: "rgba(255,255,255,.85)" }}>
-      Tinjau bulan
+    <label className="inline-flex items-center gap-2 text-[11px] font-medium" style={{ color: "var(--on-bg-soft)" }}>
+      <span className="whitespace-nowrap">Tinjau bulan</span>
       <select
-        className="input-3d !min-h-0 !py-1.5 text-sm"
+        className="input-3d !min-h-0 w-auto !py-1 !pl-2.5 !pr-7 text-xs"
         value={selectedMonth}
         onChange={(e) => go(e.target.value)}
       >
-        <option value="all">Semua bulan (sepanjang masa)</option>
+        <option value="all">Semua bulan</option>
         {months.map((m) => <option key={m} value={m}>{labelBulan(m)}</option>)}
       </select>
     </label>

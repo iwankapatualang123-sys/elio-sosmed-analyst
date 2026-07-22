@@ -11,6 +11,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, UploadCloud, Database, CalendarDays, ClipboardList, FileText, Settings, UserRound, ScrollText, LogOut, ChevronDown } from "lucide-react";
 import GlobalSearch from "@/components/GlobalSearch";
 import IdleLogout from "@/components/IdleLogout";
+import InfoRail from "@/components/InfoRail";
 
 const PRIMARY = [
   { href: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
@@ -53,12 +54,12 @@ export default function Nav({ email, role }) {
     return (
       <Link
         href={href}
-        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[rgba(255,255,255,.07)]"
+        className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors hover:bg-[rgba(255,255,255,.07)]"
         style={active
           ? { background: "rgba(127,224,208,.18)", color: "var(--on-bg)", boxShadow: "inset 0 0 0 1px rgba(127,224,208,.32)" }
           : { color: "var(--on-bg-soft)" }}
       >
-        <Icon size={18} strokeWidth={2.1} aria-hidden />
+        <Icon size={16} strokeWidth={2.1} aria-hidden />
         <span>{label}</span>
       </Link>
     );
@@ -67,15 +68,15 @@ export default function Nav({ email, role }) {
   const Brand = ({ compact }) => (
     <div className="flex items-center gap-2.5">
       <div
-        className="flex h-9 w-9 items-center justify-center rounded-xl text-base font-extrabold text-white"
-        style={{ background: "linear-gradient(160deg,#7fe0d0,#0a8291 55%,#00434b)", boxShadow: "0 0 18px -2px rgba(127,224,208,.5)" }}
+        className="flex h-8 w-8 items-center justify-center rounded-xl text-sm font-extrabold text-white"
+        style={{ background: "linear-gradient(160deg,#7fe0d0,#0a8291 55%,#00434b)", boxShadow: "0 0 16px -2px rgba(127,224,208,.5)" }}
       >
         E
       </div>
       {!compact && (
         <div className="leading-none">
-          <div className="text-sm font-bold tracking-tight" style={{ color: "var(--on-bg)" }}>Elio Analyst</div>
-          <div className="mt-0.5 text-[10px] font-medium uppercase tracking-widest" style={{ color: "var(--on-bg-soft)" }}>Sosmed</div>
+          <div className="text-[13px] font-bold tracking-tight" style={{ color: "var(--on-bg)" }}>Elio Analyst</div>
+          <div className="mt-0.5 text-[9px] font-medium uppercase tracking-widest" style={{ color: "var(--on-bg-soft)" }}>Sosmed</div>
         </div>
       )}
     </div>
@@ -83,42 +84,46 @@ export default function Nav({ email, role }) {
 
   return (
     <>
-      {/* ───── SIDEBAR (desktop) ───── */}
+      {/* ───── SIDEBAR (desktop) — panel kaca MELAYANG (margin di semua sisi) ───── */}
       <aside
-        className="fixed left-0 top-0 z-40 hidden h-screen w-60 flex-col px-3 py-4 md:flex"
+        className="fixed left-3 top-3 z-40 hidden w-56 flex-col rounded-2xl px-2.5 py-3 md:flex"
         style={{
+          height: "calc(100vh - 1.5rem)",
           background: "linear-gradient(180deg, rgba(6,32,37,.72), rgba(4,22,26,.66))",
-          WebkitBackdropFilter: "blur(20px) saturate(150%)",
-          backdropFilter: "blur(20px) saturate(150%)",
-          borderRight: "1px solid rgba(127,224,208,.14)",
-          boxShadow: "1px 0 0 rgba(255,255,255,.04) inset, 24px 0 48px -30px rgba(0,0,0,.6)",
+          WebkitBackdropFilter: "blur(22px) saturate(155%)",
+          backdropFilter: "blur(22px) saturate(155%)",
+          border: "1px solid rgba(127,224,208,.16)",
+          boxShadow: "0 1px 0 rgba(255,255,255,.06) inset, 0 24px 48px -24px rgba(0,0,0,.65)",
         }}
       >
-        <div className="px-2 pb-3"><Brand /></div>
-        <div className="px-0.5 pb-3"><GlobalSearch /></div>
+        <div className="px-1.5 pb-2.5"><Brand /></div>
+        <div className="px-0.5 pb-2.5"><GlobalSearch /></div>
 
         <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
-          <p className="px-3 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--on-bg-soft)" }}>Menu</p>
+          <p className="px-2.5 pb-1 pt-0.5 text-[9px] font-semibold uppercase tracking-widest" style={{ color: "var(--on-bg-soft)" }}>Menu</p>
           {PRIMARY.map((l) => <NavLink key={l.href} {...l} />)}
-          <div className="my-2 h-px" style={{ background: "rgba(255,255,255,.1)" }} />
+          <div className="my-1.5 h-px" style={{ background: "rgba(255,255,255,.1)" }} />
           {secondary.map((l) => <NavLink key={l.href} {...l} />)}
         </nav>
 
-        <div className="mt-auto border-t pt-3" style={{ borderColor: "rgba(255,255,255,.1)" }}>
-          <div className="flex items-center gap-2 px-2 pb-2">
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: "linear-gradient(180deg,#7fe0d0,#00545e)" }}>
+        <div className="mt-auto border-t pt-2.5" style={{ borderColor: "rgba(255,255,255,.1)" }}>
+          <div className="flex items-center gap-2 px-1.5 pb-1.5">
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: "linear-gradient(180deg,#7fe0d0,#00545e)" }}>
               {(email || "?").charAt(0).toUpperCase()}
             </span>
             <div className="min-w-0">
-              <div className="truncate text-xs font-semibold" style={{ color: "var(--on-bg)" }}>{email}</div>
-              {role && <div className="text-[10px] capitalize" style={{ color: "var(--on-bg-soft)" }}>{role}</div>}
+              <div className="truncate text-[11px] font-semibold" style={{ color: "var(--on-bg)" }}>{email}</div>
+              {role && <div className="text-[9px] capitalize" style={{ color: "var(--on-bg-soft)" }}>{role}</div>}
             </div>
           </div>
-          <button type="button" onClick={handleLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[rgba(255,90,90,.14)]" style={{ color: "#ff9b9b" }}>
-            <LogOut size={16} aria-hidden /> Keluar
+          <button type="button" onClick={handleLogout} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors hover:bg-[rgba(255,90,90,.14)]" style={{ color: "#ff9b9b" }}>
+            <LogOut size={15} aria-hidden /> Keluar
           </button>
         </div>
       </aside>
+
+      {/* ───── SIDEBAR KANAN (informasi) ───── */}
+      <InfoRail />
 
       {/* ───── TOPBAR (mobile) ───── */}
       <header

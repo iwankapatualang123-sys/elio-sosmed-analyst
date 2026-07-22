@@ -312,7 +312,7 @@ export default async function DashboardPage({ searchParams }) {
       {/* Hero judul */}
       <div className="flex flex-wrap items-end justify-between gap-3 px-1">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">
+          <h1 className="text-xl font-bold tracking-tight text-white drop-shadow-sm sm:text-2xl">
             Dashboard Analitik
           </h1>
           <p className="mt-0.5 text-sm" style={{ color: "var(--on-bg-soft)" }}>
