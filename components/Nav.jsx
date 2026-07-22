@@ -86,7 +86,7 @@ export default function Nav({ email, role }) {
     <>
       {/* ───── SIDEBAR (desktop) — panel kaca MELAYANG (margin di semua sisi) ───── */}
       <aside
-        className="fixed left-3 top-6 z-40 hidden w-56 flex-col rounded-2xl px-2.5 py-3 md:flex"
+        className="fixed left-3 top-6 z-40 hidden w-60 flex-col rounded-2xl px-2.5 py-3 md:flex"
         style={{
           height: "calc(100vh - 3rem)",
           background: "linear-gradient(180deg, rgba(6,32,37,.72), rgba(4,22,26,.66))",

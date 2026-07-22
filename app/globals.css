@@ -61,18 +61,18 @@ body {
   min-height: 100vh;
   color: var(--ink);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
-  /* Latar ABU-ABU gelap (charcoal) immersif — gradasi diagonal netral, jadi
-     panggung untuk kartu kaca terang yang mengambang. Semburan cahaya lembut
-     (sedikit teal untuk aksen brand) agar tidak flat. */
+  /* Latar SILVER METALIK (gunmetal) BERKILAU — gradasi baja gelap + pita kilau
+     diagonal (sheen) seperti logam poles, jadi panggung untuk kartu kaca terang
+     yang mengambang. Cukup gelap agar kartu putih & teks judul tetap kontras. */
   background:
-    radial-gradient(1000px 680px at 2% -12%, rgba(120, 200, 190, 0.10), transparent 58%),
-    radial-gradient(900px 620px at 108% 4%, rgba(150, 165, 185, 0.09), transparent 55%),
-    radial-gradient(1000px 780px at 74% 128%, rgba(140, 160, 175, 0.09), transparent 60%),
-    linear-gradient(158deg, #1b1e22 0%, #262a2f 46%, #31363c 100%);
+    linear-gradient(118deg, transparent 26%, rgba(255, 255, 255, 0.09) 43%, rgba(255, 255, 255, 0.16) 50%, rgba(255, 255, 255, 0.07) 57%, transparent 74%),
+    radial-gradient(1000px 680px at 4% -12%, rgba(226, 232, 240, 0.12), transparent 58%),
+    radial-gradient(1000px 780px at 76% 126%, rgba(200, 210, 222, 0.10), transparent 60%),
+    linear-gradient(158deg, #363c44 0%, #464e59 47%, #565f6b 100%);
   background-attachment: fixed;
 }
 
-/* Orbit cahaya lembut yang mengambang pelan → kesan ruang berkedalaman (spatial). */
+/* Kilau metalik yang mengambang pelan → kesan permukaan perak berkilau (spatial). */
 body::before {
   content: "";
   position: fixed;
@@ -80,10 +80,10 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(circle at 16% 18%, rgba(140, 215, 205, 0.16) 0, transparent 26vmax),
-    radial-gradient(circle at 88% 24%, rgba(160, 175, 195, 0.14) 0, transparent 24vmax),
-    radial-gradient(circle at 70% 88%, rgba(150, 170, 180, 0.14) 0, transparent 26vmax);
-  filter: blur(18px);
+    radial-gradient(circle at 16% 16%, rgba(255, 255, 255, 0.18) 0, transparent 24vmax),
+    radial-gradient(circle at 88% 22%, rgba(214, 224, 236, 0.16) 0, transparent 24vmax),
+    radial-gradient(circle at 70% 90%, rgba(190, 202, 216, 0.14) 0, transparent 26vmax);
+  filter: blur(20px);
   animation: nebulaDrift 34s ease-in-out infinite alternate;
 }
 @keyframes nebulaDrift {
@@ -202,7 +202,7 @@ body > * { position: relative; z-index: 1; }
    Sidebar kiri MELAYANG: left-3 (0.75rem) + lebar 14rem → butuh ±15.25rem.
    Sidebar kanan (info) hanya muncul di ≥1280px, jadi offset kanannya di sana. */
 @media (min-width: 768px) {
-  body:has(main.grid3) { padding-left: 15.25rem; }
+  body:has(main.grid3) { padding-left: 16.25rem; } /* left-3 + lebar 15rem (samakan dgn kanan) */
 }
 @media (min-width: 1280px) {
   body:has(aside.info-rail) { padding-right: 16.25rem; } /* right-3 + lebar 15rem */
