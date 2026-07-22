@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "migrate:data": "node scripts/migrate-supabase-to-mysql.mjs",
     "test:parser": "node test/tiktok-parser.test.js",
     "test:sync": "node test/tiktok-sync.test.js",
     "test:metrics": "node test/tiktok-metrics.test.js",
@@ -24,8 +28,10 @@
     "test:diagnosis": "node test/tiktok-diagnosis.test.js"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.1",
+    "bcryptjs": "^3.0.3",
     "exceljs": "^4.4.0",
     "fflate": "^0.8.3",
     "lucide-react": "^1.23.0",
@@ -38,6 +44,7 @@
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "prisma": "^5.22.0",
     "tailwindcss": "^4"
   }
 }

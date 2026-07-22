@@ -1,0 +1,367 @@
+// Skema Prisma — elio-sosmed-analyst (MySQL, self-host aaPanel).
+// Menggantikan Supabase Postgres. Nama tabel & kolom DIPERTAHANKAN PERSIS seperti
+// di Supabase (lewat @@map / @map) supaya migrasi data 1:1 dan kueri lama gampang
+// ditelusuri. Lihat docs/DEPLOY_AAPANEL.md.
+//
+//   npx prisma generate           → generate client
+//   npx prisma migrate deploy     → terapkan migrasi di server
+//
+// Catatan pemetaan tipe Postgres → MySQL:
+//   uuid            → Char(36)   (kita isi sendiri via @default(uuid()))
+//   bigint identity → BigInt autoincrement
+//   jsonb / text[]  → Json       (MySQL tak punya array; platforms disimpan JSON)
+//   numeric         → Decimal
+//   timestamptz     → DateTime   (disimpan UTC)
+//   date            → DateTime @db.Date
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  manager
+  staff
+}
+
+/// User aplikasi (dulu public.profiles + auth.users Supabase digabung).
+/// password_hash = bcrypt; untuk migrasi bisa disalin langsung dari auth.users.
+model Profile {
+  id           String   @id @default(uuid()) @db.Char(36)
+  fullName     String?  @map("full_name") @db.Text
+  email        String   @unique @db.VarChar(255)
+  passwordHash String?  @map("password_hash") @db.VarChar(255)
+  role         UserRole @default(staff)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  createdById  String?  @map("created_by") @db.Char(36)
+
+  createdBy       Profile?           @relation("ProfileCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdProfiles Profile[]          @relation("ProfileCreatedBy")
+  branchAccess    UserBranchAccess[] @relation("AccessUser")
+  assignedAccess  UserBranchAccess[] @relation("AccessAssignedBy")
+  createdAccounts TiktokAccount[]    @relation("AccountCreatedBy")
+
+  @@map("profiles")
+}
+
+/// Cabang/akun sosial (tabel inti — semua data anak mengacu ke sini).
+model TiktokAccount {
+  id             String   @id @default(uuid()) @db.Char(36)
+  namaCabang     String   @map("nama_cabang") @db.Text
+  tiktokUsername String   @unique @map("tiktok_username") @db.VarChar(255)
+  kategori       String?  @db.Text
+  logoUrl        String?  @map("logo_url") @db.Text
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  createdById    String?  @map("created_by") @db.Char(36)
+
+  createdBy Profile? @relation("AccountCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  branchAccess        UserBranchAccess[]
+  content             TiktokContent[]
+  dailyOverview       TiktokDailyOverview[]
+  followerHistory     TiktokFollowerHistory[]
+  followerGender      TiktokFollowerGender[]
+  followerTerritories TiktokFollowerTerritory[]
+  followerActivity    TiktokFollowerActivity[]
+  viewers             TiktokViewer[]
+  goals               TiktokAccountGoal[]
+  annotations         BranchAnnotation[]
+  contentPlans        ContentPlan[]
+  snapshots           SocialAccountSnapshot[]
+  igDailyMetrics      InstagramDailyMetric[]
+  igContent           InstagramContent[]
+
+  @@map("tiktok_accounts")
+}
+
+/// Hak akses user → cabang (pengganti bagian penting RLS can_access_account).
+model UserBranchAccess {
+  id              String   @id @default(uuid()) @db.Char(36)
+  userId          String   @map("user_id") @db.Char(36)
+  tiktokAccountId String   @map("tiktok_account_id") @db.Char(36)
+  assignedAt      DateTime @default(now()) @map("assigned_at")
+  assignedById    String?  @map("assigned_by") @db.Char(36)
+
+  user       Profile       @relation("AccessUser", fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy Profile?      @relation("AccessAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+  account    TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tiktokAccountId])
+  @@map("user_branch_access")
+}
+
+model TiktokContent {
+  id                  String    @id @default(uuid()) @db.Char(36)
+  tiktokAccountId     String    @map("tiktok_account_id") @db.Char(36)
+  videoId             String    @map("video_id") @db.VarChar(255)
+  videoTitle          String?   @map("video_title") @db.Text
+  videoLink           String?   @map("video_link") @db.Text
+  postDate            DateTime? @map("post_date") @db.Date
+  totalLikes          Int?      @default(0) @map("total_likes")
+  totalComments       Int?      @default(0) @map("total_comments")
+  totalShares         Int?      @default(0) @map("total_shares")
+  totalViews          Int?      @default(0) @map("total_views")
+  reportGeneratedDate DateTime? @map("report_generated_date") @db.Date
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@index([tiktokAccountId])
+  @@map("tiktok_content")
+}
+
+model TiktokDailyOverview {
+  id              String   @id @default(uuid()) @db.Char(36)
+  tiktokAccountId String   @map("tiktok_account_id") @db.Char(36)
+  date            DateTime @db.Date
+  videoViews      Int?     @default(0) @map("video_views")
+  profileViews    Int?     @default(0) @map("profile_views")
+  likes           Int?     @default(0)
+  comments        Int?     @default(0)
+  shares          Int?     @default(0)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([tiktokAccountId, date])
+  @@map("tiktok_daily_overview")
+}
+
+model TiktokFollowerHistory {
+  id                  String   @id @default(uuid()) @db.Char(36)
+  tiktokAccountId     String   @map("tiktok_account_id") @db.Char(36)
+  date                DateTime @db.Date
+  followers           Int
+  diffFromPreviousDay Int?     @default(0) @map("diff_from_previous_day")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([tiktokAccountId, date])
+  @@map("tiktok_follower_history")
+}
+
+model TiktokFollowerGender {
+  id              String   @id @default(uuid()) @db.Char(36)
+  tiktokAccountId String   @map("tiktok_account_id") @db.Char(36)
+  snapshotDate    DateTime @map("snapshot_date") @db.Date
+  malePct         Decimal? @map("male_pct") @db.Decimal(6, 3)
+  femalePct       Decimal? @map("female_pct") @db.Decimal(6, 3)
+  otherPct        Decimal? @map("other_pct") @db.Decimal(6, 3)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([tiktokAccountId, snapshotDate])
+  @@map("tiktok_follower_gender")
+}
+
+model TiktokFollowerTerritory {
+  id              String   @id @default(uuid()) @db.Char(36)
+  tiktokAccountId String   @map("tiktok_account_id") @db.Char(36)
+  snapshotDate    DateTime @map("snapshot_date") @db.Date
+  territoryCode   String   @map("territory_code") @db.VarChar(255)
+  distributionPct Decimal? @map("distribution_pct") @db.Decimal(6, 3)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([tiktokAccountId, snapshotDate, territoryCode])
+  @@map("tiktok_follower_territories")
+}
+
+model TiktokFollowerActivity {
+  id              String   @id @default(uuid()) @db.Char(36)
+  tiktokAccountId String   @map("tiktok_account_id") @db.Char(36)
+  date            DateTime @db.Date
+  hour            Int      @db.SmallInt
+  activeFollowers Int?     @default(0) @map("active_followers")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([tiktokAccountId, date, hour])
+  @@map("tiktok_follower_activity")
+}
+
+model TiktokViewer {
+  id               String   @id @default(uuid()) @db.Char(36)
+  tiktokAccountId  String   @map("tiktok_account_id") @db.Char(36)
+  date             DateTime @db.Date
+  totalViewers     Int?     @map("total_viewers")
+  newViewers       Int?     @map("new_viewers")
+  returningViewers Int?     @map("returning_viewers")
+  isIncomplete     Boolean? @default(false) @map("is_incomplete")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([tiktokAccountId, date])
+  @@map("tiktok_viewers")
+}
+
+model ActivityLog {
+  id        BigInt   @id @default(autoincrement())
+  userId    String?  @map("user_id") @db.Char(36)
+  userEmail String?  @map("user_email") @db.VarChar(255)
+  action    String   @db.Text
+  entity    String?  @db.Text
+  detail    Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("activity_log")
+}
+
+/// Target per akun × platform × bulan. PK komposit (sesuai Supabase).
+model TiktokAccountGoal {
+  tiktokAccountId      String   @map("tiktok_account_id") @db.Char(36)
+  platform             String   @default("tiktok") @db.VarChar(20)
+  targetMonth          String   @map("target_month") @db.VarChar(7)
+  targetTotalViews     Int?     @map("target_total_views")
+  targetEngagementRate Decimal? @map("target_engagement_rate") @db.Decimal(6, 3)
+  targetNetFollowers   Int?     @map("target_net_followers")
+  updatedById          String?  @map("updated_by") @db.Char(36)
+  updatedAt            DateTime @default(now()) @map("updated_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@id([tiktokAccountId, platform, targetMonth])
+  @@map("tiktok_account_goals")
+}
+
+model BranchAnnotation {
+  id              BigInt   @id @default(autoincrement())
+  tiktokAccountId String   @map("tiktok_account_id") @db.Char(36)
+  noteDate        DateTime @map("note_date") @db.Date
+  note            String   @db.Text
+  createdById     String?  @map("created_by") @db.Char(36)
+  createdByEmail  String?  @map("created_by_email") @db.VarChar(255)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@index([tiktokAccountId])
+  @@map("branch_annotations")
+}
+
+model ContentPlan {
+  id              BigInt    @id @default(autoincrement())
+  tiktokAccountId String    @map("tiktok_account_id") @db.Char(36)
+  planMonth       DateTime  @map("plan_month") @db.Date
+  postDate        DateTime? @map("post_date") @db.Date
+  seq             Int?
+  pic             String?   @db.Text
+  headline        String?   @db.Text
+  topic           String?   @db.Text
+  goalsContent    String?   @map("goals_content") @db.Text
+  primaryPillar   String?   @map("primary_pillar") @db.Text
+  secondaryPillar String?   @map("secondary_pillar") @db.Text
+  contentType     String?   @map("content_type") @db.Text
+  referenceUrl    String?   @map("reference_url") @db.Text
+  notes           String?   @db.Text
+  accToPosting    Boolean   @default(false) @map("acc_to_posting")
+  statusOverride  String?   @map("status_override") @db.Text
+  createdById     String?   @map("created_by") @db.Char(36)
+  createdByEmail  String?   @map("created_by_email") @db.VarChar(255)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  postedUrl       String?   @map("posted_url") @db.Text
+  replacedById    BigInt?   @map("replaced_by_id")
+  platforms       Json // text[] Postgres → JSON array ["tiktok",...]
+  platformLinks   Json      @map("platform_links")
+
+  account    TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+  replacedBy ContentPlan?  @relation("PlanReplacedBy", fields: [replacedById], references: [id], onDelete: SetNull)
+  replaces   ContentPlan[] @relation("PlanReplacedBy")
+
+  @@index([tiktokAccountId])
+  @@map("content_plans")
+}
+
+model ContentPlanCategory {
+  id           BigInt   @id @default(autoincrement())
+  categoryType String   @map("category_type") @db.VarChar(20)
+  value        String   @db.Text
+  createdById  String?  @map("created_by") @db.Char(36)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("content_plan_categories")
+}
+
+model SocialAccountSnapshot {
+  id              BigInt   @id @default(autoincrement())
+  tiktokAccountId String   @map("tiktok_account_id") @db.Char(36)
+  platform        String   @db.VarChar(20)
+  snapshotDate    DateTime @map("snapshot_date") @db.Date
+  followers       Int?
+  reach30d        Int?     @map("reach_30d")
+  profileVisits   Int?     @map("profile_visits")
+  createdById     String?  @map("created_by") @db.Char(36)
+  createdByEmail  String?  @map("created_by_email") @db.VarChar(255)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@index([tiktokAccountId])
+  @@map("social_account_snapshots")
+}
+
+model InstagramDailyMetric {
+  id              BigInt   @id @default(autoincrement())
+  tiktokAccountId String   @map("tiktok_account_id") @db.Char(36)
+  metric          String   @db.VarChar(30)
+  date            DateTime @db.Date
+  value           Int
+  createdById     String?  @map("created_by") @db.Char(36)
+  createdByEmail  String?  @map("created_by_email") @db.VarChar(255)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@index([tiktokAccountId])
+  @@map("instagram_daily_metrics")
+}
+
+model InstagramContent {
+  id              BigInt    @id @default(autoincrement())
+  tiktokAccountId String    @map("tiktok_account_id") @db.Char(36)
+  postId          String    @map("post_id") @db.VarChar(255)
+  igAccountId     String?   @map("ig_account_id") @db.VarChar(255)
+  username        String?   @db.VarChar(255)
+  accountName     String?   @map("account_name") @db.Text
+  description     String?   @db.Text
+  durationS       Int?      @map("duration_s")
+  publishedAt     DateTime? @map("published_at")
+  permalink       String?   @db.Text
+  postType        String?   @map("post_type") @db.VarChar(50)
+  views           Int?
+  reach           Int?
+  likes           Int?
+  comments        Int?
+  shares          Int?
+  saves           Int?
+  profileVisits   Int?      @map("profile_visits")
+  replies         Int?
+  navigation      Int?
+  stickerTaps     Int?      @map("sticker_taps")
+  follows         Int?
+  isCollab        Boolean   @default(false) @map("is_collab")
+  createdById     String?   @map("created_by") @db.Char(36)
+  createdByEmail  String?   @map("created_by_email") @db.VarChar(255)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@index([tiktokAccountId])
+  @@map("instagram_content")
+}

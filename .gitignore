@@ -34,6 +34,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# ekspor password saat migrasi (JANGAN commit — berisi hash bcrypt user)
+auth_users.json
+
 # vercel
 .vercel
 

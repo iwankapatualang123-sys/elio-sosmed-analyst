@@ -1,126 +1,63 @@
-# Deploy ke Server Sendiri (aaPanel) + Database Sendiri
+# Deploy ke Server Sendiri (aaPanel) — MySQL + Prisma + PM2
 
-Panduan memindahkan **elio-sosmed-analyst** dari Vercel + Supabase Cloud ke
-**server sendiri via aaPanel**, dengan **database pindah** juga.
+Panduan memindahkan **elio-sosmed-analyst** dari **Vercel + Supabase** ke
+**server aaPanel sendiri** dengan **database MySQL**, mengikuti pola aplikasi
+aaPanel Anda yang lain (`elio-absensi-aapanel`).
 
-> **Ringkas:** kode aplikasi TIDAK perlu diubah. Semua koneksi Supabase lewat
-> environment variable, jadi cukup arahkan env ke database baru + jalankan
-> Next.js di server. Bagian tersulit adalah **database**, bukan aplikasinya.
+> **Ringkas:** database Supabase (Postgres) → **MySQL**, akses data lewat
+> **Prisma**, autentikasi Supabase → **JWT cookie sendiri**, RLS → **cek akses di
+> kode**. Next.js tetap dipakai apa adanya dan jalan lewat **PM2** (Next.js sudah
+> jadi server-nya sendiri — tidak perlu backend Express terpisah seperti absensi
+> yang berbasis Vite SPA).
 
 ---
 
-## 0. Keputusan penting: database mau seperti apa?
+## 0. Perubahan dibanding versi Supabase
 
-Aplikasi ini memakai **Supabase** bukan cuma sebagai Postgres, tapi juga untuk
-**Auth (login/role)** dan **RLS (keamanan data per cabang)**. Ada 2 jalur:
-
-| Jalur | Usaha | Rekomendasi |
+| Lapisan | Sebelum (Vercel) | Sesudah (aaPanel) |
 |---|---|---|
-| **A. Self-host Supabase** (Docker) di server | Sedang | ✅ **Dipakai panduan ini.** Kode aplikasi TIDAK berubah — tinggal ganti env. Auth + RLS ikut pindah utuh. |
-| **B. PostgreSQL biasa saja** (tanpa Supabase) | Besar | ❌ Harus tulis ulang seluruh login, role, dan RLS. Tidak disarankan. |
+| Database | Supabase Postgres | **MySQL** (aaPanel Database Manager) |
+| Akses data | `supabase.from()` | **Prisma** (`lib/db.js`) |
+| Auth | Supabase Auth (GoTrue) | **JWT cookie** (`lib/auth-jwt.js`), hash bcrypt |
+| Keamanan data | Postgres RLS | Cek akses di kode (`user_branch_access`) |
+| Runtime | Vercel serverless | **Next.js `npm start`** via PM2 |
+| Web server | Vercel edge | **Nginx** reverse proxy + SSL |
 
-Panduan di bawah memakai **Jalur A**.
-
-> **Sadari konsekuensinya:** setelah pindah dari layanan terkelola, **backup,
+> **Sadari konsekuensinya:** setelah lepas dari layanan terkelola, **backup,
 > update keamanan, dan uptime jadi tanggung jawab Anda.** Siapkan cron backup
-> (langkah 6) sejak hari pertama.
+> (langkah 7) sejak hari pertama — Supabase tidak lagi mem-backup otomatis.
 
 ---
 
 ## 1. Siapkan server (aaPanel)
 
-1. Server Linux (Ubuntu 22.04+ disarankan), RAM **≥ 4 GB** (Supabase + Next.js).
-2. Pasang aaPanel, lalu dari **App Store** aaPanel:
-   - **Docker Manager** (untuk Supabase),
+1. Server Linux, RAM **≥ 2 GB**. Bisa server yang sama dengan app aaPanel lain.
+2. Dari **App Store** aaPanel pastikan terpasang:
    - **Node.js** versi **22** (aplikasi butuh Node ≥ 22),
-   - **Nginx** (biasanya sudah ada — dipakai reverse proxy + SSL).
-3. Arahkan 2 subdomain ke IP server (DNS A record):
-   - `app.domain-anda.com`  → aplikasi Next.js
-   - `db.domain-anda.com`   → API Supabase
+   - **MySQL** 8.x,
+   - **Nginx** (reverse proxy + SSL),
+   - **PM2** (via Node.js manager aaPanel, atau `npm i -g pm2`).
+3. Arahkan 1 subdomain ke IP server (DNS A record), mis.
+   `sosmed.eliodigihub.my.id`.
 
 ---
 
-## 2. Self-host Supabase (Docker)
+## 2. Buat database MySQL
 
-```bash
-# di server, sebagai user biasa
-git clone --depth 1 https://github.com/supabase/supabase
-cd supabase/docker
-cp .env.example .env
+Di aaPanel → **Databases** → *Add database*:
+
+- Nama database: `elio_sosmed`
+- Buat **user DB khusus** (bukan root), catat password-nya.
+- Charset: `utf8mb4`.
+
+`DATABASE_URL` nanti berbentuk:
 ```
-
-Edit `.env` (minimal yang WAJIB diganti dari default):
-
-- `POSTGRES_PASSWORD` — password Postgres (kuat & unik).
-- `JWT_SECRET` — string acak ≥ 40 karakter.
-- `ANON_KEY` & `SERVICE_ROLE_KEY` — generate dari `JWT_SECRET`.
-- `SITE_URL=https://app.domain-anda.com`
-- `API_EXTERNAL_URL=https://db.domain-anda.com`
-- `SUPABASE_PUBLIC_URL=https://db.domain-anda.com`
-- Ganti password default lain (`DASHBOARD_PASSWORD`, dll).
-
-**Cara cepat generate semua kunci + password** (dijalankan di mesin mana pun
-yang punya Node — repo ini menyediakan skrip tanpa dependensi):
-
-```bash
-node scripts/gen-supabase-keys.mjs
+mysql://elio_sosmed:PASSWORD@127.0.0.1:3306/elio_sosmed
 ```
-
-Skrip itu mencetak blok siap-tempel untuk `supabase/docker/.env` (JWT_SECRET,
-ANON_KEY, SERVICE_ROLE_KEY, POSTGRES_PASSWORD, DASHBOARD_PASSWORD) **dan** blok
-untuk `.env.local` aplikasi (ANON_KEY + SERVICE_ROLE_KEY yang sama). Isi sendiri
-bagian domain (`SITE_URL` dll). Simpan hasilnya baik-baik — jangan di-commit.
-
-Jalankan:
-
-```bash
-docker compose up -d
-docker compose ps   # pastikan semua "healthy"
-```
-
-Di aaPanel: buat situs `db.domain-anda.com` → **Reverse Proxy** ke
-`http://127.0.0.1:8000` (port Kong/Supabase) → aktifkan **SSL (Let's Encrypt)**.
-
-> Studio (admin DB) ada di port `3000` internal Supabase — JANGAN diekspos publik
-> tanpa proteksi. Akses via SSH tunnel atau batasi IP.
 
 ---
 
-## 3. Pindahkan data dari Supabase Cloud
-
-**a. Ambil connection string sumber** dari dashboard Supabase Cloud lama:
-Settings → Database → *Connection string* (mode **Session/direct**, bukan pooler).
-
-**b. Dump schema + data** (dari mesin mana pun yang punya `pg_dump` v15+):
-
-```bash
-# Skema public (tabel aplikasi) + skema auth (user & password login)
-pg_dump "postgresql://postgres:PASS@db.<ref>.supabase.co:5432/postgres" \
-  --schema=public --schema=auth \
-  --no-owner --no-privileges \
-  -f elio_dump.sql
-```
-
-**c. Restore ke Supabase self-host:**
-
-```bash
-# konek ke Postgres self-host (port 5432 di server, atau via docker exec)
-psql "postgresql://postgres:POSTGRES_PASSWORD@127.0.0.1:5432/postgres" -f elio_dump.sql
-```
-
-> Karena skema `auth` ikut dipindah, **semua user + password lama tetap bisa
-> login** (hash password ada di `auth.users`). RLS & trigger juga ikut karena
-> ada di skema `public`.
->
-> Alternatif skema saja: jalankan berurutan file di `supabase/migrations/`,
-> lalu dump **data** saja (`--data-only`) dari sumber untuk diisi.
-
-**d. Verifikasi:** buka Studio self-host, cek tabel `tiktok_accounts`,
-`instagram_content`, `profiles`, dll terisi.
-
----
-
-## 4. Deploy aplikasi Next.js di aaPanel
+## 3. Deploy kode & siapkan skema
 
 ```bash
 # clone repo ke server
@@ -129,66 +66,129 @@ cd /www/wwwroot/elio-sosmed-analyst
 cp .env.example .env.local
 ```
 
-Isi `.env.local` dengan nilai **self-host** (lihat .env.example):
+Isi `.env.local` (lihat `.env.example`):
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://db.domain-anda.com
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY self-host>
-SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY self-host>
-GROQ_API_KEY=<opsional>
+DATABASE_URL=mysql://elio_sosmed:PASSWORD@127.0.0.1:3306/elio_sosmed
+AUTH_JWT_SECRET=<hasil: node scripts/gen-secret.mjs>
+GROQ_API_KEY=<opsional, untuk Insight AI>
 ```
 
-Build & jalankan:
+Install, buat tabel, generate client:
 
 ```bash
 npm ci
-npm run build          # NEXT_PUBLIC_* di-bake di sini — env harus sudah benar!
-npm start              # jalan di port 3000
+npx prisma migrate deploy   # buat 18 tabel di MySQL dari prisma/migrations
+npx prisma generate
 ```
 
-Supaya tetap hidup, jalankan lewat **PM2** (dari aaPanel Node.js project atau
-manual):
+> Kalau `prisma/migrations` belum ada (baru pakai schema), sekali saja jalankan
+> di mesin dev: `npx prisma migrate dev --name init` untuk membuat file migrasi,
+> commit, lalu di server cukup `migrate deploy`.
+
+---
+
+## 4. Pindahkan data dari Supabase
+
+**a. Data tabel** (18 tabel) — dari server yang punya akses ke keduanya:
 
 ```bash
-pm2 start npm --name elio -- start
+export SRC_SUPABASE_URL="https://<ref>.supabase.co"
+export SRC_SUPABASE_SERVICE_KEY="<service_role key Supabase lama>"
+export DATABASE_URL="mysql://elio_sosmed:PASSWORD@127.0.0.1:3306/elio_sosmed"
+
+node scripts/migrate-supabase-to-mysql.mjs
+```
+
+Skrip membaca semua baris via service-role (bypass RLS) dan meng-upsert ke MySQL
+lewat Prisma, dengan urutan aman-FK. **Idempotent** — aman dijalankan ulang
+mendekati waktu cutover supaya data terbaru ikut.
+
+**b. Password login** (opsional, supaya user tak perlu reset) — di Supabase SQL
+editor jalankan:
+
+```sql
+select json_agg(json_build_object(
+  'id', id, 'email', email, 'encrypted_password', encrypted_password
+)) from auth.users;
+```
+
+Simpan hasilnya ke `auth_users.json` di folder kerja, lalu jalankan ulang skrip
+migrasi. Hash bcrypt Supabase (`$2a$…`) kompatibel dengan verifikasi kita, jadi
+password lama tetap berlaku. (Kalau dilewati, buat/reset password lewat halaman
+Pengaturan.)
+
+**c. Verifikasi:**
+
+```bash
+npx prisma studio   # buka via SSH tunnel; cek tabel tiktok_accounts, profiles, dll terisi
+```
+
+---
+
+## 5. Jalankan aplikasi (PM2)
+
+```bash
+npm run build          # build Next.js produksi
+pm2 start npm --name elio-sosmed -- start
 pm2 save && pm2 startup
 ```
 
-Di aaPanel: situs `app.domain-anda.com` → **Reverse Proxy** ke
-`http://127.0.0.1:3000` → aktifkan **SSL (Let's Encrypt)**.
+Next.js jalan di port **3000** (ubah dengan `-- start -p 3xxx` bila bentrok
+dengan app lain di server — mis. absensi backend di 3900).
+
+> ⚠️ Kalau folder kode pernah dipindah, `pm2 restart` tidak cukup — `pm2 delete
+> elio-sosmed` lalu `pm2 start` ulang dari folder yang benar, baru `pm2 save`.
 
 ---
 
-## 5. Konfigurasi akhir
+## 6. Nginx reverse proxy + SSL
 
-1. Di Supabase self-host `.env`, pastikan `SITE_URL` = domain app, lalu
-   `docker compose restart` bila diubah — supaya link reset password / redirect
-   auth mengarah ke domain baru.
-2. Uji: **login**, **upload** data TikTok & Instagram, **RLS** (user staff cuma
-   lihat cabang-nya), **backup** (halaman Pengaturan), **Insight AI** (bila pakai Groq).
-3. Matikan auto-deploy Vercel lama bila sudah yakin (atau simpan sebagai cadangan).
+Di aaPanel: **Add site** `sosmed.eliodigihub.my.id` (tanpa program, root default),
+lalu **Reverse Proxy** ke `http://127.0.0.1:3000`, aktifkan **SSL (Let's
+Encrypt)**. Uji:
+
+- **Login** (akun lama tetap jalan bila password sudah dimigrasi),
+- **Upload** TikTok & Instagram,
+- **Akses per-cabang** (user staff hanya lihat cabangnya),
+- **Insight AI** (bila pakai Groq).
 
 ---
 
-## 6. Backup (WAJIB — tidak ada lagi backup otomatis)
+## 7. Backup (WAJIB — tidak ada lagi backup otomatis)
 
-Cron harian `pg_dump` ke folder aman (atau storage eksternal):
+Cron harian `mysqldump`:
 
 ```bash
-0 2 * * *  pg_dump "postgresql://postgres:POSTGRES_PASSWORD@127.0.0.1:5432/postgres" \
-  | gzip > /www/backup/elio_$(date +\%F).sql.gz
+0 2 * * *  mysqldump -u elio_sosmed -pPASSWORD elio_sosmed \
+  | gzip > /www/backup/elio_sosmed_$(date +\%F).sql.gz
 ```
 
-Simpan minimal 7–14 hari, dan sesekali unduh ke luar server.
+Simpan 7–14 hari, sesekali unduh ke luar server.
+
+---
+
+## 8. Cutover & matikan Supabase
+
+1. Jalankan ulang skrip migrasi data mendekati waktu cutover (ambil data terbaru).
+2. Alihkan pemakaian staf ke domain aaPanel.
+3. Amati 1–2 minggu. Setelah yakin stabil, matikan auto-deploy Vercel & pause
+   project Supabase.
+
+> **Catatan:** project Supabase "Digihub" dipakai bersama beberapa aplikasi Anda
+> (Digihub mainpage, HPP, dll). **Jangan hapus project Supabase** selama app lain
+> masih memakainya — cukup berhenti memakai tabel sosmed dari sisi app ini.
 
 ---
 
 ## Catatan gotcha
 
-- **`NEXT_PUBLIC_SUPABASE_URL` di-bake saat build.** Kalau ganti URL DB, **build
-  ulang** aplikasinya — tidak cukup restart.
+- **`AUTH_JWT_SECRET` harus tetap sama** setelah di-set — kalau berubah, semua
+  sesi login batal (user harus login ulang). Jangan regenerate sembarangan.
+- **`prisma generate` wajib setelah `npm ci`** di server (client tidak ikut
+  ter-commit). Sudah otomatis bila ada `postinstall`, kalau tidak jalankan manual.
+- **`sharp`** (resize thumbnail) native di Node server — pastikan tidak di-skip
+  saat `npm ci`.
 - **`vercel.json`** boleh dibiarkan; diabaikan di luar Vercel.
-- **`sharp`** (resize thumbnail) jalan native di Node server — pastikan tidak
-  di-skip saat `npm ci`.
-- File API (`/api/report/*`, `/api/upload`, `/api/tiktok-thumbnail`) berjalan di
-  Node server aaPanel, sama seperti di Vercel.
+- **Zona waktu:** MySQL simpan `DATETIME` apa adanya. Pastikan server & MySQL
+  konsisten (disarankan UTC) supaya perhitungan tanggal harian tidak geser.
