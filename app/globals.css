@@ -32,9 +32,9 @@
 
   /* Kartu KACA (glassmorphism): permukaan terang transparan yang berkilau,
      backdrop-blur kuat agar nebula di belakang terlihat samar & mewah. */
-  --glass-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.66), rgba(238, 253, 249, 0.48));
-  --glass-border: 1px solid rgba(255, 255, 255, 0.55);
-  --glass-blur: blur(22px) saturate(165%);
+  --glass-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.92), rgba(244, 255, 252, 0.82));
+  --glass-border: 1px solid rgba(255, 255, 255, 0.7);
+  --glass-blur: blur(22px) saturate(150%);
   --glass-shadow:
     0 1px 0 rgba(255, 255, 255, 0.6) inset,
     0 2px 6px rgba(3, 22, 26, 0.22),
