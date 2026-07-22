@@ -1,12 +1,14 @@
 // File: app/dashboard/actions.js
-// Server Action untuk set target/goal cabang (blueprint 21A). Hanya admin/manager
-// (RLS + cek role), upsert 1 baris per cabang, lalu revalidate dashboard.
+// Server Action untuk set target/goal cabang (blueprint 21A) & anotasi. Hanya
+// admin/manager untuk target; anotasi oleh siapa pun yang punya akses cabang.
+// Akses menggantikan RLS: dicek via lib/access.
 
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import prisma from "@/lib/db";
 import { getCurrentProfile, canWrite } from "@/lib/auth";
+import { assertCanAccess, canAccessAccount, isAdmin } from "@/lib/access";
 import { logActivity } from "@/lib/audit";
 
 // Parse angka bulat dari form (buang non-digit); kosong -> null.
@@ -28,17 +30,23 @@ export async function setGoals(formData) {
   if (!canWrite(profile)) throw new Error("Hanya admin/manager yang boleh mengatur target.");
   const accountId = String(formData.get("accountId") || "");
   if (!accountId) return;
+  await assertCanAccess(profile, accountId);
 
-  const supabase = await createSupabaseServerClient();
-  await supabase.from("tiktok_account_goals").upsert({
-    tiktok_account_id: accountId,
-    target_total_views: toInt(formData.get("target_total_views")),
-    target_engagement_rate: toNum(formData.get("target_engagement_rate")),
-    target_net_followers: toInt(formData.get("target_net_followers")),
-    updated_by: profile.id,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: "tiktok_account_id" });
-  await logActivity(supabase, { action: "set_target_cabang", entity: accountId });
+  // Target legacy dari dashboard: platform tiktok, bulan berjalan.
+  const platform = "tiktok";
+  const targetMonth = new Date().toISOString().slice(0, 7);
+  const base = {
+    targetTotalViews: toInt(formData.get("target_total_views")),
+    targetEngagementRate: toNum(formData.get("target_engagement_rate")),
+    targetNetFollowers: toInt(formData.get("target_net_followers")),
+    updatedById: profile.id,
+  };
+  await prisma.tiktokAccountGoal.upsert({
+    where: { tiktokAccountId_platform_targetMonth: { tiktokAccountId: accountId, platform, targetMonth } },
+    create: { tiktokAccountId: accountId, platform, targetMonth, ...base },
+    update: base,
+  });
+  await logActivity({ action: "set_target_cabang", entity: accountId });
   revalidatePath("/dashboard");
 }
 
@@ -50,25 +58,40 @@ export async function addAnnotation(formData) {
   const note_date = String(formData.get("note_date") || "");
   const note = String(formData.get("note") || "").trim();
   if (!accountId || !note_date || !note) return;
-  const supabase = await createSupabaseServerClient();
-  await supabase.from("branch_annotations").insert({
-    tiktok_account_id: accountId,
-    note_date,
-    note,
-    created_by: profile.id,
-    created_by_email: profile.email,
+  await assertCanAccess(profile, accountId);
+  await prisma.branchAnnotation.create({
+    data: {
+      tiktokAccountId: accountId,
+      noteDate: new Date(note_date),
+      note,
+      createdById: profile.id,
+      createdByEmail: profile.email,
+    },
   });
-  await logActivity(supabase, { action: "tambah_anotasi", entity: accountId, detail: { note_date } });
+  await logActivity({ action: "tambah_anotasi", entity: accountId, detail: { note_date } });
   revalidatePath("/dashboard");
 }
 
-// Hapus anotasi (pemilik atau admin — dijamin RLS).
+// Hapus anotasi (pemilik atau admin, dan punya akses cabang).
 export async function deleteAnnotation(formData) {
   const profile = await getCurrentProfile();
   if (!profile?.role) throw new Error("Belum login.");
   const id = String(formData.get("id") || "");
   if (!id) return;
-  const supabase = await createSupabaseServerClient();
-  await supabase.from("branch_annotations").delete().eq("id", id);
+  let key;
+  try {
+    key = BigInt(id);
+  } catch {
+    return;
+  }
+  const row = await prisma.branchAnnotation.findUnique({
+    where: { id: key },
+    select: { createdById: true, tiktokAccountId: true },
+  });
+  if (!row) return;
+  const allowed = (await canAccessAccount(profile, row.tiktokAccountId)) &&
+    (isAdmin(profile) || row.createdById === profile.id);
+  if (!allowed) throw new Error("Tidak boleh menghapus anotasi ini.");
+  await prisma.branchAnnotation.delete({ where: { id: key } });
   revalidatePath("/dashboard");
 }
