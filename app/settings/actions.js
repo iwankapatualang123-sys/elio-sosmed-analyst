@@ -242,15 +242,21 @@ export async function resetUserPassword(prevState, formData) {
     const email = String(formData.get("email") || "");
     if (!id) return { ok: false, error: "User tidak ditemukan." };
 
-    const tempPassword = generateTempPassword();
+    // Password diketik manual oleh admin (utama). Kosong = generate acak (fallback).
+    const manual = String(formData.get("password") || "").trim();
+    if (manual && manual.length < 8) {
+      return { ok: false, error: "Password minimal 8 karakter." };
+    }
+    const newPassword = manual || generateTempPassword();
     try {
-      await prisma.profile.update({ where: { id }, data: { passwordHash: await hashPassword(tempPassword) } });
+      await prisma.profile.update({ where: { id }, data: { passwordHash: await hashPassword(newPassword) } });
     } catch (err) {
       return { ok: false, error: err?.message || "Gagal reset password." };
     }
 
-    await logActivity({ action: "reset_password_user", entity: email, detail: { user_id: id } });
-    return { ok: true, email, tempPassword };
+    await logActivity({ action: "reset_password_user", entity: email, detail: { user_id: id, manual: Boolean(manual) } });
+    // manual=true → admin sudah tahu passwordnya (tak perlu echo); acak → tampilkan sekali.
+    return { ok: true, email, manual: Boolean(manual), tempPassword: manual ? null : newPassword };
   } catch (err) {
     return { ok: false, error: err?.message || "Gagal reset password." };
   }
