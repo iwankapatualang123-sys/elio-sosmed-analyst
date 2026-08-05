@@ -70,6 +70,19 @@ export default async function UploadPage() {
         </section>
       ) : (
         <>
+          {/* Pengingat kelengkapan data: ekspor TikTok/Meta dibatasi ~15-16 baris
+              per unduhan & rentang 7/28/60 hari tidak bersarang rapi. Upload semua
+              rentang sekaligus + rutin supaya tidak ada konten yang terlewat
+              (aplikasi menggabungkan otomatis via video_id / post_id). */}
+          <section className="card-3d p-4" style={{ background: "#fffbeb", border: "1px solid #fde68a" }}>
+            <h2 className="mb-1 flex items-center gap-1.5 text-sm font-semibold" style={{ color: "#854d0e" }}>💡 Biar data lengkap tiap bulan</h2>
+            <ul className="ml-4 list-disc space-y-0.5 text-xs" style={{ color: "#854d0e" }}>
+              <li>TikTok Studio membatasi ekspor <b>Content ke ~15-16 video</b> per unduhan, dan rentang 7/28/60 hari <b>tidak selalu memuat semua</b>. Unduh <b>ketiga rentang (7 + 28 + 60 hari) lalu upload sekaligus</b>.</li>
+              <li>Sama untuk <b>Meta Business Suite (Instagram)</b> — ekspor rutin agar konten baru masuk.</li>
+              <li>Aman diulang: data digabung otomatis (dedup via video_id / post_id), yang lama di-update, yang baru ditambah. <b>Upload rutin</b> (mis. tiap minggu) supaya arsip makin lengkap.</li>
+            </ul>
+          </section>
+
           <UploadClient branches={branches} />
           {/* Data IG dari export Meta Business Suite (harian + per konten). */}
           <InstagramUploadCard branches={branches} />
