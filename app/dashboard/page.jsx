@@ -143,7 +143,7 @@ export default async function UmumPage({ searchParams }) {
             if (!missing.length) return null;
             return (
               <p className="mt-2 rounded-lg px-3 py-2 text-[11px]" style={{ background: "rgba(240,180,90,.14)", color: "#8a5a12" }}>
-                Batang <b>{missing.join(" & ")}</b> belum tampil karena jumlah follower absolutnya belum ada — export Meta/Threads hanya memuat <i>pertambahan</i> follower, bukan total. Isi jumlah follower {missing.join(" & ")} <b>manual (mingguan)</b> di halaman Upload; batangnya muncul otomatis.
+                Batang <b>{missing.join(" & ")}</b> belum tampil karena belum ada angka follower <b>total</b>-nya — export Meta/Threads cuma memuat <i>pertambahan</i> harian, bukan total. Cukup isi jumlah follower {missing.join(" & ")} <b>sekali</b> di halaman Upload; setelah itu total{missing.includes("Instagram") ? " Instagram" : ""} lanjut dihitung sendiri dari pertambahan harian.
               </p>
             );
           })()}
