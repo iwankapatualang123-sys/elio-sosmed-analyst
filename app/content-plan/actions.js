@@ -11,6 +11,7 @@ import { getCurrentProfile, canWrite } from "@/lib/auth";
 import { assertCanAccess, canAccessAccount, isAdmin } from "@/lib/access";
 import { logActivity } from "@/lib/audit";
 import { PLATFORM_KEYS } from "@/lib/tiktok/content-plan";
+import { resolveTikTokLink } from "@/lib/tiktok/resolve-link";
 
 // Ambil string rapi dari FormData; kosong -> null.
 function str(formData, key) {
@@ -135,6 +136,8 @@ export async function createPlan(formData) {
   await assertCanAccess(profile, accountId);
 
   const fields = planFields(formData);
+  // Link pendek (vt.tiktok.com) → resolusi jadi URL lengkap agar bisa auto-Verified.
+  if (fields.posted_url) fields.posted_url = await resolveTikTokLink(fields.posted_url);
   try {
     await prisma.contentPlan.create({
       data: {
@@ -161,6 +164,7 @@ export async function updatePlan(formData) {
   await assertCanEditPlan(profile, plan);
 
   const fields = planFields(formData);
+  if (fields.posted_url) fields.posted_url = await resolveTikTokLink(fields.posted_url);
   const patch = planData(fields);
   // Pindah cabang: kalau accountId dikirim, pastikan boleh menaruh di cabang tujuan.
   const accountId = String(formData.get("accountId") || "").trim();
@@ -265,7 +269,9 @@ export async function setPostedUrl(formData) {
   if (!id) return;
   const plan = await getPlanMeta(id);
   await assertCanEditPlan(profile, plan);
-  const url = String(formData.get("posted_url") || "").trim() || null;
+  const raw = String(formData.get("posted_url") || "").trim() || null;
+  // Link pendek (vt.tiktok.com) → resolusi jadi URL lengkap agar bisa auto-Verified.
+  const url = raw ? await resolveTikTokLink(raw) : null;
   await prisma.contentPlan.update({ where: { id: plan.id }, data: { postedUrl: url } });
   await logActivity({ action: "set_link_tayang_rencana", entity: id });
   revalidatePath("/content-plan");
