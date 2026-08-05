@@ -54,13 +54,16 @@ export default async function ContentPlanPage({ searchParams }) {
 
   let plansRaw = [];
   let contents = [];
+  let igContents = [];
   if (selectedId) {
-    const [{ data: pl }, { data: ct }] = await Promise.all([
+    const [{ data: pl }, { data: ct }, { data: igc }] = await Promise.all([
       supabase.from("content_plans").select("*").eq("tiktok_account_id", selectedId).order("post_date", { ascending: true, nullsFirst: false }),
       supabase.from("tiktok_content").select("video_id, video_title, video_link, post_date").eq("tiktok_account_id", selectedId),
+      supabase.from("instagram_content").select("post_id, permalink, description, published_at").eq("tiktok_account_id", selectedId),
     ]);
     plansRaw = pl || [];
     contents = ct || [];
+    igContents = igc || [];
   }
 
   // Bulan-bulan yang ada rencananya (untuk filter). plan_month = 'YYYY-MM-01'.
@@ -74,7 +77,7 @@ export default async function ContentPlanPage({ searchParams }) {
 
   // Hitung status otomatis tiap baris (per platform + keseluruhan), lalu filter bulan.
   const withStatus = plansRaw.map((p) => {
-    const r = matchPlanStatusMulti(p, contents, { currentMonth });
+    const r = matchPlanStatusMulti(p, contents, { currentMonth, igContents });
     const rep = p.replaced_by_id ? byId.get(String(p.replaced_by_id)) : null;
     return {
       ...p, status: r.status, match: r.match, hint: r.hint,
