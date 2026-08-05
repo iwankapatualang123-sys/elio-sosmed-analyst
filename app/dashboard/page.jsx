@@ -82,7 +82,7 @@ function SnapshotFollowerCard({ rows = [], todayStr }) {
   const age = daysSince(last?.snapshot_date, todayStr);
   const stale = age != null && age > 7;
   return (
-    <div className="rounded-xl p-4" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+    <div className="rounded-xl p-4" style={{ border: "1px solid rgba(16,24,40,.1)" }}>
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>Follower (input manual)</span>
         <span className="text-[11px] font-medium" style={{ color: stale ? "#b45309" : "var(--ink-soft)" }} title={stale ? "Sudah lewat seminggu — perbarui di halaman Upload" : "Tanggal snapshot terakhir"}>
@@ -115,7 +115,7 @@ function SnapshotFollowerCard({ rows = [], todayStr }) {
 function GoalProgress({ goal, views, er, net, monthLabel }) {
   if (!goal || (goal.target_total_views == null && goal.target_engagement_rate == null && goal.target_net_followers == null)) return null;
   return (
-    <div className="mt-3 border-t pt-3" style={{ borderColor: "rgba(0,60,68,.1)" }}>
+    <div className="mt-3 border-t pt-3" style={{ borderColor: "rgba(16,24,40,.1)" }}>
       <p className="mb-2 text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>🎯 Pencapaian Target — {monthLabel}</p>
       <div className="grid gap-3 sm:grid-cols-3">
         {goal.target_total_views != null && <ProgressBar label="Total Views" current={views} target={goal.target_total_views} />}
@@ -346,7 +346,7 @@ export default async function DashboardPage({ searchParams }) {
         <>
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
-              <span style={{ width: 6, height: 22, borderRadius: 3, background: "linear-gradient(180deg,#7fe0d0,#0a8291)", display: "inline-block" }} />
+              <span style={{ width: 6, height: 22, borderRadius: 3, background: "linear-gradient(180deg,#a5b4fc,#6b73f0)", display: "inline-block" }} />
               Detail: {selectedBranch.nama_cabang}
             </h2>
             <Link
@@ -364,7 +364,7 @@ export default async function DashboardPage({ searchParams }) {
                     href={dashboardHref({ branch: b.id, cat: catFilter, month: selectedMonth })}
                     className="rounded-full px-3 py-1 text-xs font-medium"
                     style={b.id === selectedId
-                      ? { background: "linear-gradient(180deg,#0a8291,#00545e)", color: "#fff" }
+                      ? { background: "linear-gradient(180deg,#6b73f0,#3f46c9)", color: "#fff" }
                       : { background: "#ffffff", color: "var(--ink-soft)", border: "1px solid var(--line)" }}
                   >
                     {b.nama_cabang}
@@ -384,7 +384,7 @@ export default async function DashboardPage({ searchParams }) {
                   const c = PLAN_BADGE[label];
                   return <span key={label} className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: c.bg, color: c.fg }}>{n} {label}</span>;
                 })}
-              <Link href={`/content-plan?branch=${selectedId}&month=${nowMonth}`} className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+              <Link href={`/content-plan?branch=${selectedId}&month=${nowMonth}`} className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(91,99,235,.1)", color: "var(--teal-900)" }}>
                 Kelola →
               </Link>
             </div>
@@ -407,7 +407,7 @@ export default async function DashboardPage({ searchParams }) {
                     {planThisMonth.map((p) => {
                       const c = PLAN_BADGE[p.status] || PLAN_BADGE["On Going"];
                       return (
-                        <tr key={p.id} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)", opacity: p.status === "Replaced" || p.status === "Cancelled" ? 0.6 : 1 }}>
+                        <tr key={p.id} className="border-t align-top" style={{ borderColor: "rgba(16,24,40,.08)", opacity: p.status === "Replaced" || p.status === "Cancelled" ? 0.6 : 1 }}>
                           <td className="py-2 pr-3">
                             <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: c.bg, color: c.fg }}>
                               {p.status || "On Going"}
@@ -430,11 +430,11 @@ export default async function DashboardPage({ searchParams }) {
           <section className="card-3d p-4 sm:p-5">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-semibold text-ink">📱 Ringkasan Platform</h3>
-              <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>
+              <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>
                 {igMonth ? labelBulan(igMonth) : selectedMonth ? labelBulan(selectedMonth) : "Sepanjang masa"}
               </span>
               {editable && (
-                <Link href="/upload" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+                <Link href="/upload" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(91,99,235,.1)", color: "var(--teal-900)" }}>
                   Upload data →
                 </Link>
               )}
@@ -452,7 +452,7 @@ export default async function DashboardPage({ searchParams }) {
                     ["Rata-rata views/konten", fmt(detail.summary.avgViewsPerPost)],
                     ["ER akun", `${detail.summary.engagementRateOverall}%`],
                   ].map(([label, val]) => (
-                    <div key={label} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+                    <div key={label} className="rounded-xl p-3" style={{ border: "1px solid rgba(16,24,40,.1)" }}>
                       <div className="text-lg font-extrabold sm:text-xl" style={{ color: "var(--teal-900)" }}>{val}</div>
                       <div className="mt-0.5 text-[11px] font-medium" style={{ color: "var(--ink-soft)" }}>{label}</div>
                     </div>
@@ -483,7 +483,7 @@ export default async function DashboardPage({ searchParams }) {
                       </thead>
                       <tbody>
                         {detail.topVideos.map((v, i) => (
-                          <tr key={v.video_id || i} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                          <tr key={v.video_id || i} className="border-t align-top" style={{ borderColor: "rgba(16,24,40,.08)" }}>
                             <td className="py-1.5 pr-2 text-[12px]" style={{ color: "var(--ink-soft)" }}>{i + 1}</td>
                             <td className="max-w-xs py-1.5 pr-3">
                               {v.video_link ? (
@@ -542,7 +542,7 @@ export default async function DashboardPage({ searchParams }) {
                   ["Follower baru", igSum.new_followers == null ? null : `+${fmt(igSum.new_followers)}`],
                   ["ER akun", igCSummary.er == null ? null : `${igCSummary.er}%`],
                 ].map(([label, val]) => (
-                  <div key={label} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+                  <div key={label} className="rounded-xl p-3" style={{ border: "1px solid rgba(16,24,40,.1)" }}>
                     <div className="text-lg font-extrabold sm:text-xl" style={{ color: "var(--teal-900)" }}>
                       {val == null ? "—" : typeof val === "string" ? val : fmt(val)}
                     </div>
@@ -581,7 +581,7 @@ export default async function DashboardPage({ searchParams }) {
                     </thead>
                     <tbody>
                       {igTopReels.map((c, i) => (
-                        <tr key={c.post_id} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                        <tr key={c.post_id} className="border-t align-top" style={{ borderColor: "rgba(16,24,40,.08)" }}>
                           <td className="py-1.5 pr-2 text-[12px]" style={{ color: "var(--ink-soft)" }}>{i + 1}</td>
                           <td className="max-w-xs py-1.5 pr-3">
                             <a href={c.permalink || "#"} target="_blank" rel="noopener noreferrer" className="line-clamp-1 font-medium text-ink hover:underline" title={c.description || ""}>
@@ -649,7 +649,7 @@ export default async function DashboardPage({ searchParams }) {
                 follower terkini ditaruh sbg konteks kecil "kini …". */}
             <div className="mb-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px]" style={{ color: "var(--ink-soft)" }}>
               <span>
-                <b style={{ color: "#006674" }}>TikTok</b>{" "}
+                <b style={{ color: "#5b63eb" }}>TikTok</b>{" "}
                 <b style={{ color: detail.growth.netGrowth > 0 ? "#166534" : detail.growth.netGrowth < 0 ? "#b91c1c" : "inherit" }}>
                   {detail.growth.netGrowth >= 0 ? "+" : ""}{fmt(detail.growth.netGrowth)}
                 </b>{" "}follower · kini {fmt(detail.growth.endFollowers)}
@@ -672,7 +672,7 @@ export default async function DashboardPage({ searchParams }) {
               <>
                 <LineChart
                   series={[
-                    { label: "TikTok", color: "#006674", data: detail.history.map((h) => ({ x: h.date, y: Number(h.diff_from_previous_day) || 0 })) },
+                    { label: "TikTok", color: "#5b63eb", data: detail.history.map((h) => ({ x: h.date, y: Number(h.diff_from_previous_day) || 0 })) },
                     ...(igGrowthSeries.length >= 2 ? [{ label: "Instagram", color: "#c13584", data: igGrowthSeries }] : []),
                   ]}
                 />
@@ -704,10 +704,10 @@ export default async function DashboardPage({ searchParams }) {
                   turun: { bg: "#fee2e2", fg: "#991b1b" },
                   ada: { bg: "#fef3c7", fg: "#92400e" },
                   stabil: { bg: "#dcfce7", fg: "#166534" },
-                  tidak: { bg: "rgba(0,102,116,.08)", fg: "var(--teal-900)" },
+                  tidak: { bg: "rgba(91,99,235,.08)", fg: "var(--teal-900)" },
                 };
                 return (
-                  <div className="mb-4 border-b pb-4" style={{ borderColor: "rgba(0,60,68,.1)" }}>
+                  <div className="mb-4 border-b pb-4" style={{ borderColor: "rgba(16,24,40,.1)" }}>
                     <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
                       Kenaikan follower melambat: <b className="text-ink">{dg.growth.prev >= 0 ? "+" : ""}{fmt(dg.growth.prev)}</b> →{" "}
                       <b className="text-ink">{dg.growth.cur >= 0 ? "+" : ""}{fmt(dg.growth.cur)}</b>. Follower itu <i>akibat</i> — di bawah ini pemeriksaan <i>sebab</i>-nya.
@@ -720,7 +720,7 @@ export default async function DashboardPage({ searchParams }) {
                       {dg.findings.map((f) => {
                         const c = chip[f.status] || chip.tidak;
                         return (
-                          <div key={f.key} className="rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+                          <div key={f.key} className="rounded-xl p-3" style={{ border: "1px solid rgba(16,24,40,.1)" }}>
                             <div className="mb-1 flex items-center justify-between gap-2">
                               <span className="text-xs font-semibold text-ink">{f.label}</span>
                               <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: c.bg, color: c.fg }}>{f.status}</span>
@@ -742,7 +742,7 @@ export default async function DashboardPage({ searchParams }) {
                   )}
                   <div className="grid gap-3 sm:grid-cols-2">
                     {detail.insights.map((ins, i) => (
-                      <div key={i} className="rounded-xl p-4" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+                      <div key={i} className="rounded-xl p-4" style={{ border: "1px solid rgba(16,24,40,.1)" }}>
                         <div className="mb-1 flex items-center gap-2">
                           <span className="text-sm font-semibold text-ink">{ins.aspek}</span>
                           <span className="ml-auto rounded-full px-2 py-0.5 text-xs font-semibold" style={INSIGHT_STYLE[ins.status] || INSIGHT_STYLE.info}>
@@ -777,7 +777,7 @@ export default async function DashboardPage({ searchParams }) {
               <ul className="flex flex-col gap-1.5">
                 {annotations.map((a) => (
                   <li key={a.id} className="flex items-center gap-2 rounded-xl bg-white/60 px-3 py-1.5 text-sm">
-                    <span className="rounded-md px-2 py-0.5 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>{a.note_date}</span>
+                    <span className="rounded-md px-2 py-0.5 text-xs font-semibold" style={{ background: "rgba(91,99,235,.1)", color: "var(--teal-900)" }}>{a.note_date}</span>
                     <span className="min-w-0 flex-1 text-ink">{a.note}</span>
                     <span className="hidden text-xs sm:inline" style={{ color: "var(--ink-soft)" }}>{a.created_by_email}</span>
                     <form action={deleteAnnotation}>
@@ -795,7 +795,7 @@ export default async function DashboardPage({ searchParams }) {
             <section className="card-3d p-4 sm:p-5">
               <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">
                 🔔 Peringatan
-                <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+                <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: "rgba(91,99,235,.1)", color: "var(--teal-900)" }}>
                   {detail.alerts.length}
                 </span>
               </h3>
@@ -820,7 +820,7 @@ export default async function DashboardPage({ searchParams }) {
 
           {/* ————— Detail per platform ————— */}
           <div className="mt-1 flex items-center gap-2 px-1">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-sm" style={{ background: "rgba(0,102,116,.12)" }}>🎵</span>
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-sm" style={{ background: "rgba(91,99,235,.12)" }}>🎵</span>
             <h2 className="text-lg font-bold text-ink">Detail TikTok</h2>
           </div>
 
@@ -878,7 +878,7 @@ export default async function DashboardPage({ searchParams }) {
                 center={`${detail.viewers.newPct}%`}
                 data={[
                   { label: "Baru", value: detail.viewers.totalNew, color: "#4f9e7a" },
-                  { label: "Kembali", value: detail.viewers.totalReturning, color: "#006674" },
+                  { label: "Kembali", value: detail.viewers.totalReturning, color: "#5b63eb" },
                 ]}
               />
             </div>
@@ -895,7 +895,7 @@ export default async function DashboardPage({ searchParams }) {
                     key={h.hashtag}
                     title={`${h.count}x dipakai · avg ${fmt(h.avgViews)} views · ER ${h.avgEngagementRate}%`}
                     className="rounded-full px-3 py-1 font-medium"
-                    style={{ background: "rgba(0,102,116,.08)", color: "var(--teal-900)", fontSize: `${12 + Math.min(8, h.count)}px` }}
+                    style={{ background: "rgba(91,99,235,.08)", color: "var(--teal-900)", fontSize: `${12 + Math.min(8, h.count)}px` }}
                   >
                     {h.hashtag} <b>{h.count}</b>
                   </span>
@@ -925,7 +925,7 @@ export default async function DashboardPage({ searchParams }) {
               <div className="mt-3 flex items-center gap-2 px-1">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-sm" style={{ background: "rgba(193,53,132,.14)" }}>📸</span>
                 <h2 className="text-lg font-bold text-ink">Detail Instagram</h2>
-                <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+                <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(91,99,235,.1)", color: "var(--teal-900)" }}>
                   {igMonth ? labelBulan(igMonth) : "Sepanjang data"}
                 </span>
               </div>
@@ -967,7 +967,7 @@ export default async function DashboardPage({ searchParams }) {
                         </thead>
                         <tbody>
                           {igTypeBreakdown.map((t) => (
-                            <tr key={t.type} className="border-t" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                            <tr key={t.type} className="border-t" style={{ borderColor: "rgba(16,24,40,.08)" }}>
                               <td className="py-2 pr-3 font-medium text-ink">{t.type}</td>
                               <td className="py-2 pr-3 text-right">{fmt(t.count)}</td>
                               <td className="py-2 pr-3 text-right">{fmt(t.views)}</td>
@@ -1038,7 +1038,7 @@ function IgContentTable({ rows = [], valueKey, valueLabel, fmt, accent }) {
         </thead>
         <tbody>
           {rows.map((c, i) => (
-            <tr key={c.post_id || i} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+            <tr key={c.post_id || i} className="border-t align-top" style={{ borderColor: "rgba(16,24,40,.08)" }}>
               <td className="py-2 pr-2 text-[12px]" style={{ color: "var(--ink-soft)" }}>{i + 1}</td>
               <td className="max-w-xs py-2 pr-3">
                 <a href={c.permalink || "#"} target="_blank" rel="noopener noreferrer" className="line-clamp-1 font-medium text-ink hover:underline" title={c.description || ""}>

@@ -18,12 +18,12 @@ export default function ProgressBar({ label, current = 0, target = null, suffix 
           {hasTarget ? <b className="ml-1" style={{ color: done ? "#166534" : "var(--teal-900)" }}>{pct}%</b> : <span className="ml-1">· belum ada target</span>}
         </span>
       </div>
-      <div style={{ height: 10, borderRadius: 6, background: "rgba(0,60,68,.1)", overflow: "hidden" }}>
+      <div style={{ height: 10, borderRadius: 6, background: "rgba(16,24,40,.1)", overflow: "hidden" }}>
         <div style={{
           width: `${hasTarget ? pct : 0}%`,
           height: "100%",
           borderRadius: 6,
-          background: done ? "linear-gradient(90deg,#64b98f,#3d7f61)" : "linear-gradient(90deg,#0a8291,#006674)",
+          background: done ? "linear-gradient(90deg,#64b98f,#3d7f61)" : "linear-gradient(90deg,#6b73f0,#5b63eb)",
           transition: "width .3s ease",
         }} />
       </div>

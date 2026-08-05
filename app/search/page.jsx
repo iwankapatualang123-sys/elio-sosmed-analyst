@@ -77,7 +77,7 @@ export default async function SearchPage({ searchParams }) {
               <div className="flex flex-wrap gap-2">
                 {branches.map((b) => (
                   <Link key={b.id} href={`/dashboard?branch=${b.id}`}
-                    className="rounded-full px-3 py-1.5 text-sm font-medium" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+                    className="rounded-full px-3 py-1.5 text-sm font-medium" style={{ background: "rgba(91,99,235,.1)", color: "var(--teal-900)" }}>
                     {b.nama_cabang}{b.tiktok_username ? ` @${b.tiktok_username}` : ""}
                   </Link>
                 ))}
@@ -90,7 +90,7 @@ export default async function SearchPage({ searchParams }) {
             {videos.length === 0 ? (
               <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Tidak ada video cocok.</p>
             ) : (
-              <ul className="flex flex-col divide-y" style={{ borderColor: "rgba(0,60,68,.1)" }}>
+              <ul className="flex flex-col divide-y" style={{ borderColor: "rgba(16,24,40,.1)" }}>
                 {videos.map((v) => (
                   <li key={v.video_id} className="flex items-center gap-3 py-2">
                     <span className="min-w-0 flex-1">

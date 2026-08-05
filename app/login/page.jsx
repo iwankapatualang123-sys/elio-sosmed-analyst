@@ -58,7 +58,7 @@ function LoginForm() {
         <div className="mb-6 flex flex-col items-center text-center">
           <div
             className="mb-4 flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold text-white"
-            style={{ background: "linear-gradient(180deg,#0a8291,#00545e)", boxShadow: "0 6px 14px rgba(0,59,67,.4), inset 0 1px 0 rgba(255,255,255,.4)" }}
+            style={{ background: "linear-gradient(180deg,#6b73f0,#3f46c9)", boxShadow: "0 6px 14px rgba(0,59,67,.4), inset 0 1px 0 rgba(255,255,255,.4)" }}
           >
             Elio
           </div>

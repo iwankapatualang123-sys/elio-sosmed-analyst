@@ -19,7 +19,7 @@ function fmtNum(n) {
 function SaveButton() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#0a8291,#006674)" }}>
+    <button type="submit" disabled={pending} className="rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#6b73f0,#5b63eb)" }}>
       {pending ? "Menyimpan…" : "Simpan snapshot"}
     </button>
   );
@@ -103,7 +103,7 @@ export default function SocialSnapshotCard({ branches = [], latest = [] }) {
       </form>
 
       {latest.length > 0 && (
-        <div className="mt-4 border-t pt-3" style={{ borderColor: "rgba(0,60,68,.1)" }}>
+        <div className="mt-4 border-t pt-3" style={{ borderColor: "rgba(16,24,40,.1)" }}>
           <p className="mb-1.5 text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>Input terakhir per cabang</p>
           <ul className="space-y-0.5 text-[13px]">
             {latest.map((s) => (

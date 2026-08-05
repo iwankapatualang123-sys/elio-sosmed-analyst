@@ -56,7 +56,7 @@ export default function Nav({ email, role }) {
         href={href}
         className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors hover:bg-[rgba(16,24,40,.04)]"
         style={active
-          ? { background: "rgba(0,102,116,.10)", color: "var(--teal-900)", fontWeight: 600 }
+          ? { background: "rgba(91,99,235,.10)", color: "var(--teal-900)", fontWeight: 600 }
           : { color: "var(--ink-soft)" }}
       >
         <Icon size={16} strokeWidth={2.1} aria-hidden />
@@ -69,7 +69,7 @@ export default function Nav({ email, role }) {
     <div className="flex items-center gap-2.5">
       <div
         className="flex h-8 w-8 items-center justify-center rounded-xl text-sm font-extrabold text-white"
-        style={{ background: "linear-gradient(160deg,#7fe0d0,#0a8291 55%,#00434b)", boxShadow: "0 0 16px -2px rgba(127,224,208,.5)" }}
+        style={{ background: "linear-gradient(160deg,#a5b4fc,#6b73f0 55%,#3730a3)", boxShadow: "0 0 16px -2px rgba(127,224,208,.5)" }}
       >
         E
       </div>
@@ -106,7 +106,7 @@ export default function Nav({ email, role }) {
 
         <div className="mt-auto border-t pt-2.5" style={{ borderColor: "var(--line)" }}>
           <div className="flex items-center gap-2 px-1.5 pb-1.5">
-            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: "linear-gradient(180deg,#7fe0d0,#00545e)" }}>
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: "linear-gradient(180deg,#a5b4fc,#3f46c9)" }}>
               {(email || "?").charAt(0).toUpperCase()}
             </span>
             <div className="min-w-0">
@@ -142,7 +142,7 @@ export default function Nav({ email, role }) {
             style={{ background: "#f4f6fb", border: "1px solid var(--line)" }}
             aria-label="Menu akun"
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: "linear-gradient(180deg,#7fe0d0,#00545e)" }}>
+            <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: "linear-gradient(180deg,#a5b4fc,#3f46c9)" }}>
               {(email || "?").charAt(0).toUpperCase()}
             </span>
             <ChevronDown size={15} style={{ color: "var(--ink-soft)" }} aria-hidden />
@@ -191,7 +191,7 @@ export default function Nav({ email, role }) {
           const active = isActive(l.href);
           return (
             <Link key={l.href} href={l.href} className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-semibold" style={active ? { color: "var(--teal-900)" } : { color: "var(--ink-soft)" }}>
-              <span className="flex h-7 w-12 items-center justify-center rounded-full" style={active ? { background: "rgba(0,102,116,.10)" } : undefined}>
+              <span className="flex h-7 w-12 items-center justify-center rounded-full" style={active ? { background: "rgba(91,99,235,.10)" } : undefined}>
                 <l.Icon size={19} strokeWidth={2.2} aria-hidden />
               </span>
               {l.label}

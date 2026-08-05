@@ -241,7 +241,7 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
             type="button"
             onClick={openImport}
             className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold"
-            style={{ border: "1px solid rgba(0,60,68,.2)", color: "var(--teal-900)", background: "#fff" }}
+            style={{ border: "1px solid rgba(16,24,40,.2)", color: "var(--teal-900)", background: "#fff" }}
             title="Unggah banyak rencana sekaligus dari file Excel (bisa banyak cabang via kolom Outlet)"
           >
             <FileSpreadsheet size={16} /> Import Excel
@@ -250,14 +250,14 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
             type="button"
             onClick={() => setEditing("new")}
             className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-white"
-            style={{ background: "linear-gradient(180deg,#0a8291,#006674)", boxShadow: "0 6px 14px -4px rgba(0,60,68,.5)" }}
+            style={{ background: "linear-gradient(180deg,#6b73f0,#5b63eb)", boxShadow: "0 6px 14px -4px rgba(16,24,40,.5)" }}
           >
             <Plus size={16} /> Tambah rencana
           </button>
         </div>
       </div>
 
-      <div className="overflow-auto rounded-xl" style={{ maxHeight: 620, border: "1px solid rgba(0,60,68,.1)" }}>
+      <div className="overflow-auto rounded-xl" style={{ maxHeight: 620, border: "1px solid rgba(16,24,40,.1)" }}>
         <table className="w-full text-left text-sm" style={{ tableLayout: "fixed" }}>
           {/* Lebar kolom tetap: Post/Status/PIC dipersempit, Headline diperlebar
               supaya jadi fokus utama tabel — bukan mengikuti isi teks otomatis. */}
@@ -295,7 +295,7 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
               plans.map((p, i) => {
                 const dim = p.status === "Replaced" || p.status === "Cancelled";
                 return (
-                <tr key={p.id} className="border-t align-middle" style={{ borderColor: "rgba(0,60,68,.08)", opacity: dim ? 0.6 : 1 }}>
+                <tr key={p.id} className="border-t align-middle" style={{ borderColor: "rgba(16,24,40,.08)", opacity: dim ? 0.6 : 1 }}>
                   <td className="px-1.5 py-1.5 text-[10px]" style={{ color: "var(--ink-soft)" }}>{p.seq || i + 1}</td>
                   <td className="overflow-hidden text-ellipsis whitespace-nowrap px-1.5 py-1.5 text-[10px]" title={fmtDateFull(p.post_date)}>{fmtDate(p.post_date)}</td>
                   <td className="overflow-hidden px-1.5 py-1.5">
@@ -374,17 +374,17 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
                       checked={!!p.acc_to_posting}
                       onChange={() => flipAcc(p)}
                       disabled={pending}
-                      className="h-4 w-4 accent-[#0a8291]"
+                      className="h-4 w-4 accent-[#6b73f0]"
                       title={p.acc_to_posting ? "Sudah ACC untuk posting" : "Belum ACC"}
                     />
                   </td>
-                  <td className="whitespace-nowrap px-2.5 py-1.5" style={{ position: "sticky", right: 0, background: "#fff", boxShadow: "-8px 0 10px -8px rgba(0,60,68,.2)" }}>
+                  <td className="whitespace-nowrap px-2.5 py-1.5" style={{ position: "sticky", right: 0, background: "#fff", boxShadow: "-8px 0 10px -8px rgba(16,24,40,.2)" }}>
                     <div className="flex items-center justify-center gap-1">
                       <button
                         type="button"
                         onClick={() => setEditing({ ...EMPTY, ...p, post_date: (p.post_date || "").slice(0, 10) })}
                         className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold hover:brightness-95"
-                        style={{ color: "#fff", background: "linear-gradient(180deg,#0a8291,#006674)" }}
+                        style={{ color: "#fff", background: "linear-gradient(180deg,#6b73f0,#5b63eb)" }}
                         title="Edit rencana ini"
                       >
                         <Pencil size={12} /> Edit
@@ -452,7 +452,7 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
           <div className="my-6 w-full max-w-2xl rounded-2xl bg-white p-5 sm:p-6" style={{ boxShadow: "0 24px 60px -12px rgba(0,36,42,.6)" }} onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-ink">{editing === "new" ? "Tambah rencana konten" : "Edit rencana konten"}</h3>
-              <button type="button" onClick={() => setEditing(null)} className="rounded-lg p-1 hover:bg-[rgba(0,60,68,.06)]"><X size={20} /></button>
+              <button type="button" onClick={() => setEditing(null)} className="rounded-lg p-1 hover:bg-[rgba(16,24,40,.06)]"><X size={20} /></button>
             </div>
 
             <form action={onSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -536,7 +536,7 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
               </div>
 
               <label className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <input type="checkbox" name="acc_to_posting" defaultChecked={!!draft.acc_to_posting} className="h-4 w-4 accent-[#0a8291]" />
+                <input type="checkbox" name="acc_to_posting" defaultChecked={!!draft.acc_to_posting} className="h-4 w-4 accent-[#6b73f0]" />
                 ACC to Posting (siap tayang)
               </label>
               <Field label="Status (opsional)" hint="Kosongkan agar otomatis (On Going/Uploaded/Verified/Cancelled). 'Replaced' diatur lewat tombol Ganti.">
@@ -550,7 +550,7 @@ export default function ContentPlanBoard({ accountId, accounts = [], plans = [],
               </Field>
 
               <div className="mt-2 flex items-center justify-end gap-2 sm:col-span-2">
-                <button type="button" onClick={() => setEditing(null)} className="rounded-xl px-4 py-2 text-sm font-semibold" style={{ border: "1px solid rgba(0,60,68,.2)", color: "var(--ink)" }}>Batal</button>
+                <button type="button" onClick={() => setEditing(null)} className="rounded-xl px-4 py-2 text-sm font-semibold" style={{ border: "1px solid rgba(16,24,40,.2)", color: "var(--ink)" }}>Batal</button>
                 <SubmitButton isNew={editing === "new"} />
               </div>
             </form>
@@ -578,12 +578,12 @@ function PlatformSection({ draft }) {
   }
   const linkName = (key) => (key === "tiktok" ? "posted_url" : `link_${key}`);
   return (
-    <div className="flex flex-col gap-2 rounded-xl p-3" style={{ border: "1px solid rgba(0,60,68,.12)", background: "rgba(0,102,116,.03)" }}>
+    <div className="flex flex-col gap-2 rounded-xl p-3" style={{ border: "1px solid rgba(16,24,40,.12)", background: "rgba(91,99,235,.03)" }}>
       <span className="text-sm font-semibold text-ink">Platform tayang</span>
       <div className="flex flex-wrap gap-3">
         {PLATFORM_OPTIONS.map((o) => (
           <label key={o.key} className="flex items-center gap-1.5 text-sm font-medium text-ink">
-            <input type="checkbox" name="platforms" value={o.key} checked={checked.has(o.key)} onChange={() => toggle(o.key)} className="h-4 w-4 accent-[#0a8291]" />
+            <input type="checkbox" name="platforms" value={o.key} checked={checked.has(o.key)} onChange={() => toggle(o.key)} className="h-4 w-4 accent-[#6b73f0]" />
             {o.label}
           </label>
         ))}
@@ -617,7 +617,7 @@ function PlatformSection({ draft }) {
 function SubmitButton({ isNew }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#0a8291,#006674)" }}>
+    <button type="submit" disabled={pending} className="rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#6b73f0,#5b63eb)" }}>
       {pending ? "Menyimpan…" : isNew ? "Tambah" : "Simpan"}
     </button>
   );
@@ -627,7 +627,7 @@ function SubmitButton({ isNew }) {
 function PendingButton({ children, disabled }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending || disabled} className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#0a8291,#006674)" }}>
+    <button type="submit" disabled={pending || disabled} className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#6b73f0,#5b63eb)" }}>
       <Repeat size={16} /> {pending ? "Memproses…" : children}
     </button>
   );
@@ -648,7 +648,7 @@ function ReplaceModal({ old, accountId, plans = [], options = {}, pics = [], onS
       <div className="my-6 w-full max-w-2xl rounded-2xl bg-white p-5 sm:p-6" style={{ boxShadow: "0 24px 60px -12px rgba(0,36,42,.6)" }} onClick={(e) => e.stopPropagation()}>
         <div className="mb-1 flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-lg font-bold text-ink"><Repeat size={20} /> Ganti rencana</h3>
-          <button type="button" onClick={onClose} className="rounded-lg p-1 hover:bg-[rgba(0,60,68,.06)]"><X size={20} /></button>
+          <button type="button" onClick={onClose} className="rounded-lg p-1 hover:bg-[rgba(16,24,40,.06)]"><X size={20} /></button>
         </div>
         <p className="mb-4 text-sm" style={{ color: "var(--ink-soft)" }}>
           Rencana lama <b className="text-ink">“{old.headline || "—"}”</b> akan ditandai <b>Replaced</b> (tetap tampil sebagai histori) dan ditautkan ke penggantinya.
@@ -660,7 +660,7 @@ function ReplaceModal({ old, accountId, plans = [], options = {}, pics = [], onS
             <button
               key={k} type="button" onClick={() => setMode(k)}
               className="rounded-xl px-3 py-2 text-sm font-semibold"
-              style={mode === k ? { background: "linear-gradient(180deg,#0a8291,#006674)", color: "#fff" } : { border: "1px solid rgba(0,60,68,.2)", color: "var(--ink)" }}
+              style={mode === k ? { background: "linear-gradient(180deg,#6b73f0,#5b63eb)", color: "#fff" } : { border: "1px solid rgba(16,24,40,.2)", color: "var(--ink)" }}
             >
               {lbl}
             </button>
@@ -736,7 +736,7 @@ function ReplaceModal({ old, accountId, plans = [], options = {}, pics = [], onS
           )}
 
           <div className="mt-2 flex items-center justify-end gap-2 sm:col-span-2">
-            <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-semibold" style={{ border: "1px solid rgba(0,60,68,.2)", color: "var(--ink)" }}>Batal</button>
+            <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm font-semibold" style={{ border: "1px solid rgba(16,24,40,.2)", color: "var(--ink)" }}>Batal</button>
             <PendingButton disabled={mode === "existing" && candidates.length === 0}>{mode === "new" ? "Buat & Ganti" : "Ganti"}</PendingButton>
           </div>
         </form>
@@ -762,7 +762,7 @@ function ImportWizard({ accounts, accountId, step, setStep, file, setFile, busy,
       <div className="my-6 w-full max-w-xl rounded-2xl bg-white p-5 sm:p-6" style={{ boxShadow: "0 24px 60px -12px rgba(0,36,42,.6)" }} onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-lg font-bold text-ink"><FileSpreadsheet size={20} /> Import rencana dari Excel</h3>
-          <button type="button" onClick={() => !busy && onClose()} className="rounded-lg p-1 hover:bg-[rgba(0,60,68,.06)]"><X size={20} /></button>
+          <button type="button" onClick={() => !busy && onClose()} className="rounded-lg p-1 hover:bg-[rgba(16,24,40,.06)]"><X size={20} /></button>
         </div>
 
         {/* Indikator langkah */}
@@ -801,19 +801,19 @@ function UploadStep({ file, setFile, busy, error, onClose, onAnalyze }) {
       <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
         Unggah file Excel berisi rencana. Bila file memuat <b>banyak cabang</b>, tambahkan kolom <b>Outlet</b> — nanti tiap Outlet dipetakan ke cabang di langkah berikutnya. Import bersifat <b>menambah</b> (tidak menghapus); baris Headline+Tanggal yang sudah ada dilewati.
       </p>
-      <a href="/api/content-plan/template" className="inline-flex w-fit items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold" style={{ border: "1px solid rgba(0,60,68,.2)", color: "var(--teal-900)" }}>
+      <a href="/api/content-plan/template" className="inline-flex w-fit items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold" style={{ border: "1px solid rgba(16,24,40,.2)", color: "var(--teal-900)" }}>
         <Download size={16} /> Unduh template Excel
       </a>
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-semibold text-ink">File Excel (.xlsx)</span>
         <input type="file" accept=".xlsx" disabled={busy} onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[rgba(0,102,116,.1)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--teal-900)]" />
+          className="text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[rgba(91,99,235,.1)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--teal-900)]" />
         {file && <span className="text-[11px]" style={{ color: "var(--ink-soft)" }}>Dipilih: {file.name}</span>}
       </label>
       {error && <div className="rounded-xl p-3 text-sm" style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}><b>Gagal:</b> {error}</div>}
       <div className="mt-1 flex items-center justify-end gap-2">
-        <button type="button" onClick={onClose} disabled={busy} className="rounded-xl px-4 py-2 text-sm font-semibold" style={{ border: "1px solid rgba(0,60,68,.2)", color: "var(--ink)" }}>Batal</button>
-        <button type="button" onClick={onAnalyze} disabled={busy || !file} className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#0a8291,#006674)" }}>
+        <button type="button" onClick={onClose} disabled={busy} className="rounded-xl px-4 py-2 text-sm font-semibold" style={{ border: "1px solid rgba(16,24,40,.2)", color: "var(--ink)" }}>Batal</button>
+        <button type="button" onClick={onAnalyze} disabled={busy || !file} className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#6b73f0,#5b63eb)" }}>
           {busy ? "Menganalisa…" : "Analisa file"} <ArrowRight size={16} />
         </button>
       </div>
@@ -843,9 +843,9 @@ function MapStep({ accounts, accountId, analysis, outletMap, setOutletMap, busy,
       {/* Peta Outlet -> cabang */}
       <div>
         <div className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-ink"><Store size={15} /> Petakan Outlet ke cabang</div>
-        <div className="overflow-hidden rounded-xl" style={{ border: "1px solid rgba(0,60,68,.12)" }}>
+        <div className="overflow-hidden rounded-xl" style={{ border: "1px solid rgba(16,24,40,.12)" }}>
           <table className="w-full text-left text-sm">
-            <thead style={{ background: "rgba(0,102,116,.07)" }}>
+            <thead style={{ background: "rgba(91,99,235,.07)" }}>
               <tr>
                 <th className="px-3 py-1.5 text-[11px] font-semibold text-ink">Outlet (di file)</th>
                 <th className="px-2 py-1.5 text-[11px] font-semibold text-ink">Baris</th>
@@ -854,7 +854,7 @@ function MapStep({ accounts, accountId, analysis, outletMap, setOutletMap, busy,
             </thead>
             <tbody>
               {analysis.outlets.map((o) => (
-                <tr key={o.value || "__blank__"} className="border-t" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                <tr key={o.value || "__blank__"} className="border-t" style={{ borderColor: "rgba(16,24,40,.08)" }}>
                   <td className="px-3 py-1.5">
                     {o.value ? <span className="font-medium text-ink">{o.value}</span> : <span className="italic" style={{ color: "var(--ink-soft)" }}>(tanpa outlet)</span>}
                   </td>
@@ -877,9 +877,9 @@ function MapStep({ accounts, accountId, analysis, outletMap, setOutletMap, busy,
 
       {/* Pratinjau baris */}
       {analysis.sample?.length > 0 && (
-        <details className="rounded-xl" style={{ border: "1px solid rgba(0,60,68,.12)" }}>
+        <details className="rounded-xl" style={{ border: "1px solid rgba(16,24,40,.12)" }}>
           <summary className="cursor-pointer px-3 py-2 text-[12px] font-semibold text-ink">Pratinjau {analysis.sample.length} baris pertama</summary>
-          <div className="max-h-40 overflow-auto border-t px-3 py-2 text-[11px]" style={{ borderColor: "rgba(0,60,68,.08)", color: "var(--ink-soft)" }}>
+          <div className="max-h-40 overflow-auto border-t px-3 py-2 text-[11px]" style={{ borderColor: "rgba(16,24,40,.08)", color: "var(--ink-soft)" }}>
             {analysis.sample.map((s, i) => (
               <div key={i} className="flex items-center gap-2 py-0.5">
                 <span className="w-14 shrink-0">{fmtDateShort(s.post_date)}</span>
@@ -896,10 +896,10 @@ function MapStep({ accounts, accountId, analysis, outletMap, setOutletMap, busy,
       {error && <div className="rounded-xl p-3 text-sm" style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c" }}><b>Gagal:</b> {error}</div>}
 
       <div className="mt-1 flex items-center justify-between gap-2">
-        <button type="button" onClick={onBack} disabled={busy} className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold" style={{ border: "1px solid rgba(0,60,68,.2)", color: "var(--ink)" }}>
+        <button type="button" onClick={onBack} disabled={busy} className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold" style={{ border: "1px solid rgba(16,24,40,.2)", color: "var(--ink)" }}>
           <ArrowLeft size={16} /> Kembali
         </button>
-        <button type="button" onClick={onImport} disabled={busy || mappedCount === 0} className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#0a8291,#006674)" }}>
+        <button type="button" onClick={onImport} disabled={busy || mappedCount === 0} className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#6b73f0,#5b63eb)" }}>
           <UploadCloud size={16} /> {busy ? "Mengimpor…" : `Import ${mappedCount} baris`}
         </button>
       </div>
@@ -930,8 +930,8 @@ function ResultView({ accounts, result, onClose, reset }) {
         </p>
       )}
       <div className="mt-3 flex justify-end gap-2">
-        <button type="button" onClick={reset} className="rounded-xl px-3 py-1.5 text-sm font-semibold" style={{ border: "1px solid rgba(0,60,68,.2)", color: "var(--ink)" }}>Import lagi</button>
-        <button type="button" onClick={onClose} className="rounded-xl px-3 py-1.5 text-sm font-semibold text-white" style={{ background: "linear-gradient(180deg,#0a8291,#006674)" }}>Selesai</button>
+        <button type="button" onClick={reset} className="rounded-xl px-3 py-1.5 text-sm font-semibold" style={{ border: "1px solid rgba(16,24,40,.2)", color: "var(--ink)" }}>Import lagi</button>
+        <button type="button" onClick={onClose} className="rounded-xl px-3 py-1.5 text-sm font-semibold text-white" style={{ background: "linear-gradient(180deg,#6b73f0,#5b63eb)" }}>Selesai</button>
       </div>
     </div>
   );

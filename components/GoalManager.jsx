@@ -98,7 +98,7 @@ export default function GoalManager({ branches = [], goalMap = {}, monthOptions 
       </div>
 
       <div className="flex items-center gap-3">
-        <button type="submit" disabled={saving} className="rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#0a8291,#006674)" }}>
+        <button type="submit" disabled={saving} className="rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60" style={{ background: "linear-gradient(180deg,#6b73f0,#5b63eb)" }}>
           {saving ? "Menyimpan…" : "Simpan target"}
         </button>
         <span className="text-xs" style={{ color: "var(--ink-soft)" }}>

@@ -231,7 +231,7 @@ export default async function DataPage({ searchParams }) {
                 </thead>
                 <tbody>
                   {weeklyOverview.map((w, i) => (
-                    <tr key={w.week} className="border-t" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                    <tr key={w.week} className="border-t" style={{ borderColor: "rgba(16,24,40,.08)" }}>
                       <td className="py-1.5 pr-3 font-medium text-ink">{w.label}</td>
                       <td className="whitespace-nowrap py-1.5 pr-3" style={{ color: "var(--ink-soft)" }}>{weeklyWeeks[i]?.rangeLabel || "—"}</td>
                       <td className="py-1.5 pr-3 text-right">{numCell(w.videoViews)}</td>
@@ -442,13 +442,13 @@ function GenderBar({ row }) {
   const female = Number(row.female_pct) || 0;
   const other = Math.max(0, 100 - male - female);
   const seg = [
-    { label: "Pria", pct: male, color: "#0a8291" },
+    { label: "Pria", pct: male, color: "#6b73f0" },
     { label: "Wanita", pct: female, color: "#e191ab" },
     { label: "Lainnya", pct: Math.round(other * 10) / 10, color: "#c9c9c9" },
   ].filter((s) => s.pct > 0);
   return (
     <div>
-      <div className="flex h-6 w-full overflow-hidden rounded-full" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+      <div className="flex h-6 w-full overflow-hidden rounded-full" style={{ border: "1px solid rgba(16,24,40,.1)" }}>
         {seg.map((s) => (
           <div key={s.label} style={{ width: `${s.pct}%`, background: s.color }} title={`${s.label} ${s.pct}%`} />
         ))}
@@ -477,8 +477,8 @@ function TerritoryBars({ rows = [], limit = 6 }) {
         return (
           <div key={r.territory_code} className="flex items-center gap-2 text-xs">
             <span className="w-24 shrink-0 truncate font-medium text-ink" title={r.territory_code}>{r.territory_code}</span>
-            <div className="h-3.5 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(0,102,116,.08)" }}>
-              <div className="h-full rounded-full" style={{ width: `${Math.min(100, (pct / max) * 100)}%`, background: "linear-gradient(90deg,#0a8291,#006674)" }} />
+            <div className="h-3.5 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(91,99,235,.08)" }}>
+              <div className="h-full rounded-full" style={{ width: `${Math.min(100, (pct / max) * 100)}%`, background: "linear-gradient(90deg,#6b73f0,#5b63eb)" }} />
             </div>
             <span className="w-12 shrink-0 text-right" style={{ color: "var(--ink-soft)" }}>{pct}%</span>
           </div>
@@ -497,7 +497,7 @@ function Section({ title, count, subtitle, children }) {
     <section className="card-3d p-4 sm:p-5">
       <div className="mb-1 flex items-center gap-2">
         <h2 className="text-base font-semibold text-ink">{title}</h2>
-        <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+        <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: "rgba(91,99,235,.1)", color: "var(--teal-900)" }}>
           {count} baris
         </span>
       </div>

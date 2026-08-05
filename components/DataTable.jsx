@@ -49,7 +49,7 @@ function TitleCell({ value, width = 320, link = null }) {
       {tags.length > 0 && (
         <div className="mt-1 flex flex-wrap gap-1">
           {tags.slice(0, expanded ? tags.length : 3).map((t, i) => (
-            <span key={`${t}-${i}`} className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>{t}</span>
+            <span key={`${t}-${i}`} className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>{t}</span>
           ))}
           {!expanded && tags.length > 3 && (
             <span className="text-[10px]" style={{ color: "var(--ink-soft)" }}>+{tags.length - 3}</span>
@@ -173,7 +173,7 @@ export default function DataTable({ columns = [], rows = [], emptyText = "Tidak 
       </div>
 
       {/* Tabel */}
-      <div className="overflow-auto rounded-xl" style={{ maxHeight, border: "1px solid rgba(0,60,68,.1)" }}>
+      <div className="overflow-auto rounded-xl" style={{ maxHeight, border: "1px solid rgba(16,24,40,.1)" }}>
         <table className="w-full text-left text-sm">
           <thead className="sticky top-0 z-10" style={{ background: "linear-gradient(180deg,#eaf5ec,#dcefe0)" }}>
             <tr>
@@ -199,7 +199,7 @@ export default function DataTable({ columns = [], rows = [], emptyText = "Tidak 
               <tr><td colSpan={columns.length} className="px-3 py-6 text-center" style={{ color: "var(--ink-soft)" }}>{emptyText}</td></tr>
             ) : (
               pageRows.map((row, i) => (
-                <tr key={i} className="border-t" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                <tr key={i} className="border-t" style={{ borderColor: "rgba(16,24,40,.08)" }}>
                   {columns.map((c) => (
                     <td
                       key={c.key}
@@ -225,10 +225,10 @@ export default function DataTable({ columns = [], rows = [], emptyText = "Tidak 
         </span>
         <div className="ml-auto flex items-center gap-1">
           <button type="button" onClick={() => setPage(Math.max(0, cur - 1))} disabled={cur === 0}
-            className="rounded-lg border px-2 py-1 disabled:opacity-40" style={{ borderColor: "rgba(0,60,68,.2)" }}>← Sebelumnya</button>
+            className="rounded-lg border px-2 py-1 disabled:opacity-40" style={{ borderColor: "rgba(16,24,40,.2)" }}>← Sebelumnya</button>
           <span className="px-1">Hal {cur + 1}/{pages}</span>
           <button type="button" onClick={() => setPage(Math.min(pages - 1, cur + 1))} disabled={cur >= pages - 1}
-            className="rounded-lg border px-2 py-1 disabled:opacity-40" style={{ borderColor: "rgba(0,60,68,.2)" }}>Berikutnya →</button>
+            className="rounded-lg border px-2 py-1 disabled:opacity-40" style={{ borderColor: "rgba(16,24,40,.2)" }}>Berikutnya →</button>
         </div>
       </div>
     </div>

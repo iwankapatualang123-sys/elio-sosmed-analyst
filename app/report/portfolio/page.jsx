@@ -44,7 +44,7 @@ export default async function PortfolioReportPage({ searchParams }) {
       </div>
 
       <article className="card-3d p-6 sm:p-8">
-        <header className="mb-6 border-b pb-4" style={{ borderColor: "rgba(0,60,68,.15)" }}>
+        <header className="mb-6 border-b pb-4" style={{ borderColor: "rgba(16,24,40,.15)" }}>
           <h1 className="text-xl font-bold text-ink">Laporan Semua Cabang{month ? ` — ${labelBulan(month)}` : ""}</h1>
           <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Ringkasan portofolio · {portfolio.activeBranches} cabang aktif{!month && " · sepanjang masa"}</p>
         </header>
@@ -81,7 +81,7 @@ export default async function PortfolioReportPage({ searchParams }) {
               </thead>
               <tbody>
                 {branches.map((b) => (
-                  <tr key={b.id} className="border-t" style={{ borderColor: "rgba(0,60,68,.1)" }}>
+                  <tr key={b.id} className="border-t" style={{ borderColor: "rgba(16,24,40,.1)" }}>
                     <td className="py-2 pr-3 font-medium text-ink">{b.nama_cabang}{b.tiktok_username ? ` @${b.tiktok_username}` : ""}</td>
                     <td className="py-2 pr-3">{fmt(b.contentThisMonth)}</td>
                     <td className="py-2 pr-3">{fmt(b.totalViews)}</td>

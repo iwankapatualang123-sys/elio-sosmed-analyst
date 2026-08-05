@@ -32,7 +32,7 @@ export default function ContentCalendar({ year, month, dayData = {} }) {
               key={i}
               title={info ? `${info.count} video · ${fmt(info.views)} views\n${(info.titles || []).join("\n")}` : ""}
               className="flex min-h-[64px] flex-col rounded-lg p-1.5 text-xs"
-              style={{ background: info ? `rgba(0,102,116,${intensity})` : "rgba(255,255,255,.45)", border: "1px solid rgba(0,60,68,.08)" }}
+              style={{ background: info ? `rgba(91,99,235,${intensity})` : "rgba(255,255,255,.45)", border: "1px solid rgba(16,24,40,.08)" }}
             >
               <span className="font-semibold" style={{ color: info && intensity > 0.4 ? "#fff" : "var(--ink)" }}>{d}</span>
               {info && (

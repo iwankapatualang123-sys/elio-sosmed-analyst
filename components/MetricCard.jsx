@@ -1,25 +1,35 @@
 // File: components/MetricCard.jsx
-// Kartu metrik 3D dengan chip ikon berwarna per aspek (blueprint bagian 23).
-// Server-safe (tanpa hook). Input: { icon, label, value, sub, accent }.
+// Kartu KPI bergaya referensi UI: latar PASTEL lembut per-aspek + chip ikon
+// berwarna solid + angka besar. Server-safe (tanpa hook).
+// Input: { icon, label, value, sub, accent }. accent: indigo|green|blue|amber|
+// orange|violet (alias lama: teal→indigo).
 
 const ACCENTS = {
-  teal: "linear-gradient(180deg,#0a8291,#00545e)",
-  green: "linear-gradient(180deg,#64b98f,#3d7f61)",
-  blue: "linear-gradient(180deg,#4b8fd6,#2c5f9e)",
-  amber: "linear-gradient(180deg,#f0b45a,#c8822a)",
+  indigo: { bg: "#eef0fe", chip: "#5b63eb", ring: "#e0e3fb" },
+  teal:   { bg: "#eef0fe", chip: "#5b63eb", ring: "#e0e3fb" }, // alias lama
+  green:  { bg: "#e7f9f0", chip: "#12b76a", ring: "#cdefdd" },
+  blue:   { bg: "#eaf4ff", chip: "#53b1fd", ring: "#d5e9ff" },
+  sky:    { bg: "#eaf4ff", chip: "#53b1fd", ring: "#d5e9ff" },
+  amber:  { bg: "#fff7e6", chip: "#f5b445", ring: "#fde9bf" },
+  orange: { bg: "#fff3ec", chip: "#f79066", ring: "#ffdcc9" },
+  violet: { bg: "#f3f0fe", chip: "#9b8afb", ring: "#e6e0fd" },
 };
 
-export default function MetricCard({ icon = "•", label, value, sub, accent = "teal" }) {
+export default function MetricCard({ icon = "•", label, value, sub, accent = "indigo" }) {
+  const a = ACCENTS[accent] || ACCENTS.indigo;
   return (
-    <div className="card-3d flex flex-col gap-2 p-4">
+    <div
+      className="flex flex-col gap-2.5 rounded-2xl p-4"
+      style={{ background: a.bg, border: `1px solid ${a.ring}` }}
+    >
       <div
-        className="flex h-10 w-10 items-center justify-center rounded-xl text-lg text-white"
-        style={{ background: ACCENTS[accent] || ACCENTS.teal, boxShadow: "0 4px 8px rgba(0,60,68,.25), inset 0 1px 0 rgba(255,255,255,.35)" }}
+        className="flex h-9 w-9 items-center justify-center rounded-xl text-base text-white"
+        style={{ background: a.chip, boxShadow: `0 4px 10px -3px ${a.chip}80` }}
       >
         {icon}
       </div>
       <div className="text-2xl font-bold leading-tight text-ink">{value}</div>
-      <div className="text-sm" style={{ color: "var(--ink-soft)" }}>{label}</div>
+      <div className="text-[13px] font-medium" style={{ color: "var(--ink-soft)" }}>{label}</div>
       {sub != null && <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{sub}</div>}
     </div>
   );

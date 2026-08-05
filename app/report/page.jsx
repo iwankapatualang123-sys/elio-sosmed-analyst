@@ -70,7 +70,7 @@ export default async function ReportIndexPage({ searchParams }) {
 
       {/* Laporan Semua Cabang (kartu ringkas) */}
       <section className="card-3d flex flex-wrap items-center gap-3 p-3.5">
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-white" style={{ background: "linear-gradient(180deg,#0a8291,#00545e)" }}>
+        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-white" style={{ background: "linear-gradient(180deg,#6b73f0,#3f46c9)" }}>
           <LayoutGrid size={16} />
         </div>
         <div className="min-w-0">
@@ -92,7 +92,7 @@ export default async function ReportIndexPage({ searchParams }) {
           <div key={b.id} className="card-3d flex flex-col p-3">
             {/* Header cabang */}
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white" style={{ background: b.is_active ? "linear-gradient(180deg,#7fe0d0,#0a8291)" : "linear-gradient(180deg,#b7c7c5,#7c908d)" }}>
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white" style={{ background: b.is_active ? "linear-gradient(180deg,#a5b4fc,#6b73f0)" : "linear-gradient(180deg,#b7c7c5,#7c908d)" }}>
                 {b.nama_cabang.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
@@ -111,7 +111,7 @@ export default async function ReportIndexPage({ searchParams }) {
             {/* LIST unduhan — baris ikon + label + aksi (estetik & modern) */}
             <div className="mt-2.5 flex flex-col gap-0.5 border-t pt-2" style={{ borderColor: "var(--line)" }}>
               <Link href={`/report/${b.id}${month ? `?${monthQS}` : ""}`} className="dl-row">
-                <span className="dl-ico" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}><FileText size={14} /></span>
+                <span className="dl-ico" style={{ background: "rgba(91,99,235,.1)", color: "var(--teal-900)" }}><FileText size={14} /></span>
                 <span className="dl-label">Lihat laporan</span>
                 <ChevronRight size={15} className="dl-arrow" />
               </Link>

@@ -82,7 +82,7 @@ export default function ContentGrid({ rows = [], emptyText = "Belum ada konten."
                 {tags.length > 0 && (
                   <div className="mt-1 flex flex-wrap items-center gap-1">
                     {tags.slice(0, 2).map((t, j) => (
-                      <span key={j} className="rounded px-1.5 py-0.5 text-[10px]" style={{ background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>{t}</span>
+                      <span key={j} className="rounded px-1.5 py-0.5 text-[10px]" style={{ background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>{t}</span>
                     ))}
                     {tags.length > 2 && <span className="text-[10px]" style={{ color: "var(--ink-soft)" }}>+{tags.length - 2}</span>}
                   </div>

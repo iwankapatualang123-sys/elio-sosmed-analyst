@@ -3,7 +3,8 @@
 // (props -> SVG), dirender di server. Responsif via viewBox + width 100%.
 // Dipakai dashboard (blueprint bagian 4). Warna mengikuti palet globals.css.
 
-const PALETTE = ["#006674", "#4f9e7a", "#7fbf8f", "#93bcad", "#00545e", "#b9dcc6"];
+// Palet deret grafik mengikuti referensi UI: indigo utama + oranye + pastel.
+const PALETTE = ["#5b63eb", "#f79066", "#53b1fd", "#12b76a", "#9b8afb", "#f5b445"];
 
 // Komponen: BarChart — bar vertikal dengan label & nilai. data: [{label, value}].
 export function BarChart({ data = [], height = 180, unit = "" }) {
@@ -42,8 +43,8 @@ export function BarChartLabeled({ data = [], height = 200, format = (v) => v }) 
               height: `${(d.value / max) * 100}%`,
               minHeight: 4,
               borderRadius: "6px 6px 3px 3px",
-              background: `linear-gradient(180deg, #64b98f, ${PALETTE[i % PALETTE.length]})`,
-              boxShadow: "0 3px 6px rgba(0,60,68,.25)",
+              background: PALETTE[i % PALETTE.length],
+              boxShadow: "0 2px 5px rgba(16,24,40,.12)",
             }}
           />
           <span style={{ fontSize: 10, color: "var(--ink-soft)", marginTop: 4 }}>{d.label}</span>
@@ -71,16 +72,16 @@ export function DivergingBarChart({ data = [], height = 160, format = (v) => v }
           <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
               {positive && (
-                <div title={`${d.label}: ${v > 0 ? "+" : ""}${format(v)}`} style={{ width: "70%", margin: "0 auto", height: `${pct}%`, minHeight: v !== 0 ? 4 : 0, borderRadius: "5px 5px 2px 2px", background: "linear-gradient(180deg,#7fbf8f,#4f9e7a)", boxShadow: "0 2px 5px rgba(0,60,68,.2)" }} />
+                <div title={`${d.label}: ${v > 0 ? "+" : ""}${format(v)}`} style={{ width: "70%", margin: "0 auto", height: `${pct}%`, minHeight: v !== 0 ? 4 : 0, borderRadius: "5px 5px 2px 2px", background: "linear-gradient(180deg,#32d583,#12b76a)", boxShadow: "0 2px 5px rgba(16,24,40,.12)" }} />
               )}
             </div>
             <div style={{ textAlign: "center", fontSize: 11, fontWeight: 700, padding: "2px 0", color: v > 0 ? "#166534" : v < 0 ? "#991b1b" : "var(--ink-soft)" }}>
               {v > 0 ? "+" : ""}{format(v)}
             </div>
-            <div style={{ height: 1, background: "rgba(0,60,68,.25)" }} />
+            <div style={{ height: 1, background: "rgba(16,24,40,.25)" }} />
             <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
               {!positive && (
-                <div title={`${d.label}: ${format(v)}`} style={{ width: "70%", margin: "0 auto", height: `${pct}%`, minHeight: v !== 0 ? 4 : 0, borderRadius: "2px 2px 5px 5px", background: "linear-gradient(0deg,#f87171,#dc2626)", boxShadow: "0 2px 5px rgba(0,60,68,.2)" }} />
+                <div title={`${d.label}: ${format(v)}`} style={{ width: "70%", margin: "0 auto", height: `${pct}%`, minHeight: v !== 0 ? 4 : 0, borderRadius: "2px 2px 5px 5px", background: "linear-gradient(0deg,#f87171,#dc2626)", boxShadow: "0 2px 5px rgba(16,24,40,.2)" }} />
               )}
             </div>
             <span style={{ fontSize: 10, color: "var(--ink-soft)", textAlign: "center", marginTop: 4 }}>{d.label}</span>
@@ -98,7 +99,7 @@ const idFmt = (n) => Number(n || 0).toLocaleString("id-ID");
 // LineChart 1 garis (prop `data`) ATAU multi-garis (prop `series`:
 // [{ label, color, data: [{x,y}] }] — tanggal antar seri boleh beda; sumbu-X
 // dibangun dari gabungan tanggal semua seri). Area gradasi hanya utk 1 garis.
-export function LineChart({ data = [], series = null, color = "#006674" }) {
+export function LineChart({ data = [], series = null, color = "#5b63eb" }) {
   const multi = Array.isArray(series) && series.filter((s) => (s.data || []).length > 0).length > 0;
   const sers = multi
     ? series.filter((s) => (s.data || []).length > 0)
@@ -143,7 +144,7 @@ export function LineChart({ data = [], series = null, color = "#006674" }) {
         const y = yAt(t);
         return (
           <g key={i}>
-            <line x1={padL} y1={y} x2={padL + plotW} y2={y} stroke="rgba(0,60,68,.12)" strokeWidth="1" />
+            <line x1={padL} y1={y} x2={padL + plotW} y2={y} stroke="rgba(16,24,40,.08)" strokeWidth="1" />
             <text x={padL - 6} y={y + 3} textAnchor="end" fontSize="9" fill="var(--ink-soft)">{idFmt(Math.round(t))}</text>
           </g>
         );
@@ -155,12 +156,12 @@ export function LineChart({ data = [], series = null, color = "#006674" }) {
         const pts = linesOf(s);
         return (
           <g key={si}>
-            <polyline points={toPoints(pts)} fill="none" stroke={s.color || "#006674"} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+            <polyline points={toPoints(pts)} fill="none" stroke={s.color || "#5b63eb"} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
             {s.data.map((d, i) => {
               const px = xAt(xIndex.get(String(d.x)));
               const py = yAt(Number(d.y) || 0);
               return (
-                <circle key={i} cx={px} cy={py} r={multi ? 2.4 : 3} fill={s.color || "#006674"} stroke="#fff" strokeWidth="1.5">
+                <circle key={i} cx={px} cy={py} r={multi ? 2.4 : 3} fill={s.color || "#5b63eb"} stroke="#fff" strokeWidth="1.5">
                   {/* Tooltip bawaan browser per titik: tanggal + nilai. */}
                   <title>{`${d.x}: ${idFmt(d.y)}`}</title>
                 </circle>
@@ -177,7 +178,7 @@ export function LineChart({ data = [], series = null, color = "#006674" }) {
       <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: "var(--ink-soft)" }}>
         {sers.map((s, i) => (
           <span key={i} className="inline-flex items-center gap-1.5">
-            <span className="inline-block h-1 w-4 rounded-full" style={{ background: s.color || "#006674" }} />
+            <span className="inline-block h-1 w-4 rounded-full" style={{ background: s.color || "#5b63eb" }} />
             {s.label}
           </span>
         ))}
@@ -297,7 +298,7 @@ export function Heatmap({ heatmap = {} }) {
                           title={`${day} ${String(h).padStart(2, "0")}:00 — ${Math.round(val)} follower aktif`}
                           style={{
                             width: 17, height: 17, borderRadius: 3, padding: 0,
-                            background: `rgba(0,102,116,${0.06 + a * 0.94})`,
+                            background: `rgba(91,99,235,${0.06 + a * 0.94})`,
                             boxShadow: isBest ? "0 0 0 2px #f0b45a" : "none",
                           }}
                         />
@@ -318,7 +319,7 @@ export function Heatmap({ heatmap = {} }) {
           {/* Legenda warna */}
           <div className="mt-3 flex items-center gap-2 text-xs" style={{ color: "var(--ink-soft)" }}>
             <span>Sepi</span>
-            <span style={{ width: 120, height: 10, borderRadius: 5, background: "linear-gradient(90deg, rgba(0,102,116,.08), rgba(0,102,116,1))", display: "inline-block" }} />
+            <span style={{ width: 120, height: 10, borderRadius: 5, background: "linear-gradient(90deg, rgba(91,99,235,.08), rgba(91,99,235,1))", display: "inline-block" }} />
             <span>Ramai</span>
             <span className="ml-3 flex items-center gap-1"><span style={{ width: 10, height: 10, borderRadius: 3, boxShadow: "0 0 0 2px #f0b45a", display: "inline-block" }} /> jam terbaik</span>
           </div>
@@ -327,9 +328,9 @@ export function Heatmap({ heatmap = {} }) {
         {/* Tabel rekomendasi upload per hari */}
         <div className="lg:w-60 lg:flex-shrink-0">
           <h4 className="mb-2 text-xs font-semibold" style={{ color: "var(--teal-900)" }}>📅 Rekomendasi upload per hari</h4>
-          <div className="overflow-hidden rounded-xl" style={{ border: "1px solid rgba(0,60,68,.1)" }}>
+          <div className="overflow-hidden rounded-xl" style={{ border: "1px solid rgba(16,24,40,.1)" }}>
             <table className="w-full text-left" style={{ borderCollapse: "collapse" }}>
-              <thead style={{ background: "rgba(0,102,116,.07)" }}>
+              <thead style={{ background: "rgba(91,99,235,.07)" }}>
                 <tr>
                   <th className="px-2 py-1.5 text-[10px] font-semibold text-ink">Hari</th>
                   <th className="px-2 py-1.5 text-[10px] font-semibold text-ink">Puncak</th>
@@ -338,7 +339,7 @@ export function Heatmap({ heatmap = {} }) {
               </thead>
               <tbody>
                 {perDayBest.map((d) => (
-                  <tr key={d.wd} className="border-t" style={{ borderColor: "rgba(0,60,68,.07)" }}>
+                  <tr key={d.wd} className="border-t" style={{ borderColor: "rgba(16,24,40,.07)" }}>
                     <td className="px-2 py-1.5 text-xs font-medium text-ink">{d.day}</td>
                     {d.hour == null ? (
                       <td colSpan={2} className="px-2 py-1.5 text-[10px]" style={{ color: "var(--ink-soft)" }}>Belum ada data</td>

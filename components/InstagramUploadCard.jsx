@@ -76,7 +76,7 @@ export default function InstagramUploadCard({ branches = [] }) {
             multiple
             disabled={busy}
             onChange={(e) => setFiles([...(e.target.files || [])])}
-            className="text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[rgba(0,102,116,.1)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--teal-900)]"
+            className="text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[rgba(91,99,235,.1)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--teal-900)]"
           />
           {files.length > 0 && (
             <span className="text-[11px]" style={{ color: "var(--ink-soft)" }}>
@@ -96,7 +96,7 @@ export default function InstagramUploadCard({ branches = [] }) {
             type="submit"
             disabled={busy || files.length === 0}
             className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            style={{ background: "linear-gradient(180deg,#0a8291,#006674)" }}
+            style={{ background: "linear-gradient(180deg,#6b73f0,#5b63eb)" }}
           >
             <UploadCloud size={16} /> {busy ? "Memproses…" : `Upload ${files.length > 0 ? files.length + " file" : ""}`}
           </button>
@@ -105,7 +105,7 @@ export default function InstagramUploadCard({ branches = [] }) {
 
       {/* Hasil per file */}
       {results && (
-        <ul className="mt-3 space-y-1.5 border-t pt-3 text-[13px]" style={{ borderColor: "rgba(0,60,68,.1)" }}>
+        <ul className="mt-3 space-y-1.5 border-t pt-3 text-[13px]" style={{ borderColor: "rgba(16,24,40,.1)" }}>
           {results.map((r, i) => (
             <li key={i} className="flex items-start gap-2">
               {r.ok ? <CheckCircle2 size={15} className="mt-0.5 shrink-0" style={{ color: "#166534" }} /> : <XCircle size={15} className="mt-0.5 shrink-0 text-red-600" />}

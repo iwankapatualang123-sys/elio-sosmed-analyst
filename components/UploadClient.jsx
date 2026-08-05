@@ -120,8 +120,8 @@ export default function UploadClient({ branches = [] }) {
         onClick={() => inputRef.current?.click()}
         className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center transition-colors"
         style={{
-          borderColor: dragOver ? "var(--teal-700)" : "rgba(0,60,68,.2)",
-          background: dragOver ? "rgba(0,102,116,.06)" : "rgba(244,250,245,.6)",
+          borderColor: dragOver ? "var(--teal-700)" : "rgba(16,24,40,.2)",
+          background: dragOver ? "rgba(91,99,235,.06)" : "rgba(244,250,245,.6)",
         }}
       >
         <div className="text-3xl">📁</div>
@@ -164,8 +164,8 @@ export default function UploadClient({ branches = [] }) {
       {/* Step indicator saat memproses (blueprint 22) */}
       {status === "sending" && (
         <div className="mt-4">
-          <div className="mb-2 h-2 overflow-hidden rounded-full" style={{ background: "rgba(0,60,68,.1)" }}>
-            <div style={{ width: `${((step + 1) / STEPS.length) * 100}%`, height: "100%", background: "linear-gradient(90deg,#0a8291,#006674)", transition: "width .5s ease" }} />
+          <div className="mb-2 h-2 overflow-hidden rounded-full" style={{ background: "rgba(16,24,40,.1)" }}>
+            <div style={{ width: `${((step + 1) / STEPS.length) * 100}%`, height: "100%", background: "linear-gradient(90deg,#6b73f0,#5b63eb)", transition: "width .5s ease" }} />
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
             {STEPS.slice(0, 3).map((label, i) => (

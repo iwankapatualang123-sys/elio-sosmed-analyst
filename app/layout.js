@@ -3,14 +3,16 @@
 // offline), tema global, metadata PWA (manifest/ikon), dan registrasi service worker.
 // Warna & gaya lihat app/globals.css (blueprint bagian 11).
 
-import { Poppins } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
-const poppins = Poppins({
+// Inter — tipografi netral & tajam khas dashboard SaaS modern (mengikuti referensi
+// UI). Variabel tetap dinamai --font-poppins agar globals.css tak perlu diubah.
+const poppins = Inter({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -30,7 +32,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#052a30",
+  themeColor: "#eef0f7",
   viewportFit: "cover",
 };
 

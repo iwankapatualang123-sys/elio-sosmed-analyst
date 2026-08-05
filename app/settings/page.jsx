@@ -145,10 +145,10 @@ export default async function SettingsPage() {
                   <span className="text-xs" style={{ color: "var(--ink-soft)" }}>Belum ada nilai.</span>
                 )}
                 {categoriesByType[type].map((c) => (
-                  <form key={c.id} action={deleteCategory} className="inline-flex items-center gap-1 rounded-full py-1 pl-3 pr-1.5 text-xs font-medium" style={{ background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>
+                  <form key={c.id} action={deleteCategory} className="inline-flex items-center gap-1 rounded-full py-1 pl-3 pr-1.5 text-xs font-medium" style={{ background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>
                     <input type="hidden" name="id" value={c.id} />
                     {c.value}
-                    <button type="submit" className="rounded-full px-1 hover:bg-[rgba(0,60,68,.12)]" title={`Hapus "${c.value}"`}>×</button>
+                    <button type="submit" className="rounded-full px-1 hover:bg-[rgba(16,24,40,.12)]" title={`Hapus "${c.value}"`}>×</button>
                   </form>
                 ))}
               </div>
@@ -163,7 +163,7 @@ export default async function SettingsPage() {
         <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
           Buat akun user baru di bawah ini (role bisa diubah lagi kapan saja), atau atur role/akses cabang user yang sudah ada.
         </p>
-        <div className="mb-5 border-b pb-4" style={{ borderColor: "rgba(0,60,68,.1)" }}>
+        <div className="mb-5 border-b pb-4" style={{ borderColor: "rgba(16,24,40,.1)" }}>
           <InviteUserForm />
         </div>
 
@@ -171,7 +171,7 @@ export default async function SettingsPage() {
           {(users || []).map((u) => {
             const assigned = accessByUser.get(u.id) || new Set();
             return (
-              <div key={u.id} className="rounded-2xl border p-3" style={{ borderColor: "rgba(0,60,68,.12)", background: "rgba(255,255,255,.5)" }}>
+              <div key={u.id} className="rounded-2xl border p-3" style={{ borderColor: "rgba(16,24,40,.12)", background: "rgba(255,255,255,.5)" }}>
                 <div className="mb-3 flex flex-wrap items-center gap-3">
                   <span className="font-medium text-ink">{u.full_name || u.email}</span>
                   <span className="text-xs" style={{ color: "var(--ink-soft)" }}>{u.email}</span>

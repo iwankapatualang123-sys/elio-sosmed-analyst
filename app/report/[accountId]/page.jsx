@@ -147,7 +147,7 @@ export default async function ReportPage({ params, searchParams }) {
         <div className="mb-1 text-right text-[10px] font-medium uppercase tracking-widest" style={{ color: "var(--ink-soft)" }}>created : Elio Digihub</div>
 
         {/* Header: logo Elio + judul + periode */}
-        <header className="print-avoid mb-5 flex items-center gap-4 border-b pb-4" style={{ borderColor: "rgba(0,60,68,.15)" }}>
+        <header className="print-avoid mb-5 flex items-center gap-4 border-b pb-4" style={{ borderColor: "rgba(16,24,40,.15)" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icon-192.png" alt="Elio" width={50} height={50} style={{ width: 50, height: 50, borderRadius: 12, display: "block" }} />
           <div className="flex-1">
@@ -161,7 +161,7 @@ export default async function ReportPage({ params, searchParams }) {
         </header>
 
         {/* ===================== LAPORAN TIKTOK ===================== */}
-        <div className="print-avoid mb-3 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "rgba(0,102,116,.08)" }}>
+        <div className="print-avoid mb-3 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "rgba(91,99,235,.08)" }}>
           <span className="text-base">🎵</span>
           <h2 className="text-sm font-extrabold uppercase tracking-wider" style={{ color: "var(--teal-900)" }}>Laporan TikTok</h2>
         </div>
@@ -246,7 +246,7 @@ export default async function ReportPage({ params, searchParams }) {
                 {kontenList.map((v, i) => {
                   const rank = topRank.get(v.video_id);
                   return (
-                    <tr key={v.video_id || i} className="border-t align-top" style={{ borderColor: "rgba(0,60,68,.08)", background: rank ? "rgba(240,180,90,.10)" : undefined }}>
+                    <tr key={v.video_id || i} className="border-t align-top" style={{ borderColor: "rgba(16,24,40,.08)", background: rank ? "rgba(240,180,90,.10)" : undefined }}>
                       <td className="py-1 pr-2 text-center">{rank ? <span title={`Top ${rank} views`}>{MEDALI[rank]}</span> : <span style={{ color: "var(--ink-soft)" }}>{i + 1}</span>}</td>
                       <td className="py-1 pr-2"><Thumbnail link={v.video_link} width={38} height={50} /></td>
                       <td className="whitespace-nowrap py-1 pr-2" style={{ color: "var(--ink-soft)" }}>{v.post_date ? tglPanjang(v.post_date).replace(/ \d{4}$/, "") : "—"}</td>
@@ -291,7 +291,7 @@ export default async function ReportPage({ params, searchParams }) {
                   const wk = detail.weekly.weeks[i] || {};
                   const net = Number(f.netGrowth) || 0;
                   return (
-                    <tr key={c.week} className="border-t" style={{ borderColor: "rgba(0,60,68,.08)" }}>
+                    <tr key={c.week} className="border-t" style={{ borderColor: "rgba(16,24,40,.08)" }}>
                       <td className="py-1 pr-3 font-medium text-ink">{c.label}</td>
                       <td className="whitespace-nowrap py-1 pr-3" style={{ color: "var(--ink-soft)" }}>{wk.rangeLabel || "—"}</td>
                       <td className="py-1 pr-3 text-right">{fmt(c.count)}</td>
@@ -377,12 +377,12 @@ export default async function ReportPage({ params, searchParams }) {
         )}
 
         {/* ===================== KESIMPULAN ===================== */}
-        <div className="print-avoid mb-3 mt-6 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "rgba(0,102,116,.08)" }}>
+        <div className="print-avoid mb-3 mt-6 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "rgba(91,99,235,.08)" }}>
           <span className="text-base">📝</span>
           <h2 className="text-sm font-extrabold uppercase tracking-wider" style={{ color: "var(--teal-900)" }}>Kesimpulan</h2>
         </div>
         <section className="print-avoid mb-5">
-          <p className="mb-3 rounded-xl p-3 text-sm leading-relaxed text-ink" style={{ background: "rgba(0,102,116,.05)" }}>{summaryText}</p>
+          <p className="mb-3 rounded-xl p-3 text-sm leading-relaxed text-ink" style={{ background: "rgba(91,99,235,.05)" }}>{summaryText}</p>
           <h3 className="mb-1.5 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--teal-900)" }}>Rekomendasi</h3>
           <ul className="flex flex-col gap-1.5">
             {(detail.insights || []).map((i, idx) => (
@@ -395,7 +395,7 @@ export default async function ReportPage({ params, searchParams }) {
         </section>
 
         {/* Footer metodologi */}
-        <footer className="mt-6 border-t pt-3 text-[10px] leading-relaxed" style={{ borderColor: "rgba(0,60,68,.15)", color: "var(--ink-soft)" }}>
+        <footer className="mt-6 border-t pt-3 text-[10px] leading-relaxed" style={{ borderColor: "rgba(16,24,40,.15)", color: "var(--ink-soft)" }}>
           Sumber data: TikTok Studio (Analytics){hasIg ? " & Meta Business Suite (Instagram)" : ""}. Periode data terakhir: {tglPanjang(detail.latestDataDate)}.
           Laporan dibuat otomatis oleh <b>Elio Digihub</b> pada {dibuat}. Angka views bersifat akumulatif s/d tanggal tarik data.
         </footer>

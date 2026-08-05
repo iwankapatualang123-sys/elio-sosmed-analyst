@@ -62,7 +62,7 @@ export default function BranchRow({ branch }) {
 
   if (editing) {
     return (
-      <tr className="border-t" style={{ borderColor: "rgba(0,60,68,.1)", background: "rgba(0,102,116,.04)" }}>
+      <tr className="border-t" style={{ borderColor: "rgba(16,24,40,.1)", background: "rgba(91,99,235,.04)" }}>
         <td className="py-2 pr-3">
           <input value={nama} onChange={(e) => setNama(e.target.value)} className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="Nama cabang" />
         </td>
@@ -88,7 +88,7 @@ export default function BranchRow({ branch }) {
   }
 
   return (
-    <tr className="border-t" style={{ borderColor: "rgba(0,60,68,.1)" }}>
+    <tr className="border-t" style={{ borderColor: "rgba(16,24,40,.1)" }}>
       <td className="py-2 pr-3 font-medium text-ink">{branch.nama_cabang}</td>
       <td className="py-2 pr-3">@{branch.tiktok_username}</td>
       <td className="py-2 pr-3">{branch.kategori || "-"}</td>

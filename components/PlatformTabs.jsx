@@ -20,8 +20,8 @@ export default function PlatformTabs({ tabs = [], children }) {
             onClick={() => setActive(i)}
             className="rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all"
             style={i === active
-              ? { background: "linear-gradient(180deg,#0a8291,#006674)", color: "#fff", boxShadow: "0 4px 10px -3px rgba(0,60,68,.4)" }
-              : { background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}
+              ? { background: "linear-gradient(180deg,#6b73f0,#5b63eb)", color: "#fff", boxShadow: "0 4px 10px -3px rgba(16,24,40,.4)" }
+              : { background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}
           >
             {label}
           </button>

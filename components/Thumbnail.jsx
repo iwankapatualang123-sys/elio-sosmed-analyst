@@ -49,7 +49,7 @@ export default function Thumbnail({ link, width = 48, height = 64 }) {
     return () => { alive = false; };
   }, [link]);
 
-  const box = { width, height, borderRadius: 8, background: "rgba(0,60,68,.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: Math.round(width / 3) };
+  const box = { width, height, borderRadius: 8, background: "rgba(16,24,40,.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: Math.round(width / 3) };
 
   if (!link) return <div style={box}>🎬</div>;
   if (!ready) return <div style={box} aria-busy="true" />; // masih resolusi oEmbed
@@ -68,7 +68,7 @@ export default function Thumbnail({ link, width = 48, height = 64 }) {
         width={width}
         height={height}
         onError={onError}
-        style={{ width, height, objectFit: "cover", borderRadius: 8, background: "rgba(0,60,68,.08)", display: "block" }}
+        style={{ width, height, objectFit: "cover", borderRadius: 8, background: "rgba(16,24,40,.08)", display: "block" }}
       />
     </a>
   );

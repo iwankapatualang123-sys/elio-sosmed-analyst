@@ -8,13 +8,28 @@
 @import "tailwindcss";
 
 :root {
-  /* Palet brand */
-  --teal-900: #00545e; /* aksen / hover / shadow */
-  --teal-700: #006674; /* primary / header */
-  --green-500: #4f9e7a;
-  --green-400: #7fbf8f;
-  --mint-100: #dbefd4;
-  --sage-300: #93bcad;
+  /* Palet PRIMARY: indigo/periwinkle (mengikuti referensi UI). Variabel masih
+     bernama --teal-* agar seluruh pemakaian var(--teal-*) ikut berubah otomatis. */
+  --teal-900: #3f46c9; /* indigo tua — teks aksen di latar terang */
+  --teal-700: #5b63eb; /* indigo/periwinkle — PRIMARY */
+  --pri-50:  #eef0fe;  /* tint sangat muda utk bg aktif/hover */
+  --pri-100: #e3e6fd;
+  --green-500: #12b76a; /* sukses (hijau bersih) */
+  --green-400: #32d583;
+  --mint-100: #d1fadf;
+  --sage-300: #6ce9a6;
+  /* Aksen sekunder untuk chart & KPI (palet referensi: indigo + oranye + pastel). */
+  --accent-orange: #f79066;
+  --accent-amber:  #f5b445;
+  --accent-sky:    #53b1fd;
+  --accent-violet: #9b8afb;
+  /* Warna deret grafik (urutan konsisten di semua chart). */
+  --c1: #5b63eb; /* indigo   */
+  --c2: #f79066; /* oranye   */
+  --c3: #53b1fd; /* biru muda*/
+  --c4: #12b76a; /* hijau    */
+  --c5: #9b8afb; /* violet   */
+  --c6: #f5b445; /* amber    */
   --ink: #1a2338;       /* teks utama gelap (slate) — mudah dibaca di kartu putih */
   --ink-soft: #667085;  /* teks sekunder (muted) */
   /* "on background": karena latar sekarang TERANG, teks di atasnya juga gelap. */
@@ -113,7 +128,7 @@ body > * { position: relative; z-index: 1; }
   border-radius: 9px;
   transition: background 0.13s ease;
 }
-.dl-row:hover { background: rgba(0, 102, 116, 0.06); }
+.dl-row:hover { background: var(--pri-50); }
 .dl-ico {
   display: flex;
   align-items: center;
@@ -206,15 +221,15 @@ body > * { position: relative; z-index: 1; }
 
 .btn-primary {
   color: #fff;
-  background: linear-gradient(180deg, #0a8291 0%, var(--teal-700) 100%);
-  box-shadow: 0 1px 2px rgba(0, 50, 58, 0.25), 0 6px 16px -8px rgba(0, 90, 104, 0.55);
+  background: linear-gradient(180deg, #6b73f0 0%, var(--teal-700) 100%);
+  box-shadow: 0 1px 2px rgba(53, 60, 170, 0.25), 0 6px 16px -8px rgba(91, 99, 235, 0.5);
 }
-.btn-primary:hover:not(:disabled) { box-shadow: 0 1px 2px rgba(0, 50, 58, 0.3), 0 10px 22px -8px rgba(0, 90, 104, 0.6); }
+.btn-primary:hover:not(:disabled) { box-shadow: 0 1px 2px rgba(53, 60, 170, 0.3), 0 10px 22px -8px rgba(91, 99, 235, 0.55); }
 
 .btn-success {
   color: #fff;
-  background: linear-gradient(180deg, #57ab84 0%, var(--green-500) 100%);
-  box-shadow: 0 1px 2px rgba(45, 95, 72, 0.25), 0 6px 16px -8px rgba(51, 107, 82, 0.5);
+  background: linear-gradient(180deg, #32d583 0%, var(--green-500) 100%);
+  box-shadow: 0 1px 2px rgba(6, 118, 71, 0.22), 0 6px 16px -8px rgba(18, 183, 106, 0.45);
 }
 
 .btn-ghost {
@@ -249,7 +264,7 @@ body > * { position: relative; z-index: 1; }
 .input-3d::-ms-clear { display: none; }
 .input-3d:focus {
   border-color: var(--teal-700);
-  box-shadow: 0 0 0 3px rgba(0, 102, 116, 0.14);
+  box-shadow: 0 0 0 3px rgba(91, 99, 235, 0.16);
 }
 
 /* Safe-area insets (notch/PWA). */

@@ -37,11 +37,11 @@ export default function FollowerGrowthRange({ ttMonthly = [], igMonthly = [] }) 
   const igF = igMonthly.filter((p) => inRange(p.x));
 
   const series = [
-    { label: "TikTok", color: "#006674", data: ttF },
+    { label: "TikTok", color: "#5b63eb", data: ttF },
     ...(igF.length >= 1 ? [{ label: "Instagram", color: "#c13584", data: igF }] : []),
   ];
 
-  const rows = [["TikTok", ttF, "#006674"], ["Instagram", igF, "#c13584"]];
+  const rows = [["TikTok", ttF, "#5b63eb"], ["Instagram", igF, "#c13584"]];
   const jmlBulan = months.filter(inRange).length;
 
   return (

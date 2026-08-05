@@ -36,7 +36,7 @@ export default function PortfolioSummary({
   const cur = isIg ? instagram : tiktok;
   const p = cur.portfolio;
   const ranked = cur.ranked;
-  const accent = isIg ? "#c13584" : "#006674";
+  const accent = isIg ? "#c13584" : "#5b63eb";
   const igEmpty = isIg && p.activeBranches === 0;
 
   return (
@@ -75,13 +75,13 @@ export default function PortfolioSummary({
           </span>
           {categories.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              <Link href={dashboardHref({ month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={!catFilter ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>Semua</Link>
+              <Link href={dashboardHref({ month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={!catFilter ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>Semua</Link>
               {categories.map((c) => (
-                <Link key={c} href={dashboardHref({ cat: c, month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={catFilter === c ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(0,102,116,.08)", color: "var(--teal-900)" }}>{c}</Link>
+                <Link key={c} href={dashboardHref({ cat: c, month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={catFilter === c ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>{c}</Link>
               ))}
             </div>
           )}
-          <Link href="/report/portfolio" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,102,116,.1)", color: "var(--teal-900)" }}>
+          <Link href="/report/portfolio" className="ml-auto rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(91,99,235,.1)", color: "var(--teal-900)" }}>
             📄 Laporan Semua Cabang
           </Link>
         </div>
@@ -107,7 +107,7 @@ export default function PortfolioSummary({
             </thead>
             <tbody>
               {ranked.map((b) => (
-                <tr key={b.id} className="border-t" style={{ borderColor: "rgba(0,60,68,.1)", opacity: isIg && !b.hasData ? 0.5 : 1 }}>
+                <tr key={b.id} className="border-t" style={{ borderColor: "rgba(16,24,40,.1)", opacity: isIg && !b.hasData ? 0.5 : 1 }}>
                   <td className="py-2 pr-3 font-medium text-ink">
                     {b.nama_cabang}
                     {b.tiktok_username ? <span style={{ color: "var(--ink-soft)" }}> @{b.tiktok_username}</span> : null}
