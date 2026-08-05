@@ -135,6 +135,18 @@ export default async function UmumPage({ searchParams }) {
             Batang bertambah otomatis saat outlet punya data di platform lain. {umum.followerBars.length >= 6 ? "Menampilkan 6 outlet teratas." : ""}
           </p>
           <FollowerGroupBars outlets={umum.followerBars} />
+          {(() => {
+            const missing = [
+              !umum.followerBars.some((o) => o.instagram != null) && "Instagram",
+              !umum.followerBars.some((o) => o.threads != null) && "Threads",
+            ].filter(Boolean);
+            if (!missing.length) return null;
+            return (
+              <p className="mt-2 rounded-lg px-3 py-2 text-[11px]" style={{ background: "rgba(240,180,90,.14)", color: "#8a5a12" }}>
+                Batang <b>{missing.join(" & ")}</b> belum tampil karena jumlah follower absolutnya belum ada — export Meta/Threads hanya memuat <i>pertambahan</i> follower, bukan total. Isi jumlah follower {missing.join(" & ")} <b>manual (mingguan)</b> di halaman Upload; batangnya muncul otomatis.
+              </p>
+            );
+          })()}
         </div>
 
         <div className="card-3d p-4 sm:p-5">
