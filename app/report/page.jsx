@@ -61,7 +61,7 @@ export default async function ReportIndexPage({ searchParams }) {
       <Nav email={profile.email} role={profile.role} />
 
       <div className="px-1">
-        <h1 className="text-xl font-bold tracking-tight text-white drop-shadow-sm sm:text-2xl">Laporan</h1>
+        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Laporan</h1>
         <p className="mt-0.5 text-[13px]" style={{ color: "var(--on-bg-soft)" }}>
           {month ? `Semua laporan discope ke ${labelBulan(month)}.` : "Pilih cabang untuk unduh laporannya (PDF & Excel), atau ambil laporan gabungan."}
         </p>

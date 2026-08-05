@@ -15,30 +15,28 @@
   --green-400: #7fbf8f;
   --mint-100: #dbefd4;
   --sage-300: #93bcad;
-  --ink: #0e3238;       /* teks gelap di atas kaca terang (isi kartu) */
-  --ink-soft: #4b6b6f;
-  /* Teks di atas latar NEBULA gelap (judul/subjudul halaman, di luar kartu). */
-  --on-bg: #effffb;
-  --on-bg-soft: rgba(220, 248, 242, 0.76);
+  --ink: #1a2338;       /* teks utama gelap (slate) — mudah dibaca di kartu putih */
+  --ink-soft: #667085;  /* teks sekunder (muted) */
+  /* "on background": karena latar sekarang TERANG, teks di atasnya juga gelap. */
+  --on-bg: #1a2338;
+  --on-bg-soft: #667085;
 
-  /* Aksen "spatial": cahaya cyan-mint untuk glow & garis energi */
+  /* Aksen halus (dipakai hover/garis). */
   --glow: #46e6d0;
   --glow-soft: rgba(70, 230, 208, 0.5);
   --halo: rgba(120, 240, 220, 0.22);
 
   --surface: #ffffff;
   --radius-card: 16px;
-  --line: rgba(15, 50, 56, 0.10); /* garis/pembatas halus di dalam kartu kaca terang */
+  --line: #e8eaf1; /* garis/pembatas halus (abu terang) */
 
-  /* Kartu KACA (glassmorphism): permukaan terang transparan yang berkilau,
-     backdrop-blur kuat agar nebula di belakang terlihat samar & mewah. */
-  --glass-bg: linear-gradient(158deg, rgba(255, 255, 255, 0.92), rgba(244, 255, 252, 0.82));
-  --glass-border: 1px solid rgba(255, 255, 255, 0.7);
-  --glass-blur: blur(22px) saturate(150%);
+  /* Kartu CLEAN: putih solid, border tipis, bayangan lembut berlapis (bukan kaca). */
+  --glass-bg: #ffffff;
+  --glass-border: 1px solid var(--line);
+  --glass-blur: saturate(100%);
   --glass-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 2px 6px rgba(3, 22, 26, 0.22),
-    0 22px 48px -22px rgba(3, 22, 26, 0.55);
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 4px 12px -4px rgba(16, 24, 40, 0.08);
 }
 
 /* Token utility Tailwind + font */
@@ -61,38 +59,21 @@ body {
   min-height: 100vh;
   color: var(--ink);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
-  /* Latar SILVER METALIK (gunmetal) BERKILAU — gradasi baja gelap + pita kilau
-     diagonal (sheen) seperti logam poles, jadi panggung untuk kartu kaca terang
-     yang mengambang. Cukup gelap agar kartu putih & teks judul tetap kontras. */
+  /* Latar CLEAN: abu-lavender sangat terang & rata → kesan bersih, kartu putih
+     menonjol lembut. Sedikit variasi radial supaya tidak flat mati. */
   background:
-    linear-gradient(118deg, transparent 26%, rgba(255, 255, 255, 0.09) 43%, rgba(255, 255, 255, 0.16) 50%, rgba(255, 255, 255, 0.07) 57%, transparent 74%),
-    radial-gradient(1000px 680px at 4% -12%, rgba(226, 232, 240, 0.12), transparent 58%),
-    radial-gradient(1000px 780px at 76% 126%, rgba(200, 210, 222, 0.10), transparent 60%),
-    linear-gradient(158deg, #363c44 0%, #464e59 47%, #565f6b 100%);
+    radial-gradient(1100px 700px at 0% 0%, #f2f4fb, transparent 60%),
+    radial-gradient(1000px 700px at 100% 0%, #eef1f9, transparent 55%),
+    #eef0f7;
   background-attachment: fixed;
-}
-
-/* Kilau metalik yang mengambang pelan → kesan permukaan perak berkilau (spatial). */
-body::before {
-  content: "";
-  position: fixed;
-  inset: -20vmax;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(circle at 16% 16%, rgba(255, 255, 255, 0.18) 0, transparent 24vmax),
-    radial-gradient(circle at 88% 22%, rgba(214, 224, 236, 0.16) 0, transparent 24vmax),
-    radial-gradient(circle at 70% 90%, rgba(190, 202, 216, 0.14) 0, transparent 26vmax);
-  filter: blur(20px);
-  animation: nebulaDrift 34s ease-in-out infinite alternate;
-}
-@keyframes nebulaDrift {
-  0%   { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(2.4vmax, -2.4vmax, 0) scale(1.07); }
 }
 
 /* Konten harus di atas lapisan latar. */
 body > * { position: relative; z-index: 1; }
+@keyframes nebulaDrift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(2.4vmax, -2.4vmax, 0) scale(1.07); }
+}
 
 /* ── KARTU KACA (glassmorphism) ─────────────────────────────────────────────
    Cukup opak agar tabel/grafik di dalamnya tetap terbaca, tapi tepi bercahaya
@@ -100,33 +81,16 @@ body > * { position: relative; z-index: 1; }
 .card-3d {
   position: relative;
   background: var(--glass-bg);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
   border-radius: var(--radius-card);
   border: var(--glass-border);
   box-shadow: var(--glass-shadow);
   transition: box-shadow 0.16s ease, transform 0.16s ease;
 }
-/* Kilau tepi kaca: garis cahaya tipis di sisi atas-kiri → efek "berkilau". */
-.card-3d::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 42%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-/* Hover: angkat sedikit + glow teal → terasa mengambang di ruang. */
+/* Hover: bayangan sedikit lebih dalam (clean, tanpa glow). */
 .card-3d:hover {
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 2px 8px rgba(3, 22, 26, 0.26),
-    0 30px 60px -24px rgba(3, 22, 26, 0.6),
-    0 0 28px -6px var(--halo);
+    0 1px 2px rgba(16, 24, 40, 0.05),
+    0 8px 24px -8px rgba(16, 24, 40, 0.14);
 }
 
 /* Helper kaca generik (mis. panel kecil, dropdown) bila diperlukan. */
@@ -255,13 +219,11 @@ body > * { position: relative; z-index: 1; }
 
 .btn-ghost {
   color: var(--teal-900);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(240, 253, 249, 0.7));
-  -webkit-backdrop-filter: blur(10px) saturate(150%);
-  backdrop-filter: blur(10px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 1px 2px rgba(3, 22, 26, 0.18), 0 6px 16px -10px rgba(3, 22, 26, 0.4);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
-.btn-ghost:hover:not(:disabled) { background: linear-gradient(180deg, #ffffff, rgba(240, 253, 249, 0.9)); }
+.btn-ghost:hover:not(:disabled) { background: #f6f8fc; border-color: #d8dce6; }
 
 .btn-danger {
   color: #fff;
