@@ -8,7 +8,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, UploadCloud, Database, CalendarDays, ClipboardList, FileText, Settings, UserRound, ScrollText, LogOut, ChevronDown } from "lucide-react";
+import { LayoutDashboard, UploadCloud, Database, CalendarDays, ClipboardList, FileText, Settings, UserRound, ScrollText, LogOut, ChevronDown, Music2, Camera, AtSign, LayoutGrid } from "lucide-react";
 import GlobalSearch from "@/components/GlobalSearch";
 import IdleLogout from "@/components/IdleLogout";
 import InfoRail from "@/components/InfoRail";
@@ -22,10 +22,21 @@ const PRIMARY = [
   { href: "/upload", label: "Upload", Icon: UploadCloud },
 ];
 
+// Sub-menu Dashboard per platform. Umum = ringkasan semua platform & outlet;
+// sisanya = detail per outlet dengan tab platform terbuka.
+const DASH_SUB = [
+  { href: "/dashboard", label: "Umum", Icon: LayoutGrid, exact: true },
+  { href: "/dashboard/instagram", label: "Instagram", Icon: Camera },
+  { href: "/dashboard/tiktok", label: "TikTok", Icon: Music2 },
+  { href: "/dashboard/threads", label: "Threads", Icon: AtSign },
+];
+
 export default function Nav({ email, role }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const onDash = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+  const [dashOpen, setDashOpen] = useState(onDash);
 
   const isActive = (href) => pathname === href || pathname.startsWith(`${href}/`);
 
@@ -99,7 +110,41 @@ export default function Nav({ email, role }) {
 
         <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
           <p className="px-2.5 pb-1 pt-0.5 text-[9px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink-soft)" }}>Menu</p>
-          {PRIMARY.map((l) => <NavLink key={l.href} {...l} />)}
+
+          {/* Dashboard — grup expandable per platform */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setDashOpen((o) => !o)}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors hover:bg-[rgba(16,24,40,.04)]"
+              style={onDash ? { background: "rgba(91,99,235,.10)", color: "var(--teal-900)", fontWeight: 600 } : { color: "var(--ink-soft)" }}
+              aria-expanded={dashOpen || onDash}
+            >
+              <LayoutDashboard size={16} strokeWidth={2.1} aria-hidden />
+              <span>Dashboard</span>
+              <ChevronDown size={14} className="ml-auto transition-transform" style={{ transform: (dashOpen || onDash) ? "rotate(0deg)" : "rotate(-90deg)" }} aria-hidden />
+            </button>
+            {(dashOpen || onDash) && (
+              <div className="ml-3 mt-0.5 flex flex-col gap-0.5 border-l pl-2.5" style={{ borderColor: "var(--line)" }}>
+                {DASH_SUB.map((s) => {
+                  const act = s.exact ? pathname === s.href : (pathname === s.href || pathname.startsWith(`${s.href}/`));
+                  return (
+                    <Link
+                      key={s.href}
+                      href={s.href}
+                      className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium transition-colors hover:bg-[rgba(16,24,40,.04)]"
+                      style={act ? { background: "rgba(91,99,235,.12)", color: "var(--teal-900)", fontWeight: 700 } : { color: "var(--ink-soft)" }}
+                    >
+                      <s.Icon size={14} strokeWidth={2.1} aria-hidden />
+                      <span>{s.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {PRIMARY.slice(1).map((l) => <NavLink key={l.href} {...l} />)}
           <div className="my-1.5 h-px" style={{ background: "var(--line)" }} />
           {secondary.map((l) => <NavLink key={l.href} {...l} />)}
         </nav>

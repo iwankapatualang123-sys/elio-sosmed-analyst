@@ -7,8 +7,8 @@
 
 import { useState } from "react";
 
-export default function PlatformTabs({ tabs = [], children }) {
-  const [active, setActive] = useState(0);
+export default function PlatformTabs({ tabs = [], children, defaultIndex = 0 }) {
+  const [active, setActive] = useState(defaultIndex);
   const kids = Array.isArray(children) ? children : [children];
   return (
     <div>

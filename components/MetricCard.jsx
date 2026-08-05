@@ -15,13 +15,21 @@ const ACCENTS = {
   violet: { bg: "#f3f0fe", chip: "#9b8afb", ring: "#e6e0fd" },
 };
 
-export default function MetricCard({ icon = "•", label, value, sub, accent = "indigo" }) {
+export default function MetricCard({ icon = "•", label, value, sub, accent = "indigo", chip = null }) {
   const a = ACCENTS[accent] || ACCENTS.indigo;
   return (
     <div
-      className="flex flex-col gap-2.5 rounded-2xl p-4"
+      className="relative flex flex-col gap-2.5 rounded-2xl p-4"
       style={{ background: a.bg, border: `1px solid ${a.ring}` }}
     >
+      {chip != null && (
+        <span
+          className="absolute right-3 top-3 rounded-full px-2 py-0.5 text-[9.5px] font-bold"
+          style={{ background: a.ring, color: a.chip }}
+        >
+          {chip}
+        </span>
+      )}
       <div
         className="flex h-9 w-9 items-center justify-center rounded-xl text-base text-white"
         style={{ background: a.chip, boxShadow: `0 4px 10px -3px ${a.chip}80` }}
