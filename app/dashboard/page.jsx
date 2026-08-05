@@ -9,6 +9,7 @@ import Link from "next/link";
 import Nav from "@/components/Nav";
 import MonthFilter from "@/components/MonthFilter";
 import { LineChart, Donut, BarChartLabeled, Heatmap } from "@/components/Charts";
+import FollowerGrowthRange from "@/components/FollowerGrowthRange";
 import InsightAI from "@/components/InsightAI";
 import OnboardingTips from "@/components/OnboardingTips";
 import ProgressBar from "@/components/ProgressBar";
@@ -680,31 +681,7 @@ export default async function DashboardPage({ searchParams }) {
                 </p>
               </>
             ) : (
-              <>
-                <LineChart
-                  series={[
-                    { label: "TikTok", color: "#006674", data: ttGrowthMonthly },
-                    ...(igGrowthMonthly.length >= 2 ? [{ label: "Instagram", color: "#c13584", data: igGrowthMonthly }] : []),
-                  ]}
-                />
-                {/* Penjelasan bahasa awam: bandingkan 2 bulan terakhir per platform. */}
-                <div className="mt-2 flex flex-col gap-1 text-xs" style={{ color: "var(--ink-soft)" }}>
-                  {[["TikTok", ttGrowthMonthly, "#006674"], ["Instagram", igGrowthMonthly, "#c13584"]].map(([label, ser, color]) => {
-                    if (ser.length < 2) return null;
-                    const prev = ser[ser.length - 2];
-                    const cur = ser[ser.length - 1];
-                    const higher = prev.y >= cur.y;
-                    return (
-                      <p key={label}>
-                        <b style={{ color }}>{label}</b>: pertambahan follower <b className="text-ink">{labelBulan(prev.x)}</b> ({prev.y >= 0 ? "+" : ""}{fmt(prev.y)}) {higher ? ">" : "<"} <b className="text-ink">{labelBulan(cur.x)}</b> ({cur.y >= 0 ? "+" : ""}{fmt(cur.y)}) — {higher ? "melambat" : "meningkat"}.
-                      </p>
-                    );
-                  })}
-                </div>
-                <p className="mt-1 text-[10px]" style={{ color: "var(--ink-soft)" }}>
-                  Garis = <b>pertambahan follower per bulan</b> (bukan jumlah total). Pilih satu bulan di filter atas untuk detail harian.
-                </p>
-              </>
+              <FollowerGrowthRange ttMonthly={ttGrowthMonthly} igMonthly={igGrowthMonthly} />
             )}
 
           </section>
