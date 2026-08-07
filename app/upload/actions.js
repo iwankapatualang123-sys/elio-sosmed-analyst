@@ -60,6 +60,11 @@ export async function uploadInstagramFiles(formData) {
 
   for (const file of files) {
     try {
+      // File PDF (mis. "Pemirsa") sering salah di-upload ke sini — arahkan ke kartu
+      // manual yang benar, bukan lempar error parser yang membingungkan.
+      if (/\.pdf$/i.test(file.name || "") || /pemirsa/i.test(file.name || "")) {
+        throw new Error('File ini sepertinya "Pemirsa"/PDF — datanya berupa gambar, tidak bisa dibaca otomatis. Ketik angkanya di kartu "Pemirsa Instagram (demografi)" di bawah (total follower, gender, usia, kota, negara).');
+      }
       const parsed = parseInstagramFile(Buffer.from(await file.arrayBuffer()));
       if (parsed.kind === "daily") {
         for (const r of parsed.rows) {
