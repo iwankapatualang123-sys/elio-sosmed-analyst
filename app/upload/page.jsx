@@ -8,6 +8,7 @@ import Nav from "@/components/Nav";
 import UploadClient from "@/components/UploadClient";
 import SocialSnapshotCard from "@/components/SocialSnapshotCard";
 import InstagramUploadCard from "@/components/InstagramUploadCard";
+import InstagramAudienceCard from "@/components/InstagramAudienceCard";
 import { latestSnapshot } from "@/lib/social/snapshots";
 
 export default async function UploadPage() {
@@ -86,6 +87,8 @@ export default async function UploadPage() {
           <UploadClient branches={branches} />
           {/* Data IG dari export Meta Business Suite (harian + per konten). */}
           <InstagramUploadCard branches={branches} />
+          {/* Demografi "Pemirsa" IG (input manual: follower + gender + usia + kota/negara). */}
+          <InstagramAudienceCard branches={branches} />
           {/* Snapshot manual mingguan IG/Threads (jangkar total follower) —
               tetap dipakai; file export IG hanya berisi PERTAMBAHAN follower. */}
           <SocialSnapshotCard branches={branches} latest={latestSnaps} />

@@ -77,6 +77,7 @@ model TiktokAccount {
   snapshots           SocialAccountSnapshot[]
   igDailyMetrics      InstagramDailyMetric[]
   igContent           InstagramContent[]
+  igAudience          InstagramAudience[]
 
   @@map("tiktok_accounts")
 }
@@ -368,4 +369,32 @@ model InstagramContent {
   @@unique([tiktokAccountId, postId])
   @@index([tiktokAccountId])
   @@map("instagram_content")
+}
+
+/// Data "Pemirsa" (Audience) Instagram — input MANUAL dari Meta Business Suite
+/// (export-nya berupa gambar, tak bisa dibaca otomatis). Snapshot per (cabang,
+/// tanggal): total follower + gender + distribusi usia + kota & negara populer.
+/// age_json    : [{ bracket, female, male }] (persen per rentang usia)
+/// cities_json : ["Kota, Provinsi", ...] (urut populer)
+/// countries_json : [{ name, pct }]
+model InstagramAudience {
+  id              BigInt   @id @default(autoincrement())
+  tiktokAccountId String   @map("tiktok_account_id") @db.Char(36)
+  snapshotDate    DateTime @map("snapshot_date") @db.Date
+  followers       Int?
+  femalePct       Decimal? @map("female_pct") @db.Decimal(6, 3)
+  malePct         Decimal? @map("male_pct") @db.Decimal(6, 3)
+  ageJson         Json?    @map("age_json")
+  citiesJson      Json?    @map("cities_json")
+  countriesJson   Json?    @map("countries_json")
+  createdById     String?  @map("created_by") @db.Char(36)
+  createdByEmail  String?  @map("created_by_email") @db.VarChar(255)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  account TiktokAccount @relation(fields: [tiktokAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([tiktokAccountId, snapshotDate])
+  @@index([tiktokAccountId])
+  @@map("instagram_audience")
 }

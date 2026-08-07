@@ -21,6 +21,7 @@ import { groupByPlatform, followerTrend, latestSnapshot, daysSince } from "@/lib
 import { sumDaily, dailySeries, contentInPeriod, contentSummary, topContents, contentTypeBreakdown, hashtagStats as igHashtagStats } from "@/lib/instagram/metrics";
 import PlatformTabs from "@/components/PlatformTabs";
 import PortfolioSummary from "@/components/PortfolioSummary";
+import InstagramAudiencePanel from "@/components/InstagramAudiencePanel";
 import { addAnnotation, deleteAnnotation } from "@/app/dashboard/actions";
 
 const BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -223,8 +224,9 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
   let socialSnaps = [];
   let igDaily = [];
   let igContent = [];
+  let igAudience = null;
   if (selectedId) {
-    const [{ data: snapRows }, { data: igd }, { data: igc }] = await Promise.all([
+    const [{ data: snapRows }, { data: igd }, { data: igc }, { data: igAud }] = await Promise.all([
       supabase
         .from("social_account_snapshots")
         .select("platform, snapshot_date, followers, reach_30d, profile_visits")
@@ -239,10 +241,17 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
         .from("instagram_content")
         .select("post_id, description, permalink, post_type, published_at, views, reach, likes, comments, shares, saves, follows, is_collab")
         .eq("tiktok_account_id", selectedId),
+      supabase
+        .from("instagram_audience")
+        .select("snapshot_date, followers, female_pct, male_pct, age_json, cities_json, countries_json")
+        .eq("tiktok_account_id", selectedId)
+        .order("snapshot_date", { ascending: false })
+        .limit(1),
     ]);
     socialSnaps = snapRows || [];
     igDaily = igd || [];
     igContent = igc || [];
+    igAudience = (igAud && igAud[0]) || null;
   }
   const snapsByPlatform = groupByPlatform(socialSnaps);
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -931,6 +940,10 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
 
           {/* Top 5 Video TikTok dipindah ke Ringkasan Platform (tab TikTok) —
               tidak diduplikasi di sini. */}
+
+          {/* Pemirsa Instagram (demografi input manual) — tampil walau belum ada
+              upload konten IG, karena data audience berdiri sendiri. */}
+          {igAudience && <InstagramAudiencePanel audience={igAudience} />}
 
           {/* ————— Detail Instagram (dari upload Business Suite) ————— */}
           {hasIgData && (

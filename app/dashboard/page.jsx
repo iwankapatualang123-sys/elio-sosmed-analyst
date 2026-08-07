@@ -172,47 +172,68 @@ export default async function UmumPage({ searchParams }) {
       {/* Demografi + Top Pillars */}
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="card-3d p-4 sm:p-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold text-ink">Demografi Audiens</h3>
-            <span className="ml-auto rounded-full px-2 py-0.5 text-[9.5px] font-bold" style={{ background: "#ececec", color: "#333" }}>Sumber: TikTok</span>
-          </div>
-          {umum.demographics ? (
-            <>
-              <p className="mb-3 text-[11px]" style={{ color: "var(--ink-soft)" }}>
-                Rata-rata {umum.demographics.outletsCounted} outlet. Gender &amp; wilayah hanya tersedia dari TikTok Analytics.
-              </p>
-              <div className="grid grid-cols-2 gap-5">
-                <div>
-                  <p className="mb-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--ink-soft)" }}>Gender</p>
-                  {[["Wanita", umum.demographics.female, "#c13584"], ["Pria", umum.demographics.male, "#5b63eb"], ...(umum.demographics.other > 0 ? [["Lainnya", umum.demographics.other, "#93bcad"]] : [])].map(([lbl, v, c]) => (
-                    <div key={lbl} className="mb-2 flex items-center gap-2">
-                      <span className="w-14 text-[11px]" style={{ color: "var(--ink-soft)" }}>{lbl}</span>
-                      <span className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: "#f0f1f6" }}>
-                        <span className="block h-full rounded-full" style={{ width: `${Math.min(100, v)}%`, background: c }} />
-                      </span>
-                      <span className="w-9 text-right text-[11px] font-bold text-ink">{v}%</span>
-                    </div>
-                  ))}
+          {(() => {
+            const d = umum.demographics;
+            const tt = d?.tiktok || null;
+            const ig = d?.instagram || null;
+            const sumber = [tt && "TikTok", ig && "Instagram"].filter(Boolean).join(" + ") || "—";
+            const GenderRows = ({ female, male, other }) => (
+              [["Wanita", female, "#c13584"], ["Pria", male, "#5b63eb"], ...(other > 0 ? [["Lainnya", other, "#93bcad"]] : [])].map(([lbl, v, c]) => (
+                <div key={lbl} className="mb-2 flex items-center gap-2">
+                  <span className="w-14 text-[11px]" style={{ color: "var(--ink-soft)" }}>{lbl}</span>
+                  <span className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: "#f0f1f6" }}>
+                    <span className="block h-full rounded-full" style={{ width: `${Math.min(100, v || 0)}%`, background: c }} />
+                  </span>
+                  <span className="w-9 text-right text-[11px] font-bold text-ink">{v == null ? "—" : `${v}%`}</span>
                 </div>
-                <div>
-                  <p className="mb-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--ink-soft)" }}>Top Wilayah</p>
-                  {umum.demographics.territories.length === 0 ? (
-                    <p className="text-[11px]" style={{ color: "var(--ink-soft)" }}>—</p>
-                  ) : umum.demographics.territories.map((t, i) => (
-                    <div key={t.code} className="mb-2 flex items-center gap-2">
-                      <span className="w-16 truncate text-[11px]" style={{ color: "var(--ink-soft)" }} title={t.code}>{t.code}</span>
-                      <span className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: "#f0f1f6" }}>
-                        <span className="block h-full rounded-full" style={{ width: `${Math.min(100, t.pct)}%`, background: ["#5b63eb", "#6b73f0", "#8b90f4", "#aab0f8"][i] || "#aab0f8" }} />
-                      </span>
-                      <span className="w-9 text-right text-[11px] font-bold text-ink">{t.pct}%</span>
-                    </div>
-                  ))}
+              ))
+            );
+            return (
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-semibold text-ink">Demografi Audiens</h3>
+                  <span className="ml-auto rounded-full px-2 py-0.5 text-[9.5px] font-bold" style={{ background: "#ececec", color: "#333" }}>Sumber: {sumber}</span>
                 </div>
-              </div>
-            </>
-          ) : (
-            <p className="mt-2 text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada snapshot demografi TikTok dari outlet mana pun.</p>
-          )}
+                {!d ? (
+                  <p className="mt-2 text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada data demografi. Muncul setelah ada snapshot gender TikTok atau input Pemirsa Instagram.</p>
+                ) : (
+                  <>
+                    <p className="mb-3 mt-0.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>Rata-rata semua outlet yang punya data.</p>
+                    <div className="grid grid-cols-2 gap-5">
+                      <div>
+                        {tt && (
+                          <div className="mb-3">
+                            <p className="mb-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--ink-soft)" }}>Gender · TikTok</p>
+                            <GenderRows female={tt.female} male={tt.male} other={tt.other} />
+                          </div>
+                        )}
+                        {ig && (
+                          <div>
+                            <p className="mb-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "#a12472" }}>Gender · Instagram</p>
+                            <GenderRows female={ig.female} male={ig.male} other={0} />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="mb-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--ink-soft)" }}>Top Wilayah <span className="font-normal normal-case">(TikTok)</span></p>
+                        {!tt || tt.territories.length === 0 ? (
+                          <p className="text-[11px]" style={{ color: "var(--ink-soft)" }}>—</p>
+                        ) : tt.territories.map((t, i) => (
+                          <div key={t.code} className="mb-2 flex items-center gap-2">
+                            <span className="w-16 truncate text-[11px]" style={{ color: "var(--ink-soft)" }} title={t.code}>{t.code}</span>
+                            <span className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: "#f0f1f6" }}>
+                              <span className="block h-full rounded-full" style={{ width: `${Math.min(100, t.pct)}%`, background: ["#5b63eb", "#6b73f0", "#8b90f4", "#aab0f8"][i] || "#aab0f8" }} />
+                            </span>
+                            <span className="w-9 text-right text-[11px] font-bold text-ink">{t.pct}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            );
+          })()}
         </div>
 
         <div className="card-3d p-4 sm:p-5">
