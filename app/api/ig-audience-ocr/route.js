@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { getCurrentProfile, canWrite } from "@/lib/auth";
 import { isGroqConfigured, groqChatVision } from "@/lib/ai/groq-client";
 import { extractPemirsaImage } from "@/lib/instagram/pemirsa-extract";
+import { looksLikePemirsaCsv, parsePemirsaCsv } from "@/lib/instagram/pemirsa-csv";
 
 export const runtime = "nodejs";
 
@@ -48,14 +49,44 @@ export async function POST(request) {
   const profile = await getCurrentProfile();
   if (!profile?.role) return NextResponse.json({ error: "Belum login." }, { status: 401 });
   if (!canWrite(profile)) return NextResponse.json({ error: "Role Anda tidak bisa input data." }, { status: 403 });
-  if (!isGroqConfigured()) return NextResponse.json({ error: "Baca-otomatis belum aktif (GROQ_API_KEY belum diset di server). Silakan ketik manual.", configured: false }, { status: 200 });
+
+  // Ambil file dulu.
+  let buf, file;
+  try {
+    const form = await request.formData();
+    file = form.get("file");
+    if (!file || typeof file.arrayBuffer !== "function") return NextResponse.json({ error: "File tidak ada." }, { status: 400 });
+    buf = Buffer.from(await file.arrayBuffer());
+  } catch (err) {
+    return NextResponse.json({ error: err?.message || "Gagal membaca file." }, { status: 400 });
+  }
+
+  // JALUR CSV — file data asli, dibaca LANGSUNG tanpa AI (paling andal).
+  if (looksLikePemirsaCsv(buf, file.name)) {
+    try {
+      const p = parsePemirsaCsv(buf);
+      return NextResponse.json({
+        ok: true,
+        source: "csv",
+        data: {
+          followers: null, // tak ada di CSV
+          female_pct: p.female_pct,
+          male_pct: p.male_pct,
+          age: p.age,
+          cities: p.cities.map((c) => c.name),
+          countries: p.countries,
+        },
+      });
+    } catch (err) {
+      return NextResponse.json({ error: err?.message || "CSV Pemirsa tidak bisa dibaca." }, { status: 200 });
+    }
+  }
+
+  // JALUR GAMBAR/PDF — perlu AI vision.
+  if (!isGroqConfigured()) return NextResponse.json({ error: "Baca-otomatis dari gambar/PDF belum aktif (GROQ_API_KEY belum diset). Tip: ekspor Pemirsa sebagai CSV (bisa dibaca tanpa AI), atau ketik manual.", configured: false }, { status: 200 });
 
   let dataUrl;
   try {
-    const form = await request.formData();
-    const file = form.get("file");
-    if (!file || typeof file.arrayBuffer !== "function") return NextResponse.json({ error: "File tidak ada." }, { status: 400 });
-    const buf = Buffer.from(await file.arrayBuffer());
     ({ dataUrl } = extractPemirsaImage(buf, file.type, file.name));
   } catch (err) {
     return NextResponse.json({ error: err?.message || "Gagal membaca file." }, { status: 400 });
@@ -95,5 +126,5 @@ export async function POST(request) {
     countries: (Array.isArray(parsed.countries) ? parsed.countries : []).map((c) => ({ name: String(c?.name || "").trim(), pct: pct(c?.pct) })).filter((c) => c.name).slice(0, 15),
   };
 
-  return NextResponse.json({ ok: true, data });
+  return NextResponse.json({ ok: true, source: "vision", data });
 }

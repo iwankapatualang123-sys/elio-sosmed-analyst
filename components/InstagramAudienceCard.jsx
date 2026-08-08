@@ -32,7 +32,7 @@ export default function InstagramAudienceCard({ branches = [] }) {
   }, []);
   const [result, setResult] = useState(null);
   const [open, setOpen] = useState(false);
-  const [autofilled, setAutofilled] = useState(false);
+  const [autofilled, setAutofilled] = useState(null); // null | "csv" | "vision"
   const [ocr, setOcr] = useState({ loading: false, error: null });
   const fileRef = useRef(null);
 
@@ -77,7 +77,7 @@ export default function InstagramAudienceCard({ branches = [] }) {
       setCountries((d.countries || []).map((c) => `${c.name}${c.pct != null ? ` ${String(c.pct).replace(".", ",")}%` : ""}`).join("\n"));
       const hasDetail = (d.age || []).some((x) => x.female != null || x.male != null) || (d.cities || []).length || (d.countries || []).length;
       if (hasDetail) setOpen(true);
-      setAutofilled(true);
+      setAutofilled(json.source || "vision");
       setOcr({ loading: false, error: null });
     } catch (err) {
       setOcr({ loading: false, error: err?.message || "Gagal menghubungi server." });
@@ -108,17 +108,22 @@ export default function InstagramAudienceCard({ branches = [] }) {
             style={{ background: "#a12472" }}
           >
             {ocr.loading ? <Loader2 size={15} className="animate-spin" /> : <ScanLine size={15} />}
-            {ocr.loading ? "Membaca gambar…" : "Baca otomatis dari gambar/PDF"}
+            {ocr.loading ? "Membaca file…" : "Baca otomatis dari CSV / gambar / PDF"}
           </button>
           <span className="text-[11px]" style={{ color: "var(--ink-soft)" }}>
-            Upload screenshot / PDF halaman Pemirsa — angkanya diisi otomatis, lalu <b>periksa &amp; koreksi</b> sebelum simpan.
+            Upload file <b>CSV</b> Pemirsa (paling akurat, tanpa AI) — atau screenshot/PDF. Angkanya diisi otomatis, lalu <b>cek</b> sebelum simpan.
           </span>
-          <input ref={fileRef} type="file" accept="image/*,application/pdf" onChange={onPickFile} className="hidden" />
+          <input ref={fileRef} type="file" accept="image/*,application/pdf,.csv,text/csv" onChange={onPickFile} className="hidden" />
         </div>
         {ocr.error && <p className="mt-2 text-[12px]" style={{ color: "#b91c1c" }}>{ocr.error}</p>}
-        {autofilled && !ocr.error && (
+        {autofilled === "csv" && !ocr.error && (
+          <p className="mt-2 text-[12px] font-medium" style={{ color: "#166534" }}>
+            ✓ Terbaca dari CSV (akurat). Tinggal isi <b>Total pengikut</b> — angka itu tidak ada di file CSV.
+          </p>
+        )}
+        {autofilled === "vision" && !ocr.error && (
           <p className="mt-2 text-[12px] font-medium" style={{ color: "#a15230" }}>
-            ⚠ Terisi otomatis dari gambar — <b>cek dulu</b> semua angka (khususnya usia, hasil perkiraan) sebelum menyimpan.
+            ⚠ Terisi otomatis dari gambar (AI) — <b>cek dulu</b> semua angka (khususnya usia, hasil perkiraan) sebelum menyimpan.
           </p>
         )}
       </div>
