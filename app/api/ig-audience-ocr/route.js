@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 
 const AGE_BRACKETS = ["18-24", "25-34", "35-44", "45-54", "55-64", "65+"];
 
-const PROMPT = `Kamu membaca SATU screenshot halaman "Pemirsa" (Audience) Instagram dari Meta Business Suite, berbahasa Indonesia. Ekstrak angkanya menjadi JSON.
+const PROMPT = `Kamu membaca SATU screenshot halaman "Pemirsa"/"Audience" Instagram dari Meta Business Suite (bisa berbahasa Indonesia ATAU Inggris — "Pengikut"=Followers, "Perempuan"=Women, "Laki-laki"=Men, "Negara Populer"=Top countries, "Kota populer"=Top cities). Ekstrak angkanya menjadi JSON.
 
 Aturan angka Indonesia: titik = pemisah ribuan, koma = desimal. Contoh: "11.678" -> 11678 ; "59,7%" -> 59.7.
 
