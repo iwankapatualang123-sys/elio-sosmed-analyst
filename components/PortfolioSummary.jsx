@@ -29,10 +29,12 @@ function dashboardHref({ cat, month } = {}) {
 }
 
 export default function PortfolioSummary({
-  tiktok, instagram, categories = [], catFilter = null, selectedMonth = null, monthLabel = "",
+  tiktok, instagram, categories = [], catFilter = null, selectedMonth = null, monthLabel = "", lockedPlatform = null,
 }) {
-  const [platform, setPlatform] = useState("tiktok");
-  const isIg = platform === "instagram";
+  // Bila dipakai di halaman platform tertentu (TikTok/Instagram), kunci ke platform
+  // itu & sembunyikan toggle — laporan mengikuti sub-menu Dashboard.
+  const [platform, setPlatform] = useState(lockedPlatform === "instagram" ? "instagram" : "tiktok");
+  const isIg = (lockedPlatform || platform) === "instagram";
   const cur = isIg ? instagram : tiktok;
   const p = cur.portfolio;
   const ranked = cur.ranked;
@@ -41,24 +43,26 @@ export default function PortfolioSummary({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Toggle platform (segmented control) */}
-      <div className="px-1">
-        <div className="inline-flex items-center gap-1 rounded-full p-1" style={{ background: "#f1f2f7", border: "1px solid var(--line)" }}>
-          {[["tiktok", "🎵 TikTok"], ["instagram", "📸 Instagram"]].map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setPlatform(key)}
-              className="rounded-full px-4 py-1.5 text-sm font-semibold transition-all"
-              style={platform === key
-                ? { background: "#fff", color: key === "instagram" ? "#a12472" : "var(--teal-900)", boxShadow: "0 1px 3px rgba(16,24,40,.14)" }
-                : { background: "transparent", color: "var(--ink-soft)" }}
-            >
-              {label}
-            </button>
-          ))}
+      {/* Toggle platform (segmented control) — hanya bila TIDAK dikunci ke platform. */}
+      {!lockedPlatform && (
+        <div className="px-1">
+          <div className="inline-flex items-center gap-1 rounded-full p-1" style={{ background: "#f1f2f7", border: "1px solid var(--line)" }}>
+            {[["tiktok", "🎵 TikTok"], ["instagram", "📸 Instagram"]].map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setPlatform(key)}
+                className="rounded-full px-4 py-1.5 text-sm font-semibold transition-all"
+                style={platform === key
+                  ? { background: "#fff", color: key === "instagram" ? "#a12472" : "var(--teal-900)", boxShadow: "0 1px 3px rgba(16,24,40,.14)" }
+                  : { background: "transparent", color: "var(--ink-soft)" }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* KPI portofolio */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">

@@ -353,15 +353,26 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
 
       <OnboardingTips />
 
-      {/* KPI portofolio + Ranking Cabang dgn toggle platform TikTok/Instagram. */}
-      <PortfolioSummary
-        tiktok={{ portfolio, ranked: rankedBranches }}
-        instagram={{ portfolio: igPortfolioData.portfolio, ranked: rankedBranchesIg }}
-        categories={categories}
-        catFilter={catFilter}
-        selectedMonth={selectedMonth}
-        monthLabel={selectedMonth ? labelBulan(selectedMonth) : ""}
-      />
+      {/* KPI portofolio + Ranking Cabang — DIKUNCI ke platform halaman (sesuai
+          sub-menu Dashboard), tanpa toggle. Threads tak punya data ranking konten. */}
+      {defaultPlatform === "threads" ? (
+        <section className="card-3d p-4 sm:p-5">
+          <h2 className="mb-1 text-base font-semibold text-ink">🧵 Threads</h2>
+          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+            Threads belum menyediakan export data konten, jadi tidak ada ranking views/ER. Yang tersedia hanya <b>jumlah follower</b> (input manual) — lihat di bawah pada tab Threads.
+          </p>
+        </section>
+      ) : (
+        <PortfolioSummary
+          tiktok={{ portfolio, ranked: rankedBranches }}
+          instagram={{ portfolio: igPortfolioData.portfolio, ranked: rankedBranchesIg }}
+          categories={categories}
+          catFilter={catFilter}
+          selectedMonth={selectedMonth}
+          monthLabel={selectedMonth ? labelBulan(selectedMonth) : ""}
+          lockedPlatform={defaultPlatform}
+        />
+      )}
 
       {/* Detail 1 cabang */}
       {detail && selectedBranch && (
