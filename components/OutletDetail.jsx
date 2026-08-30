@@ -139,6 +139,10 @@ function GoalProgress({ goal, views, er, net, monthLabel }) {
 export default async function OutletDetail({ searchParams, defaultPlatform = "tiktok" }) {
   const platformMeta = PLATFORM_META[defaultPlatform] || PLATFORM_META.tiktok;
   const basePath = platformMeta.base;
+  // Flag platform halaman — dipakai memisahkan kartu sesuai sub-menu Dashboard.
+  const isTt = defaultPlatform === "tiktok";
+  const isIg = defaultPlatform === "instagram";
+  const isTh = defaultPlatform === "threads";
   const profile = await getCurrentProfile();
   if (!profile?.role) {
     return (
@@ -462,7 +466,7 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
               supaya gampang dibandingkan; keduanya ikut filter bulan halaman. */}
           <section className="card-3d p-4 sm:p-5">
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <h3 className="text-sm font-semibold text-ink">📱 Ringkasan Platform</h3>
+              <h3 className="text-sm font-semibold text-ink">{platformMeta.emoji} Ringkasan {isIg ? "Instagram" : isTh ? "Threads" : "TikTok"}</h3>
               <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>
                 {igMonth ? labelBulan(igMonth) : selectedMonth ? labelBulan(selectedMonth) : "Sepanjang masa"}
               </span>
@@ -472,7 +476,7 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
                 </Link>
               )}
             </div>
-            <PlatformTabs tabs={["TikTok", "Instagram", "Threads"]} defaultIndex={platformMeta.tab}>
+            <PlatformTabs tabs={["TikTok", "Instagram", "Threads"]} defaultIndex={platformMeta.tab} locked>
               {/* Tab TikTok — format sama dgn tab Instagram: 5 kotak KPI (diakhiri
                   ER), ringkasan, lalu Top 5 Video. Rincian lengkap (grafik, heatmap,
                   gender, insight) tetap di bagian "Detail TikTok" di bawah. */}
@@ -667,9 +671,10 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
           {/* Pertumbuhan Follower + Info ringkas — tepat di bawah Ringkasan Platform.
               Grafik 2 garis (TikTok+IG) + strip info (views/ER/follower/audiens/
               retensi) supaya tidak tersebar jadi banyak kartu bulky. */}
+          {!isTh && (
           <section className="card-3d p-4 sm:p-5">
-            <h3 className="mb-1 text-sm font-semibold text-ink">📈 Pertumbuhan Follower{selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</h3>
-            {!selectedMonth && detail.history.length >= 2 ? (() => {
+            <h3 className="mb-1 text-sm font-semibold text-ink">📈 Pertumbuhan Follower {isIg ? "Instagram" : "TikTok"}{selectedMonth ? ` — ${labelBulan(selectedMonth)}` : ""}</h3>
+            {isTt && !selectedMonth && detail.history.length >= 2 ? (() => {
               const fc = forecastNext(detail.history.map((h) => h.followers), 7);
               return (
                 <p className="mb-2 text-xs" style={{ color: "var(--ink-soft)" }}>
@@ -677,20 +682,17 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
                 </p>
               );
             })() : <div className="mb-2" />}
-            {/* Angka di sini = PERTAMBAHAN follower periode ini (agar konsisten dgn
-                grafik yg memang menggambar pertambahan, bukan jumlah total). Jumlah
-                follower terkini ditaruh sbg konteks kecil "kini …". */}
+            {/* Angka = PERTAMBAHAN follower periode ini (konsisten dgn grafik). */}
             <div className="mb-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px]" style={{ color: "var(--ink-soft)" }}>
-              <span>
-                <b style={{ color: "#5b63eb" }}>TikTok</b>{" "}
-                <b style={{ color: detail.growth.netGrowth > 0 ? "#166534" : detail.growth.netGrowth < 0 ? "#b91c1c" : "inherit" }}>
-                  {detail.growth.netGrowth >= 0 ? "+" : ""}{fmt(detail.growth.netGrowth)}
-                </b>{" "}follower · kini {fmt(detail.growth.endFollowers)}
-              </span>
-              {igGrowthSeries.length >= 1 && (() => {
-                // Net IG = JUMLAH pertambahan harian (sama dgn total titik di grafik),
-                // bukan selisih deret kumulatif. "kini" hanya bila ada snapshot manual
-                // (jumlah follower IG asli tak diketahui dari data pertambahan saja).
+              {isTt && (
+                <span>
+                  <b style={{ color: "#5b63eb" }}>TikTok</b>{" "}
+                  <b style={{ color: detail.growth.netGrowth > 0 ? "#166534" : detail.growth.netGrowth < 0 ? "#b91c1c" : "inherit" }}>
+                    {detail.growth.netGrowth >= 0 ? "+" : ""}{fmt(detail.growth.netGrowth)}
+                  </b>{" "}follower · kini {fmt(detail.growth.endFollowers)}
+                </span>
+              )}
+              {isIg && igGrowthSeries.length >= 1 && (() => {
                 const igNet = igGrowthSeries.reduce((s, p) => s + (p.y || 0), 0);
                 const igNow = igFollowerAnchor.latest?.followers ?? null;
                 return (
@@ -701,29 +703,34 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
                 );
               })()}
             </div>
-            {selectedMonth || (ttGrowthMonthly.length < 2 && igGrowthMonthly.length < 2) ? (
-              <>
-                <LineChart
-                  series={[
-                    { label: "TikTok", color: "#5b63eb", data: detail.history.map((h) => ({ x: h.date, y: Number(h.diff_from_previous_day) || 0 })) },
-                    ...(igGrowthSeries.length >= 2 ? [{ label: "Instagram", color: "#c13584", data: igGrowthSeries }] : []),
-                  ]}
-                />
-                <p className="mt-1 text-[10px]" style={{ color: "var(--ink-soft)" }}>
-                  Garis = <b>pertambahan follower per hari</b> (bukan jumlah total; bisa minus saat unfollow). Angka di atas grafik = total pertambahan periode ini + jumlah follower terkini.
-                </p>
-              </>
-            ) : (
-              <FollowerGrowthRange ttMonthly={ttGrowthMonthly} igMonthly={igGrowthMonthly} />
-            )}
-
+            {(() => {
+              const daily = selectedMonth || (ttGrowthMonthly.length < 2 && igGrowthMonthly.length < 2);
+              if (daily) {
+                const series = isIg
+                  ? (igGrowthSeries.length >= 2 ? [{ label: "Instagram", color: "#c13584", data: igGrowthSeries }] : [])
+                  : [{ label: "TikTok", color: "#5b63eb", data: detail.history.map((h) => ({ x: h.date, y: Number(h.diff_from_previous_day) || 0 })) }];
+                if (!series.length || (isTt && detail.history.length < 1)) {
+                  return <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada data pertumbuhan {isIg ? "Instagram" : "TikTok"} untuk periode ini.</p>;
+                }
+                return (
+                  <>
+                    <LineChart series={series} />
+                    <p className="mt-1 text-[10px]" style={{ color: "var(--ink-soft)" }}>
+                      Garis = <b>pertambahan follower per hari</b> (bukan jumlah total; bisa minus saat unfollow). Angka di atas grafik = total pertambahan periode ini + jumlah follower terkini.
+                    </p>
+                  </>
+                );
+              }
+              return <FollowerGrowthRange ttMonthly={isTt ? ttGrowthMonthly : []} igMonthly={isIg ? igGrowthMonthly : []} />;
+            })()}
           </section>
+          )}
 
           {/* Analisis Pertumbuhan — SATU kartu di bawah grafik: (a) diagnosis sebab
               perlambatan (muncul otomatis saat follower melambat) + (b) Insight per
               aspek (Konten/ER/Follower/Retensi) yang selalu tampil. Digabung supaya
               tidak jadi dua blok terpisah. */}
-          {(detail.growthDiagnosis || (detail.insights || []).length > 0) && (
+          {isTt && (detail.growthDiagnosis || (detail.insights || []).length > 0) && (
             <section className="card-3d p-4 sm:p-5">
               <h3 className="mb-3 text-sm font-semibold text-ink">
                 🔍 Analisis Pertumbuhan (TikTok){detail.growthDiagnosis ? ` — ${labelBulan(detail.growthDiagnosis.curMonth)} vs ${labelBulan(detail.growthDiagnosis.prevMonth)}` : ""}
@@ -823,8 +830,8 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
             )}
           </section>
 
-          {/* Peringatan / alert (anomali + reminder upload) */}
-          {detail.alerts && detail.alerts.length > 0 && (
+          {/* Peringatan / alert (anomali + reminder upload) — berbasis data TikTok */}
+          {isTt && detail.alerts && detail.alerts.length > 0 && (
             <section className="card-3d p-4 sm:p-5">
               <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">
                 🔔 Peringatan
@@ -849,9 +856,11 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
             </section>
           )}
 
-          <InsightAI accountId={selectedId} namaCabang={selectedBranch.nama_cabang} month={selectedMonth} />
+          {isTt && <InsightAI accountId={selectedId} namaCabang={selectedBranch.nama_cabang} month={selectedMonth} />}
 
-          {/* ————— Detail per platform ————— */}
+          {/* ————— Detail TikTok (kartu grafik/jam/gender/hashtag/heatmap) ————— */}
+          {isTt && (
+          <>
           <div className="mt-1 flex items-center gap-2 px-1">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-sm" style={{ background: "rgba(91,99,235,.12)" }}>🎵</span>
             <h2 className="text-lg font-bold text-ink">Detail TikTok</h2>
@@ -948,16 +957,14 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
               <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada data aktivitas follower per jam.</p>
             )}
           </section>
+          </>
+          )}
 
-          {/* Top 5 Video TikTok dipindah ke Ringkasan Platform (tab TikTok) —
-              tidak diduplikasi di sini. */}
-
-          {/* Pemirsa Instagram (demografi input manual) — tampil walau belum ada
-              upload konten IG, karena data audience berdiri sendiri. */}
-          {igAudience && <InstagramAudiencePanel audience={igAudience} />}
+          {/* ————— Pemirsa Instagram (demografi input manual) — halaman Instagram ————— */}
+          {isIg && igAudience && <InstagramAudiencePanel audience={igAudience} />}
 
           {/* ————— Detail Instagram (dari upload Business Suite) ————— */}
-          {hasIgData && (
+          {isIg && hasIgData && (
             <>
               <div className="mt-3 flex items-center gap-2 px-1">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-sm" style={{ background: "rgba(193,53,132,.14)" }}>📸</span>

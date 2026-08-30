@@ -7,9 +7,12 @@
 
 import { useState } from "react";
 
-export default function PlatformTabs({ tabs = [], children, defaultIndex = 0 }) {
+export default function PlatformTabs({ tabs = [], children, defaultIndex = 0, locked = false }) {
   const [active, setActive] = useState(defaultIndex);
   const kids = Array.isArray(children) ? children : [children];
+  // Mode terkunci (halaman platform spesifik): tanpa tombol tab, hanya tampilkan
+  // konten platform yang dipilih.
+  if (locked) return <div>{kids[defaultIndex]}</div>;
   return (
     <div>
       <div className="mb-3 flex flex-wrap gap-2">
