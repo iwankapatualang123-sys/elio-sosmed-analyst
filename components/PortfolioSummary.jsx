@@ -20,8 +20,9 @@ const STATUS_STYLE = {
   turun: { background: "#fee2e2", color: "#991b1b" },
 };
 
-function dashboardHref(base, { cat, month } = {}) {
+function dashboardHref(base, { branch, cat, month } = {}) {
   const p = new URLSearchParams();
+  if (branch) p.set("branch", branch);
   if (cat) p.set("cat", cat);
   if (month) p.set("month", month);
   const qs = p.toString();
@@ -115,7 +116,9 @@ export default function PortfolioSummary({
               {ranked.map((b) => (
                 <tr key={b.id} className="border-t" style={{ borderColor: "rgba(16,24,40,.1)", opacity: isIg && !b.hasData ? 0.5 : 1 }}>
                   <td className="py-2 pr-3 font-medium text-ink">
-                    {b.nama_cabang}
+                    <Link href={dashboardHref(basePath, { branch: b.id, cat: catFilter, month: selectedMonth })} className="hover:underline" style={{ color: "var(--teal-900)" }}>
+                      {b.nama_cabang}
+                    </Link>
                     {b.tiktok_username ? <span style={{ color: "var(--ink-soft)" }}> @{b.tiktok_username}</span> : null}
                   </td>
                   <td className="py-2 pr-3" style={{ color: "var(--ink-soft)" }}>{b.kategori || "-"}</td>

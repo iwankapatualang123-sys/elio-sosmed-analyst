@@ -73,7 +73,7 @@ export async function POST(request) {
           female_pct: p.female_pct,
           male_pct: p.male_pct,
           age: p.age,
-          cities: p.cities.map((c) => c.name),
+          cities: p.cities, // { name, pct }
           countries: p.countries,
         },
       });
@@ -122,7 +122,7 @@ export async function POST(request) {
     female_pct: pct(parsed.female_pct),
     male_pct: pct(parsed.male_pct),
     age,
-    cities: (Array.isArray(parsed.cities) ? parsed.cities : []).map((c) => String(c || "").trim()).filter(Boolean).slice(0, 15),
+    cities: (Array.isArray(parsed.cities) ? parsed.cities : []).map((c) => (typeof c === "string" ? { name: c.trim(), pct: null } : { name: String(c?.name || "").trim(), pct: pct(c?.pct) })).filter((c) => c.name).slice(0, 15),
     countries: (Array.isArray(parsed.countries) ? parsed.countries : []).map((c) => ({ name: String(c?.name || "").trim(), pct: pct(c?.pct) })).filter((c) => c.name).slice(0, 15),
   };
 

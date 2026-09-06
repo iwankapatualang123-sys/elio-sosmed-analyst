@@ -168,7 +168,15 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
   const igPortfolioData = await loadPortfolioInstagram(supabase, { month: selectedMonth });
   // Filter bulan mencakup semua platform (TikTok + Instagram).
   const months = [...new Set([...(ttMonths || []), ...(igPortfolioData.months || [])])].filter(Boolean).sort().reverse();
-  const selectedId = sp.branch || branches[0]?.id || null;
+  // Default outlet: kalau tak ditentukan di URL, pilih outlet yang PUNYA DATA untuk
+  // platform halaman ini (mis. /dashboard/instagram tidak mendarat di outlet yang
+  // belum ada data IG-nya). Threads tak punya sinyal murah → pakai outlet pertama.
+  const firstWithData = isIg
+    ? igPortfolioData.branches.find((b) => b.hasData)?.id
+    : isTt
+      ? branches.find((b) => (b.totalContent || 0) > 0 || (b.endFollowers || 0) > 0)?.id
+      : null;
+  const selectedId = sp.branch || firstWithData || branches[0]?.id || null;
   const catFilter = sp.cat || null;
   const categories = [...new Set(branches.map((b) => b.kategori).filter(Boolean))];
   const rankedBranches = catFilter ? branches.filter((b) => b.kategori === catFilter) : branches;

@@ -229,18 +229,16 @@ export async function saveInstagramAudience(formData) {
     .map((bracket, i) => ({ bracket, female: pctOrNull(formData.get(`age_f_${i}`)), male: pctOrNull(formData.get(`age_m_${i}`)) }))
     .filter((r) => r.female != null || r.male != null);
 
-  // Kota populer: satu per baris (urut = popularitas).
-  const citiesJson = String(formData.get("cities") || "")
-    .split(/\r?\n/).map((s) => s.trim()).filter(Boolean).slice(0, 15);
-
-  // Negara populer: "Nama 97,6%" per baris -> { name, pct }.
-  const countriesJson = String(formData.get("countries") || "")
+  // Kota & Negara populer: "Nama 97,6%" per baris -> { name, pct } (pct opsional).
+  const parseNamePctLines = (raw) => String(raw || "")
     .split(/\r?\n/).map((s) => s.trim()).filter(Boolean).slice(0, 15)
     .map((line) => {
       const m = line.match(/^(.*?)[\s:]+([\d.,]+)\s*%?$/);
       if (m) return { name: m[1].trim(), pct: pctOrNull(m[2]) };
       return { name: line, pct: null };
     });
+  const citiesJson = parseNamePctLines(formData.get("cities"));
+  const countriesJson = parseNamePctLines(formData.get("countries"));
 
   const base = {
     followers,

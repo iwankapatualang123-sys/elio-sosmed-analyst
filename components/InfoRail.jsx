@@ -11,7 +11,7 @@ import { Info, BookOpen, Lightbulb } from "lucide-react";
 
 // Ringkasan + tips per halaman (informatif, bukan aksi).
 const PAGES = [
-  { m: "/dashboard", title: "Dashboard", desc: "Ringkasan performa seluruh cabang. Gunakan filter bulan untuk mengevaluasi periode tertentu.", tips: ["Klik nama cabang untuk melihat detailnya.", "Peringkat cabang membantu menemukan yang perlu perhatian."] },
+  { m: "/dashboard", title: "Dashboard", desc: "Umum = ringkasan semua platform & outlet. Sub-menu Instagram/TikTok/Threads untuk detail per platform. Filter bulan untuk periode tertentu.", tips: ["Klik nama outlet di tabel ranking untuk membuka detailnya.", "Gunakan sub-menu platform untuk fokus ke satu platform."] },
   { m: "/data", title: "Data Cabang", desc: "Semua konten, follower, dan audiens mentah per cabang dalam bentuk galeri & tabel.", tips: ["Urutkan konten berdasarkan Views atau ER.", "Cari judul video lewat kotak pencarian."] },
   { m: "/report", title: "Laporan", desc: "Unduh laporan per cabang (bulanan/mingguan) atau gabungan semua cabang.", tips: ["File Excel berisi ringkasan KPI + data mentah.", "Pilih bulan dulu untuk laporan periode tertentu."] },
   { m: "/content-plan", title: "Rencana Konten", desc: "Kalender rencana produksi konten bulanan beserta status verifikasinya.", tips: ["Tandai konten yang sudah diverifikasi.", "Rencana lama tetap tersimpan sebagai arsip."] },

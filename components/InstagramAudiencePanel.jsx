@@ -78,19 +78,38 @@ export default function InstagramAudiencePanel({ audience }) {
 
         {/* Kota + Negara */}
         <div>
-          {cities.length > 0 && (
-            <div className="mb-3">
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--ink-soft)" }}>Kota populer</p>
-              <ol className="flex flex-col gap-1 text-[12.5px]">
-                {cities.slice(0, 8).map((c, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <span className="w-4 text-right text-[10px] font-bold" style={{ color: "var(--ink-soft)" }}>{i + 1}</span>
-                    <span className="truncate text-ink">{c}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
+          {cities.length > 0 && (() => {
+            // cities_json bisa string[] (data lama) atau {name,pct}[] (data baru).
+            const rows = cities.slice(0, 8).map((c) => (typeof c === "string" ? { name: c, pct: null } : { name: c.name, pct: c.pct }));
+            const hasPct = rows.some((r) => r.pct != null);
+            return (
+              <div className="mb-3">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--ink-soft)" }}>Kota populer</p>
+                {hasPct ? (
+                  <div className="flex flex-col gap-1.5">
+                    {rows.map((c, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="w-20 truncate text-[11px]" style={{ color: "var(--ink-soft)" }} title={c.name}>{c.name}</span>
+                        <span className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: "#f0f1f6" }}>
+                          <span className="block h-full rounded-full" style={{ width: `${Math.min(100, Number(c.pct) || 0)}%`, background: "#5b63eb" }} />
+                        </span>
+                        <span className="w-10 text-right text-[11px] font-bold text-ink">{c.pct == null ? "—" : `${c.pct}%`}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <ol className="flex flex-col gap-1 text-[12.5px]">
+                    {rows.map((c, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <span className="w-4 text-right text-[10px] font-bold" style={{ color: "var(--ink-soft)" }}>{i + 1}</span>
+                        <span className="truncate text-ink">{c.name}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            );
+          })()}
           {countries.length > 0 && (
             <div>
               <p className="mb-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--ink-soft)" }}>Negara populer</p>

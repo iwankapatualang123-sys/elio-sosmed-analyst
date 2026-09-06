@@ -73,8 +73,9 @@ export default function InstagramAudienceCard({ branches = [] }) {
         const r = (d.age || []).find((x) => x.bracket === b) || {};
         return { female: numStr(r.female), male: numStr(r.male) };
       }));
-      setCities((d.cities || []).join("\n"));
-      setCountries((d.countries || []).map((c) => `${c.name}${c.pct != null ? ` ${String(c.pct).replace(".", ",")}%` : ""}`).join("\n"));
+      const fmtLine = (c) => `${c.name}${c.pct != null ? ` ${String(c.pct).replace(".", ",")}%` : ""}`;
+      setCities((d.cities || []).map((c) => (typeof c === "string" ? c : fmtLine(c))).join("\n"));
+      setCountries((d.countries || []).map(fmtLine).join("\n"));
       const hasDetail = (d.age || []).some((x) => x.female != null || x.male != null) || (d.cities || []).length || (d.countries || []).length;
       if (hasDetail) setOpen(true);
       setAutofilled(json.source || "vision");
@@ -188,8 +189,8 @@ export default function InstagramAudienceCard({ branches = [] }) {
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-semibold text-ink">Kota populer <span className="font-normal" style={{ color: "var(--ink-soft)" }}>(satu per baris, urut populer)</span></span>
-                <textarea name="cities" value={cities} onChange={(e) => setCities(e.target.value)} rows={5} placeholder={"Sumberpucung, East Java\nKepanjen, East Java"} className="input-3d text-sm" style={{ minHeight: 0 }} />
+                <span className="font-semibold text-ink">Kota populer <span className="font-normal" style={{ color: "var(--ink-soft)" }}>(Nama 8,2% — satu per baris)</span></span>
+                <textarea name="cities" value={cities} onChange={(e) => setCities(e.target.value)} rows={5} placeholder={"Sumberpucung, East Java 8,2%\nKepanjen, East Java 6,3%"} className="input-3d text-sm" style={{ minHeight: 0 }} />
               </label>
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-semibold text-ink">Negara populer <span className="font-normal" style={{ color: "var(--ink-soft)" }}>(format: Nama 97,6%)</span></span>

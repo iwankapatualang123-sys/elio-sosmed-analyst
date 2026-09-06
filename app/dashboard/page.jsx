@@ -4,6 +4,7 @@
 // instagram/threads). Data agregat dari lib/dashboard/umum.js; ranking gabungan
 // memakai ulang loadPortfolio + loadPortfolioInstagram (sudah teruji).
 
+import Link from "next/link";
 import { getCurrentProfile } from "@/lib/auth";
 import { createReadClient } from "@/lib/db-compat";
 import { loadUmum } from "@/lib/dashboard/umum";
@@ -128,6 +129,9 @@ export default async function UmumPage({ searchParams }) {
         <MetricCard icon="💬" accent="green" label="Avg engagement rate" value={`${k.avgEr}%`} chip={chipAll} />
         <MetricCard icon="👥" accent="violet" label="Total follower" value={ringkas(k.totalFollower)} chip={platformChip} />
       </section>
+      <p className="-mt-1 px-1 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+        <b>Total follower</b> menjumlahkan TikTok + Instagram + Threads yang <b>sudah ada angka totalnya</b>. Follower Instagram/Threads yang belum di-input (di Upload) belum ikut terhitung.
+      </p>
 
       {/* Follower per outlet + Tren tayangan */}
       <section className="grid gap-4 lg:grid-cols-2">
@@ -243,7 +247,10 @@ export default async function UmumPage({ searchParams }) {
             <h3 className="text-sm font-semibold text-ink">Top Pillars</h3>
             <span className="ml-auto text-[11px]" style={{ color: "var(--ink-soft)" }}>rata-rata semua outlet</span>
           </div>
-          <p className="mb-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>Pillar konten (dari Rencana) dengan performa terbaik — dicocokkan ke konten yang sudah tayang.</p>
+          <p className="mb-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+            Pillar konten (dari Rencana) dengan performa terbaik — dicocokkan ke konten yang sudah tayang.
+            {umum.topPillars.length > 0 && <> Basis: <b>{fmt(umum.topPillars.reduce((s, p) => s + p.count, 0))}</b> konten yang link tayangnya tertaut ke pillar.</>}
+          </p>
           {umum.topPillars.length === 0 ? (
             <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada konten tayang yang tertaut ke pillar. Isi <b>pillar</b> &amp; <b>link tayang</b> di Rencana agar muncul di sini.</p>
           ) : (
@@ -304,7 +311,7 @@ export default async function UmumPage({ searchParams }) {
                   <td className="py-2 pr-3">
                     <span className="flex h-5 w-5 items-center justify-center rounded-md text-[11px] font-extrabold" style={{ background: "var(--pri-50)", color: "var(--teal-900)" }}>{i + 1}</span>
                   </td>
-                  <td className="py-2 pr-3 font-semibold text-ink">{o.nama}</td>
+                  <td className="py-2 pr-3 font-semibold"><Link href={`/dashboard/tiktok?branch=${o.id}${selectedMonth ? `&month=${selectedMonth}` : ""}`} className="hover:underline" style={{ color: "var(--teal-900)" }}>{o.nama}</Link></td>
                   <td className="py-2 pr-3" style={{ color: "var(--ink-soft)" }}>{o.kategori}</td>
                   <td className="py-2 pr-3 text-right">{fmt(o.konten)}</td>
                   <td className="py-2 pr-3 text-right font-semibold text-ink">{ringkas(o.tayangan)}</td>
