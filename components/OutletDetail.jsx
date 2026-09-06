@@ -377,6 +377,7 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
           selectedMonth={selectedMonth}
           monthLabel={selectedMonth ? labelBulan(selectedMonth) : ""}
           lockedPlatform={defaultPlatform}
+          basePath={basePath}
         />
       )}
 

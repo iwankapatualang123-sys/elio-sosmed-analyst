@@ -76,7 +76,7 @@ export default async function SearchPage({ searchParams }) {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {branches.map((b) => (
-                  <Link key={b.id} href={`/dashboard?branch=${b.id}`}
+                  <Link key={b.id} href={`/dashboard/tiktok?branch=${b.id}`}
                     className="rounded-full px-3 py-1.5 text-sm font-medium" style={{ background: "rgba(91,99,235,.1)", color: "var(--teal-900)" }}>
                     {b.nama_cabang}{b.tiktok_username ? ` @${b.tiktok_username}` : ""}
                   </Link>

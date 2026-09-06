@@ -20,16 +20,16 @@ const STATUS_STYLE = {
   turun: { background: "#fee2e2", color: "#991b1b" },
 };
 
-function dashboardHref({ cat, month } = {}) {
+function dashboardHref(base, { cat, month } = {}) {
   const p = new URLSearchParams();
   if (cat) p.set("cat", cat);
   if (month) p.set("month", month);
   const qs = p.toString();
-  return qs ? `/dashboard?${qs}` : "/dashboard";
+  return qs ? `${base}?${qs}` : base;
 }
 
 export default function PortfolioSummary({
-  tiktok, instagram, categories = [], catFilter = null, selectedMonth = null, monthLabel = "", lockedPlatform = null,
+  tiktok, instagram, categories = [], catFilter = null, selectedMonth = null, monthLabel = "", lockedPlatform = null, basePath = "/dashboard",
 }) {
   // Bila dipakai di halaman platform tertentu (TikTok/Instagram), kunci ke platform
   // itu & sembunyikan toggle — laporan mengikuti sub-menu Dashboard.
@@ -81,9 +81,9 @@ export default function PortfolioSummary({
           </span>
           {categories.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              <Link href={dashboardHref({ month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={!catFilter ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>Semua</Link>
+              <Link href={dashboardHref(basePath, { month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={!catFilter ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>Semua</Link>
               {categories.map((c) => (
-                <Link key={c} href={dashboardHref({ cat: c, month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={catFilter === c ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>{c}</Link>
+                <Link key={c} href={dashboardHref(basePath, { cat: c, month: selectedMonth })} className="rounded-full px-2.5 py-0.5 text-xs font-medium" style={catFilter === c ? { background: "var(--teal-700)", color: "#fff" } : { background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>{c}</Link>
               ))}
             </div>
           )}
