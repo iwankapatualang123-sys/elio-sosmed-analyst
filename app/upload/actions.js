@@ -60,10 +60,14 @@ export async function uploadInstagramFiles(formData) {
 
   for (const file of files) {
     try {
-      // File PDF (mis. "Pemirsa") sering salah di-upload ke sini — arahkan ke kartu
-      // manual yang benar, bukan lempar error parser yang membingungkan.
-      if (/\.pdf$/i.test(file.name || "") || /pemirsa/i.test(file.name || "")) {
-        throw new Error('File ini sepertinya "Pemirsa"/PDF — datanya berupa gambar, tidak bisa dibaca otomatis. Ketik angkanya di kartu "Pemirsa Instagram (demografi)" di bawah (total follower, gender, usia, kota, negara).');
+      // File "Pemirsa" (demografi) sering salah di-upload ke kartu KONTEN ini —
+      // arahkan ke kartu yang benar dengan pesan sesuai jenis file (CSV vs gambar).
+      const nm = String(file.name || "");
+      if (/\.pdf$/i.test(nm) || /pemirsa/i.test(nm)) {
+        if (/\.csv$/i.test(nm)) {
+          throw new Error('Ini file "Pemirsa" (demografi audiens), BUKAN data konten/harian — jadi tidak diproses di kartu ini. Gulir ke kartu "Pemirsa Instagram (demografi)" di bawah, klik "Baca otomatis dari CSV / gambar / PDF", lalu pilih file CSV ini. Datanya (usia, kota, negara, gender) akan terbaca otomatis.');
+        }
+        throw new Error('File ini sepertinya "Pemirsa"/PDF (gambar). Untuk demografi, pakai kartu "Pemirsa Instagram (demografi)" di bawah — CSV bisa "Baca otomatis", gambar/PDF perlu AI atau ketik manual.');
       }
       const parsed = parseInstagramFile(Buffer.from(await file.arrayBuffer()));
       if (parsed.kind === "daily") {
