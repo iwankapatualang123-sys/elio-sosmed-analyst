@@ -64,7 +64,9 @@ export default async function UmumPage({ searchParams }) {
   // Ranking gabungan (TikTok + Instagram) per outlet — pakai ulang portofolio teruji.
   const ttData = await loadPortfolio(supabase, { month: selectedMonth });
   const igData = await loadPortfolioInstagram(supabase, { month: selectedMonth });
-  const months = ttData.months || [];
+  // Daftar bulan = gabungan bulan TikTok + Instagram (agar bulan yang baru punya
+  // data satu platform saja tetap muncul di filter).
+  const months = [...new Set([...(ttData.months || []), ...(igData.months || [])])].filter(Boolean).sort().reverse();
   const igById = new Map(igData.branches.map((b) => [b.id, b]));
   const rankingAll = ttData.branches
     .filter((b) => !catFilter || b.kategori === catFilter)

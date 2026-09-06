@@ -164,8 +164,10 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
   // sepanjang masa (perilaku asli). Target & Progress + Peringatan SENGAJA tetap
   // all-time walau bulan dipilih (lihat lib/tiktok/analytics.js).
   const selectedMonth = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : null;
-  const { branches, portfolio, months } = await loadPortfolio(supabase, { month: selectedMonth });
+  const { branches, portfolio, months: ttMonths } = await loadPortfolio(supabase, { month: selectedMonth });
   const igPortfolioData = await loadPortfolioInstagram(supabase, { month: selectedMonth });
+  // Filter bulan mencakup semua platform (TikTok + Instagram).
+  const months = [...new Set([...(ttMonths || []), ...(igPortfolioData.months || [])])].filter(Boolean).sort().reverse();
   const selectedId = sp.branch || branches[0]?.id || null;
   const catFilter = sp.cat || null;
   const categories = [...new Set(branches.map((b) => b.kategori).filter(Boolean))];
