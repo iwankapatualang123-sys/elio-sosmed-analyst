@@ -164,6 +164,9 @@ body > * { position: relative; z-index: 1; }
   grid-template-columns: 1fr;
   gap: 0.8rem;
   align-items: start;
+  /* Cegah baris grid diregangkan saat konten lebih pendek dari layar (min-h-screen)
+     — tanpa ini, halaman pendek (mis. tab Pengaturan) memunculkan gap besar. */
+  align-content: start;
 }
 .grid3 > * { grid-column: 1 / -1; } /* default: penuh */
 @media (min-width: 768px) {
