@@ -3,6 +3,8 @@
 // Instagram. Menampilkan snapshot audience terbaru: total follower, gender, sebaran
 // usia (perempuan vs laki-laki), kota & negara populer. Input dari halaman Upload.
 
+import { deleteInstagramAudience } from "@/app/upload/actions";
+
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
 
 function GenderBar({ label, pct, color }) {
@@ -18,7 +20,7 @@ function GenderBar({ label, pct, color }) {
   );
 }
 
-export default function InstagramAudiencePanel({ audience }) {
+export default function InstagramAudiencePanel({ audience, history = [], accountId = null, editable = false }) {
   if (!audience) return null;
   const age = Array.isArray(audience.age_json) ? audience.age_json : [];
   const cities = Array.isArray(audience.cities_json) ? audience.cities_json : [];
@@ -128,6 +130,36 @@ export default function InstagramAudiencePanel({ audience }) {
           )}
         </div>
       </div>
+
+      {/* Riwayat snapshot Pemirsa (+ hapus untuk koreksi tanggal salah) */}
+      {history.length > 0 && (
+        <div className="mt-4 border-t pt-3" style={{ borderColor: "rgba(16,24,40,.1)" }}>
+          <p className="mb-1.5 text-[11px] font-semibold" style={{ color: "var(--ink-soft)" }}>Riwayat snapshot ({history.length})</p>
+          <ul className="flex flex-col gap-1 text-[12px]">
+            {history.map((h) => {
+              const d = String(h.snapshot_date).slice(0, 10);
+              const isLatest = d === String(audience.snapshot_date).slice(0, 10);
+              return (
+                <li key={d} className="flex items-center gap-2">
+                  <span className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: isLatest ? "rgba(193,53,132,.1)" : "rgba(16,24,40,.05)", color: isLatest ? "#a12472" : "var(--ink-soft)" }}>{d}{isLatest ? " · terbaru" : ""}</span>
+                  <span className="text-ink">{h.followers != null ? `${fmt(h.followers)} pengikut` : "—"}</span>
+                  {(h.female_pct != null || h.male_pct != null) && (
+                    <span style={{ color: "var(--ink-soft)" }}>· P {h.female_pct ?? "—"}% / L {h.male_pct ?? "—"}%</span>
+                  )}
+                  {editable && accountId && (
+                    <form action={deleteInstagramAudience} className="ml-auto">
+                      <input type="hidden" name="accountId" value={accountId} />
+                      <input type="hidden" name="snapshot_date" value={d} />
+                      <button type="submit" className="text-[11px] font-semibold text-red-500 hover:text-red-700" aria-label={`Hapus snapshot ${d}`}>Hapus</button>
+                    </form>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-1.5 text-[10px]" style={{ color: "var(--ink-soft)" }}>Untuk memperbaiki, input ulang di tanggal yang sama (menimpa) atau hapus lalu input ulang. Menghapus di sini tidak mengubah angka follower di grafik (dikelola terpisah di Upload).</p>
+        </div>
+      )}
     </section>
   );
 }

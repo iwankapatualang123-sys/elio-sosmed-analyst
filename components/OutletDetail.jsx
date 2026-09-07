@@ -239,6 +239,7 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
   let igDaily = [];
   let igContent = [];
   let igAudience = null;
+  let igAudienceHistory = [];
   if (selectedId) {
     const [{ data: snapRows }, { data: igd }, { data: igc }, { data: igAud }] = await Promise.all([
       supabase
@@ -260,12 +261,13 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
         .select("snapshot_date, followers, female_pct, male_pct, age_json, cities_json, countries_json")
         .eq("tiktok_account_id", selectedId)
         .order("snapshot_date", { ascending: false })
-        .limit(1),
+        .limit(12),
     ]);
     socialSnaps = snapRows || [];
     igDaily = igd || [];
     igContent = igc || [];
-    igAudience = (igAud && igAud[0]) || null;
+    igAudienceHistory = igAud || [];
+    igAudience = igAudienceHistory[0] || null;
   }
   const snapsByPlatform = groupByPlatform(socialSnaps);
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -972,7 +974,7 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
           )}
 
           {/* ————— Pemirsa Instagram (demografi input manual) — halaman Instagram ————— */}
-          {isIg && igAudience && <InstagramAudiencePanel audience={igAudience} />}
+          {isIg && igAudience && <InstagramAudiencePanel audience={igAudience} history={igAudienceHistory} accountId={selectedId} editable={editable} />}
 
           {/* ————— Detail Instagram (dari upload Business Suite) ————— */}
           {isIg && hasIgData && (

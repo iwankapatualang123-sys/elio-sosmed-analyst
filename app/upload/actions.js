@@ -278,3 +278,25 @@ export async function saveInstagramAudience(formData) {
   revalidatePath("/dashboard");
   return { ok: true };
 }
+
+// Hapus satu snapshot Pemirsa (koreksi tanggal salah). Tidak menyentuh
+// social_account_snapshots (jangkar follower) — itu dikelola terpisah.
+export async function deleteInstagramAudience(formData) {
+  const profile = await getCurrentProfile();
+  if (!profile?.role) throw new Error("Belum login.");
+  if (!canWrite(profile)) throw new Error("Role Anda hanya bisa melihat data.");
+  const accountId = String(formData.get("accountId") || "");
+  const snapshot_date = String(formData.get("snapshot_date") || "").slice(0, 10);
+  if (!accountId || !/^\d{4}-\d{2}-\d{2}$/.test(snapshot_date)) throw new Error("Data tidak valid.");
+  await assertCanAccess(profile, accountId);
+  try {
+    await prisma.instagramAudience.delete({
+      where: { tiktokAccountId_snapshotDate: { tiktokAccountId: accountId, snapshotDate: toDate(snapshot_date) } },
+    });
+  } catch (err) {
+    throw new Error(`Gagal menghapus: ${err?.message || err}`);
+  }
+  await logActivity({ action: "hapus_pemirsa_instagram", entity: accountId, detail: { snapshot_date } });
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
