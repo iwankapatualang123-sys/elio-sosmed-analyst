@@ -11,9 +11,29 @@ import ResetPasswordButton from "@/components/ResetPasswordButton";
 import BranchRow from "@/components/BranchRow";
 import GoalManager from "@/components/GoalManager";
 import BranchAccessForm from "@/components/BranchAccessForm";
+import SettingsTabs from "@/components/SettingsTabs";
 import { addBranch, setUserRole, toggleUserActive, addCategory, deleteCategory } from "./actions";
 
 const CATEGORY_TYPE_LABEL = { pic: "PIC", goals: "Goals Content", pillar: "Pillar", type: "Type of Content" };
+const ROLE_BADGE = {
+  admin: { background: "#1a2338", color: "#fff" },
+  manager: { background: "#fff3e9", color: "#b5651d" },
+  staff: { background: "#eef0fe", color: "#3f46c9" },
+};
+
+// Header kartu seragam: ikon + judul + deskripsi + aksi opsional (kanan).
+function CardHead({ icon, title, desc, action = null }) {
+  return (
+    <div className="mb-4 flex items-start gap-3">
+      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-base" style={{ background: "var(--pri-50)", color: "var(--teal-900)" }} aria-hidden>{icon}</span>
+      <div className="min-w-0">
+        <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
+        {desc && <p className="mt-0.5 text-xs leading-relaxed" style={{ color: "var(--ink-soft)" }}>{desc}</p>}
+      </div>
+      {action && <div className="ml-auto flex-shrink-0">{action}</div>}
+    </div>
+  );
+}
 
 export default async function SettingsPage() {
   const profile = await getCurrentProfile();
@@ -69,147 +89,158 @@ export default async function SettingsPage() {
     <main className="relative z-10 mx-auto grid3 min-h-screen w-full max-w-5xl p-4 sm:p-6">
       <Nav email={profile.email} role={profile.role} />
 
-      {/* Backup */}
-      <section className="card-3d flex flex-wrap items-center gap-3 p-4 sm:p-5">
-        <div>
-          <h2 className="text-base font-semibold text-ink">Backup Data</h2>
-          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Unduh seluruh data ke satu file Excel (penting untuk paket Free tanpa backup otomatis).</p>
-        </div>
-        <a href="/api/report/backup" className="ml-auto"><Button variant="success">⬇️ Backup semua data (.xlsx)</Button></a>
-      </section>
+      <div className="px-1">
+        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Pengaturan</h1>
+        <p className="mt-0.5 text-sm" style={{ color: "var(--on-bg-soft)" }}>Kelola outlet, tim &amp; akses, konfigurasi konten, dan backup — dalam tab terpisah.</p>
+      </div>
 
-      {/* Cabang */}
-      <section className="card-3d p-4 sm:p-6">
-        <h2 className="mb-4 text-base font-semibold text-ink">Cabang / Akun TikTok</h2>
-
-        <form action={addBranch} className="mb-5 grid gap-3 sm:grid-cols-4">
-          <input name="nama_cabang" required placeholder="Nama cabang" className="input-3d" />
-          <input name="tiktok_username" required placeholder="username (tanpa @)" className="input-3d" />
-          <input name="kategori" placeholder="kategori (opsional)" className="input-3d" />
-          <Button type="submit" variant="success">+ Tambah</Button>
-        </form>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr style={{ color: "var(--ink-soft)" }}>
-                <th className="py-2 pr-3 font-medium">Cabang</th>
-                <th className="py-2 pr-3 font-medium">Username</th>
-                <th className="py-2 pr-3 font-medium">Kategori</th>
-                <th className="py-2 pr-3 font-medium">Status</th>
-                <th className="py-2 pr-3 font-medium">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(branches || []).map((b) => (
-                <BranchRow key={b.id} branch={b} />
-              ))}
-              {(branches || []).length === 0 && (
-                <tr><td colSpan={5} className="py-4 text-center" style={{ color: "var(--ink-soft)" }}>Belum ada cabang.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Target per Cabang & Platform */}
-      <section className="card-3d p-4 sm:p-6">
-        <h2 className="mb-1 text-base font-semibold text-ink">🎯 Target per Cabang & Platform</h2>
-        <p className="mb-4 text-sm" style={{ color: "var(--ink-soft)" }}>
-          Pilih <b>Bulan</b>, <b>Outlet</b>, dan <b>Platform</b>, lalu isi target (Views, Engagement Rate, Net Follower) dan klik Simpan. Setiap kombinasi bulan/outlet/platform punya targetnya sendiri. Progress-nya tampil di <b>Ringkasan Platform</b> di Dashboard (ikut filter bulan; tanpa filter = bulan berjalan). Kosongkan kolom yang tidak ingin ditarget.
-        </p>
-        <GoalManager branches={activeBranches} goalMap={goalMap} monthOptions={monthOptions} />
-      </section>
-
-      {/* Kategori Rencana Konten */}
-      <section className="card-3d p-4 sm:p-6">
-        <h2 className="mb-1 text-base font-semibold text-ink">Kategori Rencana Konten</h2>
-        <p className="mb-4 text-xs" style={{ color: "var(--ink-soft)" }}>
-          Pilihan dropdown PIC, Goals Content, Pillar, dan Type of Content di halaman Rencana Konten. Tambah nilai baru di sini kalau ada PIC/kategori baru.
-        </p>
-
-        <form action={addCategory} className="mb-5 grid gap-3 sm:grid-cols-4">
-          <select name="category_type" required className="input-3d" defaultValue="">
-            <option value="" disabled>Jenis kategori</option>
-            {Object.entries(CATEGORY_TYPE_LABEL).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-          </select>
-          <input name="value" required placeholder="Nilai baru, mis. Video" className="input-3d sm:col-span-2" />
-          <Button type="submit" variant="success">+ Tambah</Button>
-        </form>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {Object.entries(CATEGORY_TYPE_LABEL).map(([type, label]) => (
-            <div key={type}>
-              <h3 className="mb-2 text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>{label}</h3>
-              <div className="flex flex-wrap gap-1.5">
-                {categoriesByType[type].length === 0 && (
-                  <span className="text-xs" style={{ color: "var(--ink-soft)" }}>Belum ada nilai.</span>
-                )}
-                {categoriesByType[type].map((c) => (
-                  <form key={c.id} action={deleteCategory} className="inline-flex items-center gap-1 rounded-full py-1 pl-3 pr-1.5 text-xs font-medium" style={{ background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>
-                    <input type="hidden" name="id" value={c.id} />
-                    {c.value}
-                    <button type="submit" className="rounded-full px-1 hover:bg-[rgba(16,24,40,.12)]" title={`Hapus "${c.value}"`}>×</button>
-                  </form>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* User */}
-      <section className="card-3d p-4 sm:p-6">
-        <h2 className="mb-1 text-base font-semibold text-ink">User</h2>
-        <p className="mb-3 text-xs" style={{ color: "var(--ink-soft)" }}>
-          Buat akun user baru di bawah ini (role bisa diubah lagi kapan saja), atau atur role/akses cabang user yang sudah ada.
-        </p>
-        <div className="mb-5 border-b pb-4" style={{ borderColor: "rgba(16,24,40,.1)" }}>
-          <InviteUserForm />
-        </div>
-
+      <SettingsTabs tabs={[{ icon: "🏪", label: "Outlet" }, { icon: "👥", label: "Tim & Akses" }, { icon: "🗂️", label: "Rencana Konten" }, { icon: "💾", label: "Data" }]}>
+        {/* ───── TAB: OUTLET ───── */}
         <div className="flex flex-col gap-4">
-          {(users || []).map((u) => {
-            const assigned = accessByUser.get(u.id) || new Set();
-            return (
-              <div key={u.id} className="rounded-2xl border p-3" style={{ borderColor: "rgba(16,24,40,.12)", background: "rgba(255,255,255,.5)" }}>
-                <div className="mb-3 flex flex-wrap items-center gap-3">
-                  <span className="font-medium text-ink">{u.full_name || u.email}</span>
-                  <span className="text-xs" style={{ color: "var(--ink-soft)" }}>{u.email}</span>
-                  <span className="ml-auto flex items-center gap-2">
-                    <form action={setUserRole} className="flex items-center gap-1">
-                      <input type="hidden" name="id" value={u.id} />
-                      <select name="role" defaultValue={u.role} className="input-3d !min-h-0 !py-1 text-xs">
-                        <option value="admin">admin</option>
-                        <option value="manager">manager</option>
-                        <option value="staff">staff</option>
-                      </select>
-                      <Button type="submit" variant="ghost" className="!min-h-0 !px-3 !py-1 text-xs">Simpan role</Button>
-                    </form>
-                    <form action={toggleUserActive}>
-                      <input type="hidden" name="id" value={u.id} />
-                      <input type="hidden" name="next" value={String(!u.is_active)} />
-                      <Button type="submit" variant="ghost" className="!min-h-0 !px-3 !py-1 text-xs">
-                        {u.is_active ? "Nonaktifkan" : "Aktifkan"}
-                      </Button>
-                    </form>
-                    <ResetPasswordButton userId={u.id} email={u.email} />
-                  </span>
-                </div>
+          <section className="card-3d p-4 sm:p-6">
+            <CardHead icon="🏪" title="Outlet" desc="Daftar outlet lintas platform (TikTok / Instagram / Threads). Tambah, edit, atau nonaktifkan di sini." />
+            <form action={addBranch} className="mb-5 grid gap-3 rounded-xl p-3 sm:grid-cols-4" style={{ background: "var(--pri-50)" }}>
+              <input name="nama_cabang" required placeholder="Nama outlet" className="input-3d" />
+              <input name="tiktok_username" required placeholder="username TikTok (tanpa @)" className="input-3d" />
+              <input name="kategori" placeholder="kategori (opsional)" className="input-3d" />
+              <Button type="submit" variant="success">+ Tambah outlet</Button>
+            </form>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr style={{ color: "var(--ink-soft)" }}>
+                    <th className="py-2 pr-3 font-medium">Outlet</th>
+                    <th className="py-2 pr-3 font-medium">Username TikTok</th>
+                    <th className="py-2 pr-3 font-medium">Kategori</th>
+                    <th className="py-2 pr-3 font-medium">Status</th>
+                    <th className="py-2 pr-3 font-medium">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(branches || []).map((b) => <BranchRow key={b.id} branch={b} />)}
+                  {(branches || []).length === 0 && (
+                    <tr><td colSpan={5} className="py-4 text-center" style={{ color: "var(--ink-soft)" }}>Belum ada outlet.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-                {u.role === "admin" ? (
-                  <p className="text-xs" style={{ color: "var(--ink-soft)" }}>Admin otomatis akses semua cabang.</p>
-                ) : (
-                  <BranchAccessForm userId={u.id} branches={activeBranches} assignedIds={[...assigned]} />
-                )}
-              </div>
-            );
-          })}
-          {(users || []).length === 0 && (
-            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada user.</p>
-          )}
+          <section className="card-3d p-4 sm:p-6">
+            <CardHead icon="🎯" title="Target per Outlet & Platform" desc="Pilih Bulan, Outlet, dan Platform, lalu isi target (Views, Engagement Rate, Net Follower). Tiap kombinasi punya targetnya sendiri; progres tampil di Ringkasan Platform di Dashboard. Kosongkan kolom yang tidak ditarget." />
+            <GoalManager branches={activeBranches} goalMap={goalMap} monthOptions={monthOptions} />
+          </section>
         </div>
-      </section>
+
+        {/* ───── TAB: TIM & AKSES ───── */}
+        <div className="flex flex-col gap-4">
+          <section className="card-3d p-4 sm:p-6">
+            <CardHead icon="＋" title="Tambah User" desc="Buat akun baru — role &amp; akses cabang bisa diatur setelahnya." />
+            <InviteUserForm />
+          </section>
+
+          <section className="card-3d p-4 sm:p-6">
+            <CardHead icon="👥" title={`Daftar User (${(users || []).length})`} desc="Atur role, status, akses cabang, dan reset password tiap anggota tim." />
+            <div className="flex flex-col gap-3">
+              {(users || []).map((u) => {
+                const assigned = accessByUser.get(u.id) || new Set();
+                const initial = (u.full_name || u.email || "?").charAt(0).toUpperCase();
+                const roleStyle = ROLE_BADGE[u.role] || ROLE_BADGE.staff;
+                return (
+                  <div key={u.id} className="rounded-2xl border p-3.5" style={{ borderColor: "var(--line)", background: "#fff" }}>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: "linear-gradient(160deg,#a5b4fc,#6b73f0 55%,#3730a3)" }}>{initial}</span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-ink">{u.full_name || u.email}</span>
+                          <span className="rounded-full px-2 py-0.5 text-[10.5px] font-bold capitalize" style={roleStyle}>{u.role}</span>
+                          <span className="rounded-full px-2 py-0.5 text-[10.5px] font-bold" style={u.is_active ? { background: "#e7f9f0", color: "#0f9d58" } : { background: "#f0f1f6", color: "#667085" }}>{u.is_active ? "aktif" : "nonaktif"}</span>
+                        </div>
+                        {u.full_name && <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{u.email}</div>}
+                      </div>
+                      <div className="ml-auto flex flex-wrap items-center gap-2">
+                        <form action={setUserRole} className="flex items-center gap-1">
+                          <input type="hidden" name="id" value={u.id} />
+                          <select name="role" defaultValue={u.role} className="input-3d !min-h-0 !py-1 text-xs">
+                            <option value="admin">admin</option>
+                            <option value="manager">manager</option>
+                            <option value="staff">staff</option>
+                          </select>
+                          <Button type="submit" variant="ghost" className="!min-h-0 !px-3 !py-1 text-xs">Simpan role</Button>
+                        </form>
+                        <form action={toggleUserActive}>
+                          <input type="hidden" name="id" value={u.id} />
+                          <input type="hidden" name="next" value={String(!u.is_active)} />
+                          <Button type="submit" variant="ghost" className="!min-h-0 !px-3 !py-1 text-xs">{u.is_active ? "Nonaktifkan" : "Aktifkan"}</Button>
+                        </form>
+                        <ResetPasswordButton userId={u.id} email={u.email} />
+                      </div>
+                    </div>
+
+                    <div className="mt-3 border-t border-dashed pt-3" style={{ borderColor: "var(--line)" }}>
+                      <p className="mb-2 text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--ink-soft)" }}>Akses cabang</p>
+                      {u.role === "admin" ? (
+                        <p className="text-xs" style={{ color: "var(--ink-soft)" }}>Admin otomatis mengakses semua cabang.</p>
+                      ) : (
+                        <BranchAccessForm userId={u.id} branches={activeBranches} assignedIds={[...assigned]} />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {(users || []).length === 0 && (
+                <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Belum ada user.</p>
+              )}
+            </div>
+          </section>
+        </div>
+
+        {/* ───── TAB: RENCANA KONTEN ───── */}
+        <div>
+          <section className="card-3d p-4 sm:p-6">
+            <CardHead icon="🗂️" title="Kategori Rencana Konten" desc="Pilihan dropdown PIC, Goals Content, Pillar, dan Type of Content di halaman Rencana Konten. Tambah nilai baru bila ada PIC/kategori baru." />
+            <form action={addCategory} className="mb-5 grid gap-3 rounded-xl p-3 sm:grid-cols-4" style={{ background: "var(--pri-50)" }}>
+              <select name="category_type" required className="input-3d" defaultValue="">
+                <option value="" disabled>Jenis kategori</option>
+                {Object.entries(CATEGORY_TYPE_LABEL).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+              </select>
+              <input name="value" required placeholder="Nilai baru, mis. Video" className="input-3d sm:col-span-2" />
+              <Button type="submit" variant="success">+ Tambah</Button>
+            </form>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {Object.entries(CATEGORY_TYPE_LABEL).map(([type, label]) => (
+                <div key={type} className="rounded-xl border p-3" style={{ borderColor: "var(--line)" }}>
+                  <h3 className="mb-2 text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>{label}</h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {categoriesByType[type].length === 0 && (
+                      <span className="text-xs" style={{ color: "var(--ink-soft)" }}>Belum ada nilai.</span>
+                    )}
+                    {categoriesByType[type].map((c) => (
+                      <form key={c.id} action={deleteCategory} className="inline-flex items-center gap-1 rounded-full py-1 pl-3 pr-1.5 text-xs font-medium" style={{ background: "rgba(91,99,235,.08)", color: "var(--teal-900)" }}>
+                        <input type="hidden" name="id" value={c.id} />
+                        {c.value}
+                        <button type="submit" className="rounded-full px-1 hover:bg-[rgba(16,24,40,.12)]" title={`Hapus "${c.value}"`}>×</button>
+                      </form>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {/* ───── TAB: DATA ───── */}
+        <div>
+          <section className="card-3d p-4 sm:p-6">
+            <CardHead
+              icon="💾"
+              title="Backup Data"
+              desc="Unduh seluruh data ke satu file Excel (penting untuk paket tanpa backup otomatis). Simpan berkala di penyimpananmu sendiri."
+              action={<a href="/api/report/backup"><Button variant="success">⬇️ Backup (.xlsx)</Button></a>}
+            />
+          </section>
+        </div>
+      </SettingsTabs>
     </main>
   );
 }
