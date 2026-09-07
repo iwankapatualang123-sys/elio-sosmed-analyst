@@ -27,12 +27,13 @@ export default async function SearchPage({ searchParams }) {
 
   let branches = [];
   let videos = [];
+  let igPosts = [];
   if (safe) {
     // Scope akses (pengganti RLS): admin = semua; lainnya = cabang miliknya.
     const ids = await accessibleAccountIds(profile); // null = admin
     const accWhere = ids === null ? {} : { id: { in: ids.length ? ids : ["__none__"] } };
     const contentWhere = ids === null ? {} : { tiktokAccountId: { in: ids.length ? ids : ["__none__"] } };
-    const [b, v] = await Promise.all([
+    const [b, v, ig] = await Promise.all([
       prisma.tiktokAccount.findMany({
         where: { AND: [accWhere, { OR: [{ namaCabang: { contains: safe } }, { tiktokUsername: { contains: safe } }] }] },
         select: { id: true, namaCabang: true, tiktokUsername: true },
@@ -44,8 +45,22 @@ export default async function SearchPage({ searchParams }) {
         orderBy: { totalViews: "desc" },
         take: 40,
       }),
+      prisma.instagramContent.findMany({
+        where: { AND: [contentWhere, { OR: [{ description: { contains: safe } }, { username: { contains: safe } }] }] },
+        select: { postId: true, description: true, permalink: true, views: true, publishedAt: true, account: { select: { namaCabang: true } } },
+        orderBy: { views: "desc" },
+        take: 40,
+      }),
     ]);
     branches = b.map((x) => ({ id: x.id, nama_cabang: x.namaCabang, tiktok_username: x.tiktokUsername }));
+    igPosts = ig.map((x) => ({
+      post_id: x.postId,
+      caption: (x.description || "").split("\n")[0],
+      permalink: x.permalink,
+      views: x.views,
+      published_at: x.publishedAt ? new Date(x.publishedAt).toISOString().slice(0, 10) : null,
+      nama_cabang: x.account?.namaCabang,
+    }));
     videos = v.map((x) => ({
       video_id: x.videoId,
       video_title: x.videoTitle,
@@ -63,7 +78,7 @@ export default async function SearchPage({ searchParams }) {
       <div className="px-1">
         <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Pencarian</h1>
         <p className="mt-0.5 text-sm" style={{ color: "var(--on-bg-soft)" }}>
-          {query ? `Hasil untuk "${query}" — ${branches.length} cabang, ${videos.length} video` : "Ketik kata kunci di kotak pencarian header."}
+          {query ? `Hasil untuk "${query}" — ${branches.length} cabang, ${videos.length} video TikTok, ${igPosts.length} konten Instagram` : "Ketik kata kunci di kotak pencarian header."}
         </p>
       </div>
 
@@ -86,7 +101,7 @@ export default async function SearchPage({ searchParams }) {
           </section>
 
           <section className="card-3d p-4 sm:p-5">
-            <h2 className="mb-3 text-base font-semibold text-ink">Video ({videos.length})</h2>
+            <h2 className="mb-3 text-base font-semibold text-ink">Video TikTok ({videos.length})</h2>
             {videos.length === 0 ? (
               <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Tidak ada video cocok.</p>
             ) : (
@@ -102,6 +117,28 @@ export default async function SearchPage({ searchParams }) {
                     <span className="whitespace-nowrap text-sm font-semibold text-ink">{fmt(v.total_views)} views</span>
                     {v.video_link && (
                       <a href={v.video_link} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold" style={{ color: "var(--teal-900)" }}>Buka ↗</a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="card-3d p-4 sm:p-5">
+            <h2 className="mb-3 text-base font-semibold text-ink">Konten Instagram ({igPosts.length})</h2>
+            {igPosts.length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Tidak ada konten Instagram cocok.</p>
+            ) : (
+              <ul className="flex flex-col divide-y" style={{ borderColor: "rgba(16,24,40,.1)" }}>
+                {igPosts.map((c) => (
+                  <li key={c.post_id} className="flex items-center gap-3 py-2">
+                    <span className="min-w-0 flex-1">
+                      <span className="line-clamp-1 text-sm text-ink" title={c.caption}>{c.caption || "(tanpa caption)"}</span>
+                      <span className="text-xs" style={{ color: "var(--ink-soft)" }}>{c.nama_cabang || "-"} · {c.published_at || "-"}</span>
+                    </span>
+                    <span className="whitespace-nowrap text-sm font-semibold text-ink">{fmt(c.views)} views</span>
+                    {c.permalink && (
+                      <a href={c.permalink} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold" style={{ color: "#a12472" }}>Buka ↗</a>
                     )}
                   </li>
                 ))}

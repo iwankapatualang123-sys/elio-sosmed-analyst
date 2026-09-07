@@ -739,6 +739,28 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
           </section>
           )}
 
+          {/* Pertumbuhan Follower Threads — dari snapshot manual (Threads tak punya
+              export). Garis = JUMLAH follower (absolut) per snapshot, bukan delta. */}
+          {isTh && (() => {
+            const rows = [...(snapsByPlatform.get("threads") || [])]
+              .filter((r) => r.followers != null)
+              .sort((a, b) => String(a.snapshot_date).localeCompare(String(b.snapshot_date)));
+            if (rows.length < 2) return null;
+            const first = rows[0];
+            const last = rows[rows.length - 1];
+            const delta = (Number(last.followers) || 0) - (Number(first.followers) || 0);
+            return (
+              <section className="card-3d p-4 sm:p-5">
+                <h3 className="mb-1 text-sm font-semibold text-ink">🧵 Pertumbuhan Follower Threads</h3>
+                <p className="mb-2 text-[11px]" style={{ color: "var(--ink-soft)" }}>
+                  Dari input manual. <b style={{ color: delta > 0 ? "#166534" : delta < 0 ? "#b91c1c" : "inherit" }}>{delta >= 0 ? "+" : ""}{fmt(delta)}</b> follower sejak {String(first.snapshot_date).slice(0, 10)} · kini <b className="text-ink">{fmt(last.followers)}</b>.
+                </p>
+                <LineChart series={[{ label: "Threads", color: "#111111", data: rows.map((r) => ({ x: String(r.snapshot_date).slice(0, 10), y: Number(r.followers) || 0 })) }]} />
+                <p className="mt-1 text-[10px]" style={{ color: "var(--ink-soft)" }}>Garis = <b>jumlah follower</b> tiap snapshot (bukan pertambahan). Catat rutin (mingguan) di Upload agar grafik makin lengkap.</p>
+              </section>
+            );
+          })()}
+
           {/* Analisis Pertumbuhan — SATU kartu di bawah grafik: (a) diagnosis sebab
               perlambatan (muncul otomatis saat follower melambat) + (b) Insight per
               aspek (Konten/ER/Follower/Retensi) yang selalu tampil. Digabung supaya
