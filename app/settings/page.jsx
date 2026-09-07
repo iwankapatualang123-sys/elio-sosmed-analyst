@@ -10,7 +10,8 @@ import InviteUserForm from "@/components/InviteUserForm";
 import ResetPasswordButton from "@/components/ResetPasswordButton";
 import BranchRow from "@/components/BranchRow";
 import GoalManager from "@/components/GoalManager";
-import { addBranch, setUserRole, toggleUserActive, saveUserBranches, addCategory, deleteCategory } from "./actions";
+import BranchAccessForm from "@/components/BranchAccessForm";
+import { addBranch, setUserRole, toggleUserActive, addCategory, deleteCategory } from "./actions";
 
 const CATEGORY_TYPE_LABEL = { pic: "PIC", goals: "Goals Content", pillar: "Pillar", type: "Type of Content" };
 
@@ -199,18 +200,7 @@ export default async function SettingsPage() {
                 {u.role === "admin" ? (
                   <p className="text-xs" style={{ color: "var(--ink-soft)" }}>Admin otomatis akses semua cabang.</p>
                 ) : (
-                  <form action={saveUserBranches} className="flex flex-wrap items-center gap-3">
-                    <input type="hidden" name="userId" value={u.id} />
-                    <span className="text-xs font-medium" style={{ color: "var(--ink-soft)" }}>Akses cabang:</span>
-                    {activeBranches.map((b) => (
-                      <label key={b.id} className="flex items-center gap-1 text-xs text-ink">
-                        <input type="checkbox" name="branchIds" value={b.id} defaultChecked={assigned.has(b.id)} />
-                        {b.nama_cabang}
-                      </label>
-                    ))}
-                    {activeBranches.length === 0 && <span className="text-xs" style={{ color: "var(--ink-soft)" }}>(belum ada cabang)</span>}
-                    <Button type="submit" variant="ghost" className="!min-h-0 !px-3 !py-1 text-xs">Simpan akses</Button>
-                  </form>
+                  <BranchAccessForm userId={u.id} branches={activeBranches} assignedIds={[...assigned]} />
                 )}
               </div>
             );

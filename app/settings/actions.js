@@ -5,7 +5,7 @@
 
 "use server";
 
-import { randomInt } from "crypto";
+import { randomInt, randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db";
 import { getCurrentProfile } from "@/lib/auth";
@@ -263,20 +263,29 @@ export async function resetUserPassword(prevState, formData) {
 }
 
 // Fungsi: saveUserBranches — set ulang akses cabang seorang user (many-to-many).
-export async function saveUserBranches(formData) {
-  const profile = await requireAdmin();
-  const userId = String(formData.get("userId") || "");
-  if (!userId) return;
-  const branchIds = formData.getAll("branchIds").map(String);
-  await prisma.$transaction([
-    prisma.userBranchAccess.deleteMany({ where: { userId } }),
-    ...(branchIds.length
-      ? [prisma.userBranchAccess.createMany({
-          data: branchIds.map((tiktokAccountId) => ({ userId, tiktokAccountId, assignedById: profile.id })),
-          skipDuplicates: true,
-        })]
-      : []),
-  ]);
-  await logActivity({ action: "ubah_akses_cabang", detail: { user_id: userId, jumlah_cabang: branchIds.length } });
-  revalidatePath("/settings");
+export async function saveUserBranches(prevState, formData) {
+  // Dukung dua pemanggilan: useActionState(prevState, formData) ATAU action(formData).
+  const fd = formData instanceof FormData ? formData : prevState;
+  try {
+    const profile = await requireAdmin();
+    const userId = String(fd.get("userId") || "");
+    if (!userId) return { ok: false, error: "User tidak valid." };
+    const branchIds = fd.getAll("branchIds").map(String).filter(Boolean);
+    // id CHAR(36) @default(uuid()) dibuat di lapisan app — isi eksplisit agar
+    // createMany tidak gagal karena id NULL (belt-and-suspenders).
+    await prisma.$transaction([
+      prisma.userBranchAccess.deleteMany({ where: { userId } }),
+      ...(branchIds.length
+        ? [prisma.userBranchAccess.createMany({
+            data: branchIds.map((tiktokAccountId) => ({ id: randomUUID(), userId, tiktokAccountId, assignedById: profile.id })),
+            skipDuplicates: true,
+          })]
+        : []),
+    ]);
+    await logActivity({ action: "ubah_akses_cabang", detail: { user_id: userId, jumlah_cabang: branchIds.length } });
+    revalidatePath("/settings");
+    return { ok: true, count: branchIds.length };
+  } catch (err) {
+    return { ok: false, error: err?.message || "Gagal menyimpan akses." };
+  }
 }
