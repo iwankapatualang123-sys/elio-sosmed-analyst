@@ -107,7 +107,7 @@ export default async function SettingsPage() {
                     <th className="py-2 pr-3 font-medium">Username TikTok</th>
                     <th className="py-2 pr-3 font-medium">Kategori</th>
                     <th className="py-2 pr-3 font-medium">Status</th>
-                    <th className="py-2 pr-3 font-medium">Aksi</th>
+                    <th className="py-2 pl-3 font-medium text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>

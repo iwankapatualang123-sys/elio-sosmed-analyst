@@ -289,3 +289,34 @@ export async function saveUserBranches(prevState, formData) {
     return { ok: false, error: err?.message || "Gagal menyimpan akses." };
   }
 }
+
+// Simpan SELURUH perubahan formulir user sekaligus: role + akses cabang (satu
+// tombol Simpan di kartu user). Admin otomatis akses semua cabang (baris akses
+// dibersihkan). Dipanggil via useActionState(prevState, formData).
+export async function saveUserSettings(prevState, formData) {
+  const fd = formData instanceof FormData ? formData : prevState;
+  try {
+    const profile = await requireAdmin();
+    const userId = String(fd.get("userId") || "");
+    if (!userId) return { ok: false, error: "User tidak valid." };
+    const role = String(fd.get("role") || "");
+    if (!["admin", "manager", "staff"].includes(role)) return { ok: false, error: "Role tidak valid." };
+    const branchIds = fd.getAll("branchIds").map(String).filter(Boolean);
+
+    const ops = [prisma.profile.update({ where: { id: userId }, data: { role } })];
+    // Akses cabang selalu ditulis ulang. Admin = semua otomatis → baris dibersihkan.
+    ops.push(prisma.userBranchAccess.deleteMany({ where: { userId } }));
+    if (role !== "admin" && branchIds.length) {
+      ops.push(prisma.userBranchAccess.createMany({
+        data: branchIds.map((tiktokAccountId) => ({ id: randomUUID(), userId, tiktokAccountId, assignedById: profile.id })),
+        skipDuplicates: true,
+      }));
+    }
+    await prisma.$transaction(ops);
+    await logActivity({ action: "ubah_user", detail: { user_id: userId, role, akses: role === "admin" ? "semua" : branchIds.length } });
+    revalidatePath("/settings");
+    return { ok: true, role, count: role === "admin" ? null : branchIds.length };
+  } catch (err) {
+    return { ok: false, error: err?.message || "Gagal menyimpan." };
+  }
+}

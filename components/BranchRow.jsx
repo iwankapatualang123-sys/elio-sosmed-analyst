@@ -6,9 +6,28 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Pencil, Trash2, Check, X } from "lucide-react";
+import { Pencil, Trash2, Check, X, Power } from "lucide-react";
 import Button from "@/components/Button";
 import { updateBranch, deleteBranch, toggleBranchActive } from "@/app/settings/actions";
+
+// Tombol aksi berbentuk IKON (rapi, tidak menumpuk). Nama muncul saat hover (title).
+function IconBtn({ title, onClick, disabled, danger = false, children }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      onClick={onClick}
+      disabled={disabled}
+      className="flex h-8 w-8 items-center justify-center rounded-lg border transition-colors disabled:opacity-50"
+      style={danger
+        ? { borderColor: "#f6d4d4", background: "#fff5f5", color: "#dc2626" }
+        : { borderColor: "var(--line)", background: "#f8f9fc", color: "var(--teal-900)" }}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function BranchRow({ branch }) {
   const [editing, setEditing] = useState(false);
@@ -90,20 +109,18 @@ export default function BranchRow({ branch }) {
   return (
     <tr className="border-t" style={{ borderColor: "rgba(16,24,40,.1)" }}>
       <td className="py-2 pr-3 font-medium text-ink">{branch.nama_cabang}</td>
-      <td className="py-2 pr-3">@{branch.tiktok_username}</td>
+      <td className="py-2 pr-3" style={{ color: "var(--ink-soft)" }}>@{branch.tiktok_username}</td>
       <td className="py-2 pr-3">{branch.kategori || "-"}</td>
-      <td className="py-2 pr-3">{branch.is_active ? "Aktif" : "Nonaktif"}</td>
       <td className="py-2 pr-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Button type="button" variant="ghost" onClick={() => setEditing(true)} disabled={pending} className="!min-h-0 !px-3 !py-1 text-xs">
-            <Pencil size={12} /> Edit
-          </Button>
-          <Button type="button" variant="ghost" onClick={toggleActive} disabled={pending} className="!min-h-0 !px-3 !py-1 text-xs">
-            {branch.is_active ? "Nonaktifkan" : "Aktifkan"}
-          </Button>
-          <Button type="button" variant="danger" onClick={remove} disabled={pending} className="!min-h-0 !px-3 !py-1 text-xs" title="Hapus permanen — tidak bisa dibatalkan">
-            <Trash2 size={12} /> Hapus
-          </Button>
+        <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={branch.is_active ? { background: "#e7f9f0", color: "#0f9d58" } : { background: "#f0f1f6", color: "#667085" }}>
+          {branch.is_active ? "aktif" : "nonaktif"}
+        </span>
+      </td>
+      <td className="py-2 pl-3">
+        <div className="flex items-center justify-end gap-1.5">
+          <IconBtn title="Edit" onClick={() => setEditing(true)} disabled={pending}><Pencil size={15} /></IconBtn>
+          <IconBtn title={branch.is_active ? "Nonaktifkan" : "Aktifkan"} onClick={toggleActive} disabled={pending}><Power size={15} /></IconBtn>
+          <IconBtn title="Hapus permanen — tidak bisa dibatalkan" danger onClick={remove} disabled={pending}><Trash2 size={15} /></IconBtn>
         </div>
       </td>
     </tr>
