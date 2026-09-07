@@ -584,7 +584,7 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
               {/* KPI akun dari metrik harian + ER akun (5 kotak, sejajar tab TikTok) */}
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
                 {[
-                  ["Tayangan", igSum.views],
+                  ["Tayangan akun*", igSum.views],
                   ["Jangkauan", igSum.reach],
                   ["Kunjungan profil", igSum.profile_visits],
                   ["Follower baru", igSum.new_followers == null ? null : `+${fmt(igSum.new_followers)}`],
@@ -599,7 +599,7 @@ export default async function OutletDetail({ searchParams, defaultPlatform = "ti
                 ))}
               </div>
               <p className="mt-1.5 text-[11px]" style={{ color: "var(--ink-soft)" }}>
-                Dari data harian ({igSum.days} hari terekam{igMonth ? ` di ${labelBulan(igMonth)}` : ""}). Angka tayangan mencakup semua jenis konten termasuk Story.
+                Dari data harian ({igSum.days} hari terekam{igMonth ? ` di ${labelBulan(igMonth)}` : ""}). <b>*Tayangan akun</b> = semua jenis konten <b>termasuk Story</b> (level akun) — berbeda dari <b>Tayangan konten</b> di ranking &amp; Umum yang hanya menghitung tayangan tiap postingan.
                 {igFollowerAnchor.latest && (
                   <> Total follower: <b className="text-ink">{fmt(igFollowerAnchor.latest.followers)}</b> (snapshot {igFollowerAnchor.latest.snapshot_date}).</>
                 )}
