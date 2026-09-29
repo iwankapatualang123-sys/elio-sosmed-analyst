@@ -34,10 +34,11 @@ export async function addBranch(formData) {
   const profile = await requireAdmin();
   const nama_cabang = String(formData.get("nama_cabang") || "").trim();
   const tiktok_username = String(formData.get("tiktok_username") || "").trim().replace(/^@/, "").toLowerCase();
+  const ig_username = String(formData.get("ig_username") || "").trim().replace(/^@/, "").toLowerCase() || null;
   const kategori = String(formData.get("kategori") || "").trim() || null;
   if (!nama_cabang || !tiktok_username) return;
   await prisma.tiktokAccount.create({
-    data: { namaCabang: nama_cabang, tiktokUsername: tiktok_username, kategori, isActive: true, createdById: profile.id },
+    data: { namaCabang: nama_cabang, tiktokUsername: tiktok_username, igUsername: ig_username, kategori, isActive: true, createdById: profile.id },
   });
   await logActivity({ action: "tambah_cabang", entity: nama_cabang, detail: { tiktok_username } });
   revalidatePath("/settings");
@@ -60,10 +61,11 @@ export async function updateBranch(formData) {
   const id = String(formData.get("id") || "");
   const nama_cabang = String(formData.get("nama_cabang") || "").trim();
   const tiktok_username = String(formData.get("tiktok_username") || "").trim().replace(/^@/, "").toLowerCase();
+  const ig_username = String(formData.get("ig_username") || "").trim().replace(/^@/, "").toLowerCase() || null;
   const kategori = String(formData.get("kategori") || "").trim() || null;
   if (!id || !nama_cabang || !tiktok_username) throw new Error("Nama cabang dan username wajib diisi.");
   try {
-    await prisma.tiktokAccount.update({ where: { id }, data: { namaCabang: nama_cabang, tiktokUsername: tiktok_username, kategori } });
+    await prisma.tiktokAccount.update({ where: { id }, data: { namaCabang: nama_cabang, tiktokUsername: tiktok_username, igUsername: ig_username, kategori } });
   } catch (err) {
     throw new Error(`Gagal memperbarui cabang: ${err?.message || err}`);
   }

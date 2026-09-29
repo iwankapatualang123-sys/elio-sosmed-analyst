@@ -55,6 +55,7 @@ model TiktokAccount {
   id             String   @id @default(uuid()) @db.Char(36)
   namaCabang     String   @map("nama_cabang") @db.Text
   tiktokUsername String   @unique @map("tiktok_username") @db.VarChar(255)
+  igUsername     String?  @map("ig_username") @db.VarChar(255)
   kategori       String?  @db.Text
   logoUrl        String?  @map("logo_url") @db.Text
   isActive       Boolean  @default(true) @map("is_active")

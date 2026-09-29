@@ -58,6 +58,19 @@ export async function uploadInstagramFiles(formData) {
   const { parseInstagramFile } = await import("@/lib/instagram/parser");
   const results = [];
 
+  // ——— PENGAMAN lintas-outlet ———
+  // Ekspor Meta kadang memuat postingan dari akun lain. Kita pakai "username IG resmi"
+  // tiap outlet (diisi di Pengaturan) untuk: (1) MENOLAK postingan yang username-nya =
+  // akun resmi OUTLET LAIN agar tak nyasar; (2) menghitung is_collab dari akun resmi
+  // outlet ini, bukan tebakan "akun terbanyak di file". Bila outlet ini belum punya
+  // username IG, kita isi otomatis dari akun terbanyak di file (modus) setelah proses.
+  const allAccounts = await prisma.tiktokAccount.findMany({ select: { id: true, igUsername: true } });
+  const norm = (v) => String(v || "").trim().replace(/^@/, "").toLowerCase();
+  let ownIg = norm(allAccounts.find((a) => a.id === accountId)?.igUsername);
+  const otherOutletIg = new Set(
+    allAccounts.filter((a) => a.id !== accountId).map((a) => norm(a.igUsername)).filter(Boolean),
+  );
+
   for (const file of files) {
     try {
       // File "Pemirsa" (demografi) sering salah di-upload ke kartu KONTEN ini —
@@ -91,9 +104,30 @@ export async function uploadInstagramFiles(formData) {
         }
         results.push({ name: file.name, ok: true, kind: "daily", metric: parsed.metric, metricLabel: parsed.metricLabel, rows: parsed.rows.length, from: parsed.rows[0].date, to: parsed.rows[parsed.rows.length - 1].date });
       } else {
+        // Bila outlet ini belum punya username IG resmi, tebak dari akun terbanyak
+        // di file (modus) untuk file INI, supaya is_collab & tolak-lintas-outlet tetap
+        // bekerja. Sesudah proses, nilai ini juga disimpan permanen ke outlet.
+        let effectiveOwn = ownIg;
+        if (!effectiveOwn) {
+          const counts = {};
+          for (const r of parsed.rows) {
+            const u = norm(r.username);
+            if (u) counts[u] = (counts[u] || 0) + 1;
+          }
+          const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+          effectiveOwn = top ? top[0] : "";
+        }
+
         let collab = 0;
+        let rejected = 0;
         for (const r of parsed.rows) {
-          if (r.is_collab) collab += 1;
+          const u = norm(r.username);
+          // Tolak postingan milik OUTLET LAIN (nyasar dari ekspor gabungan Meta).
+          if (u && otherOutletIg.has(u) && u !== effectiveOwn) { rejected += 1; continue; }
+          // is_collab: kalau kita tahu akun resmi outlet, kolaborasi = username ≠ akun
+          // resmi. Kalau tak tahu, pakai deteksi bawaan parser.
+          const isCollab = effectiveOwn ? (!!u && u !== effectiveOwn) : !!r.is_collab;
+          if (isCollab) collab += 1;
           const base = {
             igAccountId: r.ig_account_id,
             username: r.username,
@@ -114,7 +148,7 @@ export async function uploadInstagramFiles(formData) {
             navigation: r.navigation,
             stickerTaps: r.sticker_taps,
             follows: r.follows,
-            isCollab: !!r.is_collab,
+            isCollab,
             createdById: profile.id,
             createdByEmail: profile.email,
           };
@@ -124,7 +158,14 @@ export async function uploadInstagramFiles(formData) {
             update: base,
           });
         }
-        results.push({ name: file.name, ok: true, kind: "content", rows: parsed.rows.length, collab });
+        // Simpan permanen username IG resmi outlet bila belum ada (sekali isi).
+        if (!ownIg && effectiveOwn) {
+          try {
+            await prisma.tiktokAccount.update({ where: { id: accountId }, data: { igUsername: effectiveOwn } });
+            ownIg = effectiveOwn;
+          } catch { /* abaikan — tidak menggagalkan upload */ }
+        }
+        results.push({ name: file.name, ok: true, kind: "content", rows: parsed.rows.length - rejected, collab, rejected });
       }
     } catch (err) {
       results.push({ name: file.name, ok: false, error: err?.message || "Gagal memproses file." });

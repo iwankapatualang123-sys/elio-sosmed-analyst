@@ -33,6 +33,7 @@ export default function BranchRow({ branch }) {
   const [editing, setEditing] = useState(false);
   const [nama, setNama] = useState(branch.nama_cabang);
   const [username, setUsername] = useState(branch.tiktok_username);
+  const [igUsername, setIgUsername] = useState(branch.ig_username || "");
   const [kategori, setKategori] = useState(branch.kategori || "");
   const [pending, startTransition] = useTransition();
 
@@ -41,6 +42,7 @@ export default function BranchRow({ branch }) {
     fd.set("id", branch.id);
     fd.set("nama_cabang", nama);
     fd.set("tiktok_username", username);
+    fd.set("ig_username", igUsername);
     fd.set("kategori", kategori);
     startTransition(async () => {
       await updateBranch(fd);
@@ -51,6 +53,7 @@ export default function BranchRow({ branch }) {
   function cancel() {
     setNama(branch.nama_cabang);
     setUsername(branch.tiktok_username);
+    setIgUsername(branch.ig_username || "");
     setKategori(branch.kategori || "");
     setEditing(false);
   }
@@ -86,7 +89,10 @@ export default function BranchRow({ branch }) {
           <input value={nama} onChange={(e) => setNama(e.target.value)} className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="Nama cabang" />
         </td>
         <td className="py-2 pr-3">
-          <input value={username} onChange={(e) => setUsername(e.target.value)} className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="username" />
+          <input value={username} onChange={(e) => setUsername(e.target.value)} className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="username TikTok" />
+        </td>
+        <td className="py-2 pr-3">
+          <input value={igUsername} onChange={(e) => setIgUsername(e.target.value)} className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="username IG (tanpa @)" />
         </td>
         <td className="py-2 pr-3">
           <input value={kategori} onChange={(e) => setKategori(e.target.value)} className="input-3d !min-h-0 !py-1.5 text-sm" placeholder="kategori (opsional)" />
@@ -110,6 +116,7 @@ export default function BranchRow({ branch }) {
     <tr className="border-t" style={{ borderColor: "rgba(16,24,40,.1)" }}>
       <td className="py-2 pr-3 font-medium text-ink">{branch.nama_cabang}</td>
       <td className="py-2 pr-3" style={{ color: "var(--ink-soft)" }}>@{branch.tiktok_username}</td>
+      <td className="py-2 pr-3" style={{ color: "var(--ink-soft)" }}>{branch.ig_username ? `@${branch.ig_username}` : "-"}</td>
       <td className="py-2 pr-3">{branch.kategori || "-"}</td>
       <td className="py-2 pr-3">
         <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={branch.is_active ? { background: "#e7f9f0", color: "#0f9d58" } : { background: "#f0f1f6", color: "#667085" }}>

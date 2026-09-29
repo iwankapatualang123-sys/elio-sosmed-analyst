@@ -93,9 +93,10 @@ export default async function SettingsPage() {
         <div className="flex flex-col gap-4">
           <section className="card-3d p-4 sm:p-6">
             <CardHead icon="🏪" title="Outlet" desc="Daftar outlet lintas platform (TikTok / Instagram / Threads). Tambah, edit, atau nonaktifkan di sini." />
-            <form action={addBranch} className="mb-5 grid gap-3 rounded-xl p-3 sm:grid-cols-4" style={{ background: "var(--pri-50)" }}>
+            <form action={addBranch} className="mb-5 grid gap-3 rounded-xl p-3 sm:grid-cols-5" style={{ background: "var(--pri-50)" }}>
               <input name="nama_cabang" required placeholder="Nama outlet" className="input-3d" />
               <input name="tiktok_username" required placeholder="username TikTok (tanpa @)" className="input-3d" />
+              <input name="ig_username" placeholder="username Instagram (tanpa @)" className="input-3d" />
               <input name="kategori" placeholder="kategori (opsional)" className="input-3d" />
               <Button type="submit" variant="success">+ Tambah outlet</Button>
             </form>
@@ -105,6 +106,7 @@ export default async function SettingsPage() {
                   <tr style={{ color: "var(--ink-soft)" }}>
                     <th className="py-2 pr-3 font-medium">Outlet</th>
                     <th className="py-2 pr-3 font-medium">Username TikTok</th>
+                    <th className="py-2 pr-3 font-medium">Username IG</th>
                     <th className="py-2 pr-3 font-medium">Kategori</th>
                     <th className="py-2 pr-3 font-medium">Status</th>
                     <th className="py-2 pl-3 font-medium text-right">Aksi</th>
@@ -113,7 +115,7 @@ export default async function SettingsPage() {
                 <tbody>
                   {(branches || []).map((b) => <BranchRow key={b.id} branch={b} />)}
                   {(branches || []).length === 0 && (
-                    <tr><td colSpan={5} className="py-4 text-center" style={{ color: "var(--ink-soft)" }}>Belum ada outlet.</td></tr>
+                    <tr><td colSpan={6} className="py-4 text-center" style={{ color: "var(--ink-soft)" }}>Belum ada outlet.</td></tr>
                   )}
                 </tbody>
               </table>

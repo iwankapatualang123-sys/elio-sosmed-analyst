@@ -118,7 +118,7 @@ export default function InstagramUploadCard({ branches = [] }) {
                     </span>
                   ) : (
                     <span style={{ color: "var(--ink-soft)" }}>
-                      → data per konten · {r.rows} konten{r.collab > 0 ? ` (${r.collab} kolaborasi akun lain)` : ""}
+                      → data per konten · {r.rows} konten{r.collab > 0 ? ` (${r.collab} kolaborasi akun lain)` : ""}{r.rejected > 0 ? ` · ${r.rejected} ditolak (milik outlet lain)` : ""}
                     </span>
                   )
                 ) : (
