@@ -7,8 +7,8 @@
 
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db";
-import { getCurrentProfile, canWrite } from "@/lib/auth";
-import { assertCanAccess, canAccessAccount, isAdmin } from "@/lib/access";
+import { getCurrentProfile } from "@/lib/auth";
+import { assertCanAccess, canAccessAccount } from "@/lib/access";
 import { logActivity } from "@/lib/audit";
 import { PLATFORM_KEYS } from "@/lib/tiktok/content-plan";
 import { resolveTikTokLink } from "@/lib/tiktok/resolve-link";
@@ -74,18 +74,17 @@ async function getPlanMeta(id) {
     select: { id: true, createdById: true, tiktokAccountId: true, platformLinks: true },
   });
 }
-// Izin ubah: punya akses cabang DAN (admin/manager ATAU pemilik).
+// Izin ubah: cukup PUNYA AKSES CABANG (staff yang pegang cabang boleh menambah &
+// mengedit semua rencana cabang itu — Rencana Konten adalah sheet editorial bersama).
 async function assertCanEditPlan(profile, plan) {
   if (!plan) throw new Error("Rencana tidak ditemukan.");
-  const ok = (await canAccessAccount(profile, plan.tiktokAccountId)) &&
-    (canWrite(profile) || plan.createdById === profile.id);
+  const ok = await canAccessAccount(profile, plan.tiktokAccountId);
   if (!ok) { const e = new Error("Tidak boleh mengubah rencana ini."); e.status = 403; throw e; }
 }
-// Izin hapus: punya akses cabang DAN (admin ATAU pemilik).
+// Izin hapus: sama — punya akses cabang (sheet bersama). Konfirmasi hapus ada di UI.
 async function assertCanDeletePlan(profile, plan) {
   if (!plan) throw new Error("Rencana tidak ditemukan.");
-  const ok = (await canAccessAccount(profile, plan.tiktokAccountId)) &&
-    (isAdmin(profile) || plan.createdById === profile.id);
+  const ok = await canAccessAccount(profile, plan.tiktokAccountId);
   if (!ok) { const e = new Error("Tidak boleh menghapus rencana ini."); e.status = 403; throw e; }
 }
 
